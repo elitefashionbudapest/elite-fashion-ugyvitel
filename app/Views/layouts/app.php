@@ -2,8 +2,16 @@
 <html lang="hu">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= e($data['pageTitle'] ?? 'Elite Fashion') ?> - Elite Fashion Ügyvitel</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="<?= base_url('/manifest.json') ?>">
+    <meta name="theme-color" content="#0b0f0e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Elite Fashion">
+    <link rel="apple-touch-icon" href="<?= base_url('/assets/icons/icon-192.png') ?>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -81,5 +89,77 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
     <script src="<?= base_url('/assets/js/app.js') ?>"></script>
+
+    <!-- PWA: Service Worker + Install Prompt -->
+    <script>
+    // Service Worker regisztráció
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('<?= base_url('/sw.js') ?>')
+            .then(reg => { console.log('SW registered'); })
+            .catch(err => { console.log('SW error:', err); });
+    }
+
+    // Install prompt (A2HS)
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Megmutatjuk az install gombot
+        const btn = document.getElementById('pwa-install-btn');
+        if (btn) btn.classList.remove('hidden');
+    });
+
+    function installPWA() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choice => {
+            deferredPrompt = null;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.add('hidden');
+        });
+    }
+
+    // Értesítés engedély kérése
+    function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') {
+                    console.log('Notification permission granted');
+                }
+            });
+        }
+    }
+
+    // Chat hang értesítés (böngészőben)
+    let lastKnownMsgCount = 0;
+    function checkNewMessages() {
+        if (document.hidden) return; // Csak ha aktív a tab
+        // A chat polling már kezeli — itt hang + notification
+    }
+
+    // Browser notification új üzenetről (ha háttérben van az app)
+    function showChatNotification(senderName, message) {
+        if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+            new Notification('Elite Fashion — ' + senderName, {
+                body: message,
+                icon: '<?= base_url('/assets/icons/icon-192.png') ?>',
+                tag: 'chat-msg',
+                vibrate: [200, 100, 200],
+            });
+        }
+    }
+
+    // Értesítés engedélyt kérünk bejelentkezés után
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(requestNotificationPermission, 3000);
+    });
+    </script>
+
+    <!-- PWA Install gomb (sidebar alján) -->
+    <div id="pwa-install-btn" class="hidden fixed bottom-4 left-4 z-50 lg:bottom-auto lg:top-auto">
+        <button onclick="installPWA()" class="flex items-center gap-2 px-4 py-2.5 bg-accent text-sidebar font-bold text-xs rounded-full shadow-lg hover:shadow-xl transition-all">
+            <i class="fa-solid fa-download"></i> App telepítése
+        </button>
+    </div>
 </body>
 </html>
