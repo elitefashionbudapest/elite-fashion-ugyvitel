@@ -314,7 +314,7 @@ async function sendMobileChat(e) {
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 
 // Periodikus frissítés
-setInterval(() => { if (mobileChatOpen) loadMobileChat(); }, 3000);
+setInterval(() => { if (mobileChatOpen) loadMobileChat(); }, 500);
 </script>
 
 <!-- Chart.js -->
@@ -444,6 +444,6 @@ document.addEventListener('DOMContentLoaded', function() {
         md.innerHTML=h;md.scrollTop=md.scrollHeight;}catch(e){}}
     window.sendDashboardChat=async function(e){e.preventDefault();const i=document.getElementById('chat-input'),m=i.value.trim();if(!m)return false;i.value='';
     try{await fetch(base+'/chat/send',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':getCsrfToken()},body:JSON.stringify({message:m,receiver_id:null})});lid=0;await load();}catch(e){}return false;};
-    load();setInterval(load,3000);
+    load();setInterval(load,500);
 })();
 </script>

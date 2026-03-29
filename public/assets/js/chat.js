@@ -24,7 +24,7 @@ const Chat = (function () {
     const currentUserId = app ? parseInt(app.dataset.userId) : 0;
     const currentUserName = app ? app.dataset.userName : '';
     const baseUrl = app ? app.dataset.baseUrl : '';
-    const POLL_INTERVAL_MS = 3000;
+    const POLL_INTERVAL_MS = 500;
 
     /**
      * Inicializalas
