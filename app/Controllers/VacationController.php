@@ -19,7 +19,6 @@ class VacationController
 
         // Dolgozók listája a szűrőhöz — mindenki az összeset látja
         $employees = Employee::allActive();
-        }
 
         view('layouts/app', [
             'content' => 'vacation/index',
