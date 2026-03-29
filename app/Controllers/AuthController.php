@@ -66,6 +66,15 @@ class AuthController
         if (Auth::attempt($email, $password, $remember)) {
             unset($_SESSION['login_attempts'][$ip]);
             clear_old_input();
+
+            // Mobilon PIN beállítás felajánlása
+            $isMobile = preg_match('/Mobi|Android|iPhone|iPad/i', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            if ($isMobile) {
+                $user = Auth::user();
+                $userData = json_encode(['name' => $user['name'], 'id' => $user['id']]);
+                redirect('/login?setup_pin=1&user_data=' . urlencode($userData));
+            }
+
             set_flash('success', 'Sikeres bejelentkezés!');
             redirect('/');
         }
