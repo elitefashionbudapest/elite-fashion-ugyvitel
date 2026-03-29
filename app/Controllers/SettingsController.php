@@ -56,9 +56,10 @@ class SettingsController
         foreach ($allUsers as $user) {
             $uid = $user['id'];
             foreach ($allTabs as $slug => $tab) {
-                $canView = isset($perms[$uid][$slug]['view']);
-                $canEdit = isset($perms[$uid][$slug]['edit']);
-                TabPermission::save((int)$uid, $slug, $canView, $canEdit);
+                $canView   = isset($perms[$uid][$slug]['view']);
+                $canCreate = isset($perms[$uid][$slug]['create']);
+                $canEdit   = isset($perms[$uid][$slug]['edit']);
+                TabPermission::save((int)$uid, $slug, $canView, $canCreate, $canEdit);
             }
         }
 

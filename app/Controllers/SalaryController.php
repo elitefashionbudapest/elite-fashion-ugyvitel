@@ -43,7 +43,7 @@ class SalaryController
 
     public function create(): void
     {
-        Middleware::tabPermission('fizetes', 'edit');
+        Middleware::tabPermission('fizetes', 'create');
 
         $type = $_GET['type'] ?? 'dolgozoi';
         $employees = Employee::allActive();
@@ -61,7 +61,7 @@ class SalaryController
 
     public function store(): void
     {
-        Middleware::tabPermission('fizetes', 'edit');
+        Middleware::tabPermission('fizetes', 'create');
         Middleware::verifyCsrf();
 
         $type = $_POST['type'] ?? 'dolgozoi';

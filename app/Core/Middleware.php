@@ -4,9 +4,6 @@ namespace App\Core;
 
 class Middleware
 {
-    /**
-     * Bejelentkezés megkövetelése
-     */
     public static function auth(): void
     {
         if (!Auth::check()) {
@@ -14,22 +11,15 @@ class Middleware
         }
     }
 
-    /**
-     * Szerepkör megkövetelése
-     */
     public static function role(string $role): void
     {
         self::auth();
-
         if (Auth::role() !== $role) {
             set_flash('error', 'Nincs jogosultságod ehhez a művelethez.');
             redirect('/');
         }
     }
 
-    /**
-     * Tulajdonos megkövetelése
-     */
     public static function owner(): void
     {
         self::role('tulajdonos');
@@ -37,8 +27,7 @@ class Middleware
 
     /**
      * Tab jogosultság ellenőrzése
-     * Tulajdonos: ha nincs jogosultság beállítva → teljes hozzáférés
-     *             ha van beállítva → azok érvényesülnek
+     * permission: 'view' = megtekintés, 'create' = új rögzítés, 'edit' = módosítás/törlés
      */
     public static function tabPermission(string $tabSlug, string $permission = 'view'): void
     {
@@ -62,15 +51,17 @@ class Middleware
             redirect('/');
         }
 
+        if ($permission === 'create' && !$perm['can_create']) {
+            set_flash('error', 'Nincs rögzítési jogosultsága ehhez a funkcióhoz.');
+            redirect('/');
+        }
+
         if ($permission === 'edit' && !$perm['can_edit']) {
-            set_flash('error', 'Nincs szerkesztési jogosultsága ehhez a funkcióhoz.');
+            set_flash('error', 'Nincs módosítási/törlési jogosultsága ehhez a funkcióhoz.');
             redirect('/');
         }
     }
 
-    /**
-     * CSRF token ellenőrzése POST kéréseknél
-     */
     public static function verifyCsrf(): void
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

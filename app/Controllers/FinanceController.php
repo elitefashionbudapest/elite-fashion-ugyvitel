@@ -39,7 +39,7 @@ class FinanceController
 
     public function create(): void
     {
-        Middleware::tabPermission('konyveles', 'edit');
+        Middleware::tabPermission('konyveles', 'create');
 
         $stores = Auth::isOwner() ? Store::all() : [];
         $employees = Employee::allActive();
@@ -60,7 +60,7 @@ class FinanceController
 
     public function store(): void
     {
-        Middleware::tabPermission('konyveles', 'edit');
+        Middleware::tabPermission('konyveles', 'create');
         Middleware::verifyCsrf();
 
         $storeId = Auth::isStore() ? Auth::storeId() : (int)($_POST['store_id'] ?? 0);

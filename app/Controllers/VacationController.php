@@ -38,7 +38,7 @@ class VacationController
 
     public function create(): void
     {
-        Middleware::tabPermission('szabadsag', 'edit');
+        Middleware::tabPermission('szabadsag', 'create');
 
         if (Auth::isStore()) {
             $employees = Employee::getByStore(Auth::storeId());
@@ -58,7 +58,7 @@ class VacationController
 
     public function store(): void
     {
-        Middleware::tabPermission('szabadsag', 'edit');
+        Middleware::tabPermission('szabadsag', 'create');
         Middleware::verifyCsrf();
 
         $employeeId = (int) ($_POST['employee_id'] ?? 0);

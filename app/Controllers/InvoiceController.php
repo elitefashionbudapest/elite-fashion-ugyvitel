@@ -41,7 +41,7 @@ class InvoiceController
 
     public function create(): void
     {
-        Middleware::tabPermission('szamlak', 'edit');
+        Middleware::tabPermission('szamlak', 'create');
 
         $stores = Auth::isOwner() ? Store::all() : [];
 
@@ -57,7 +57,7 @@ class InvoiceController
 
     public function store(): void
     {
-        Middleware::tabPermission('szamlak', 'edit');
+        Middleware::tabPermission('szamlak', 'create');
         Middleware::verifyCsrf();
 
         $storeId = Auth::isStore() ? Auth::storeId() : (!empty($_POST['store_id']) ? (int)$_POST['store_id'] : null);

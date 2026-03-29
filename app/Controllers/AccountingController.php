@@ -76,7 +76,7 @@ class AccountingController
      */
     public function uploadStatement(): void
     {
-        Middleware::owner();
+        Middleware::tabPermission('konyvelo_docs', 'create');
         Middleware::verifyCsrf();
 
         $bankId = (int)($_POST['bank_id'] ?? 0);
@@ -133,7 +133,7 @@ class AccountingController
      */
     public function uploadPayslip(): void
     {
-        Middleware::tabPermission('konyvelo_docs', 'edit');
+        Middleware::tabPermission('konyvelo_docs', 'create');
         Middleware::verifyCsrf();
 
         $employeeId = (int)($_POST['employee_id'] ?? 0);

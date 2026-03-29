@@ -47,7 +47,7 @@ class DefectController
      */
     public function scan(): void
     {
-        Middleware::tabPermission('selejt', 'edit');
+        Middleware::tabPermission('selejt', 'create');
         Middleware::verifyCsrf();
 
         header('Content-Type: application/json; charset=utf-8');
@@ -115,7 +115,7 @@ class DefectController
      */
     public function saveDailyValue(): void
     {
-        Middleware::tabPermission('selejt', 'edit');
+        Middleware::tabPermission('selejt', 'create');
         Middleware::verifyCsrf();
 
         $storeId = Auth::isStore() ? Auth::storeId() : (int)($_POST['store_id'] ?? 0);

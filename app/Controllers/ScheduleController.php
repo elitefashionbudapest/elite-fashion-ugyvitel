@@ -264,7 +264,7 @@ class ScheduleController
      */
     public function apiStore(): void
     {
-        Middleware::tabPermission('beosztas', 'edit');
+        Middleware::tabPermission('beosztas', 'create');
         Middleware::verifyCsrf();
 
         $input = json_decode(file_get_contents('php://input'), true);

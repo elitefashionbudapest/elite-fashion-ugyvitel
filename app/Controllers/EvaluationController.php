@@ -47,7 +47,7 @@ class EvaluationController
 
     public function create(): void
     {
-        Middleware::tabPermission('ertekeles', 'edit');
+        Middleware::tabPermission('ertekeles', 'create');
 
         $stores    = Auth::isOwner() ? Store::all() : [];
         $storeId   = Auth::isStore() ? Auth::storeId() : null;
@@ -67,7 +67,7 @@ class EvaluationController
 
     public function store(): void
     {
-        Middleware::tabPermission('ertekeles', 'edit');
+        Middleware::tabPermission('ertekeles', 'create');
         Middleware::verifyCsrf();
 
         $storeId = Auth::isStore() ? Auth::storeId() : (int)($_POST['store_id'] ?? 0);
