@@ -78,16 +78,16 @@ foreach ($invoices as $inv) {
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-surface-container-low">
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Beszállító</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Számlaszám</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Bolt</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dátum</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Határidő</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Fiz. mód</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Státusz</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Kép</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műveletek</th>
+                    <th class="px-2 sm:px-6 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Beszállító</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Számlaszám</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Bolt</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Dátum</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Határidő</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Fiz. mód</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Státusz</th>
+                    <th class="px-2 sm:px-4 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Kép</th>
+                    <th class="px-2 sm:px-6 py-3 sm:py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műv.</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-surface-container">
@@ -100,22 +100,22 @@ foreach ($invoices as $inv) {
                     <?php foreach ($invoices as $inv): ?>
                     <?php $isOverdue = !$inv['is_paid'] && $inv['due_date'] && $inv['due_date'] < date('Y-m-d'); ?>
                     <tr class="hover:bg-surface-container-low/50 transition-colors <?= $isOverdue ? 'bg-red-50/30' : '' ?>">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-tertiary-container/30 flex items-center justify-center">
-                                    <i class="fa-solid fa-truck text-on-tertiary-container text-sm"></i>
+                        <td class="px-2 sm:px-6 py-3 sm:py-4">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-tertiary-container/30 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-truck text-on-tertiary-container text-xs sm:text-sm"></i>
                                 </div>
-                                <span class="font-bold text-on-surface text-sm"><?= e($inv['supplier_name']) ?></span>
+                                <span class="font-bold text-on-surface text-xs sm:text-sm truncate max-w-[80px] sm:max-w-none"><?= e($inv['supplier_name']) ?></span>
                             </div>
                         </td>
-                        <td class="px-4 py-4 text-sm font-mono text-on-surface-variant"><?= e($inv['invoice_number']) ?></td>
-                        <td class="px-4 py-4 text-right font-bold text-on-surface whitespace-nowrap">
+                        <td class="px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-mono text-on-surface-variant truncate max-w-[100px] sm:max-w-none"><?= e($inv['invoice_number']) ?></td>
+                        <td class="px-2 sm:px-4 py-3 sm:py-4 text-right font-bold text-on-surface whitespace-nowrap text-xs sm:text-sm">
                             <?= $inv['currency'] === 'EUR'
                                 ? number_format($inv['amount'], 2, ',', ' ') . ' €'
                                 : format_money($inv['amount']) ?>
                         </td>
-                        <td class="px-4 py-4 text-sm text-on-surface-variant hide-mobile"><?= e($inv['store_name']) ?></td>
-                        <td class="px-4 py-4 text-sm text-on-surface-variant whitespace-nowrap"><?= date('Y.m.d', strtotime($inv['invoice_date'])) ?></td>
+                        <td class="px-2 sm:px-4 py-3 sm:py-4 text-sm text-on-surface-variant hide-mobile"><?= e($inv['store_name']) ?></td>
+                        <td class="px-2 sm:px-4 py-3 sm:py-4 text-sm text-on-surface-variant whitespace-nowrap hide-mobile"><?= date('Y.m.d', strtotime($inv['invoice_date'])) ?></td>
                         <td class="px-4 py-4 text-sm whitespace-nowrap hide-mobile <?= $isOverdue ? 'text-red-600 font-bold' : 'text-on-surface-variant' ?>">
                             <?= $inv['due_date'] ? date('Y.m.d', strtotime($inv['due_date'])) : '—' ?>
                             <?php if ($isOverdue): ?><i class="fa-solid fa-triangle-exclamation text-[10px] ml-1"></i><?php endif; ?>
