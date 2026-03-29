@@ -129,6 +129,9 @@ $router->get('/settings/company', [App\Controllers\CompanySettingsController::cl
 $router->post('/settings/company', [App\Controllers\CompanySettingsController::class, 'save']);
 $router->get('/settings/company/test-imap', [App\Controllers\CompanySettingsController::class, 'testImap']);
 $router->get('/settings/company/test-api', [App\Controllers\CompanySettingsController::class, 'testApi']);
+$router->get('/settings/company/connect-gmail', [App\Controllers\CompanySettingsController::class, 'connectGmail']);
+$router->get('/settings/company/google-callback', [App\Controllers\CompanySettingsController::class, 'googleCallback']);
+$router->post('/settings/company/disconnect-gmail', [App\Controllers\CompanySettingsController::class, 'disconnectGmail']);
 
 // Könyvelés
 $router->get('/finance', [App\Controllers\FinanceController::class, 'index']);

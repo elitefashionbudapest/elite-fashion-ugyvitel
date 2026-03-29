@@ -50,45 +50,61 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
             </div>
         </div>
 
-        <!-- IMAP beállítások -->
+        <!-- Gmail API csatlakozás -->
         <div class="bg-surface-container-lowest rounded-xl p-4 sm:p-6">
             <h3 class="font-heading font-bold text-on-surface mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-envelope text-blue-500"></i> Email számla feldolgozás
             </h3>
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            <?php $gmailEmail = $s['google_email'] ?? ''; ?>
+            <?php if ($gmailEmail): ?>
+                <!-- Csatlakoztatva -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-emerald-800 text-sm">Gmail csatlakoztatva</p>
+                            <p class="text-xs text-emerald-600"><?= e($gmailEmail) ?></p>
+                        </div>
+                    </div>
+                    <form method="POST" action="<?= base_url('/settings/company/disconnect-gmail') ?>">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-200 hover:bg-red-100">
+                            Lecsatlakoztatás
+                        </button>
+                    </form>
+                </div>
+                <p class="text-[10px] text-on-surface-variant mt-2">A rendszer naponta reggel 5-kor automatikusan átnézi a beérkezett számlákat.</p>
+            <?php else: ?>
+                <!-- Nincs csatlakoztatva -->
+                <div class="space-y-3 mb-4">
                     <div>
-                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">IMAP szerver</label>
-                        <input type="text" name="imap_host" value="<?= e($s['imap_host'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. imap.gmail.com">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Google Client ID</label>
+                        <input type="text" name="google_client_id" value="<?= e($s['google_client_id'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="...apps.googleusercontent.com">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Port</label>
-                        <input type="text" name="imap_port" value="<?= e($s['imap_port'] ?? '993') ?>" class="<?= $inputCls ?>" placeholder="993">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Google Client Secret</label>
+                        <input type="password" name="google_client_secret" value="<?= e($s['google_client_secret'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="GOCSPX-...">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Email cím</label>
-                    <input type="email" name="imap_email" value="<?= e($s['imap_email'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="szamlak@elitedivat.hu">
+
+                <?php if (!empty($s['google_client_id']) && !empty($s['google_client_secret'])): ?>
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                    <i class="fa-brands fa-google text-4xl text-gray-300 mb-2 block"></i>
+                    <p class="text-sm text-gray-600 mb-3">Csatlakoztasd a Gmail fiókodat.</p>
+                    <a href="<?= base_url('/settings/company/connect-gmail') ?>" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-colors">
+                        <i class="fa-brands fa-google"></i> Gmail csatlakoztatása
+                    </a>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Jelszó / App password</label>
-                    <input type="password" name="imap_password" value="<?= e($s['imap_password'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="••••••••">
-                    <p class="text-[10px] text-on-surface-variant mt-1">Gmail esetén App Password kell (2FA bekapcsolva).</p>
+                <?php else: ?>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Először mentsd el a Client ID-t és Secret-et, utána tudod csatlakoztatni.
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Titkosítás</label>
-                    <select name="imap_encryption" class="<?= $inputCls ?>">
-                        <option value="ssl" <?= ($s['imap_encryption'] ?? 'ssl') === 'ssl' ? 'selected' : '' ?>>SSL</option>
-                        <option value="tls" <?= ($s['imap_encryption'] ?? '') === 'tls' ? 'selected' : '' ?>>TLS</option>
-                        <option value="none" <?= ($s['imap_encryption'] ?? '') === 'none' ? 'selected' : '' ?>>Nincs</option>
-                    </select>
-                </div>
-                <!-- IMAP teszt gomb -->
-                <button type="button" onclick="testImap()" class="w-full px-4 py-2.5 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plug"></i> Email kapcsolat tesztelése
-                </button>
-                <div id="imap-result" class="hidden text-xs p-3 rounded-xl"></div>
-            </div>
+                <?php endif; ?>
+                <p class="text-[10px] text-on-surface-variant mt-2">Google OAuth2 — biztonságos, a jelszavad nem kerül mentésre.</p>
+            <?php endif; ?>
         </div>
 
         <!-- API kulcs -->
@@ -114,33 +130,6 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
 </form>
 
 <script>
-async function testImap() {
-    const btn = event.target.closest('button');
-    const result = document.getElementById('imap-result');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tesztelés...';
-    result.className = 'text-xs p-3 rounded-xl bg-gray-50 text-gray-500';
-    result.textContent = 'Kapcsolódás...';
-    result.classList.remove('hidden');
-
-    try {
-        const res = await fetch('<?= base_url('/settings/company/test-imap') ?>');
-        const data = await res.json();
-        if (data.success) {
-            result.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200';
-            result.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>' + data.message;
-        } else {
-            result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
-            result.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>' + data.message;
-        }
-    } catch(e) {
-        result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
-        result.textContent = 'Hiba: ' + e.message;
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-plug"></i> Email kapcsolat tesztelése';
-}
-
 async function testApi() {
     const btn = event.target.closest('button');
     const result = document.getElementById('api-result');

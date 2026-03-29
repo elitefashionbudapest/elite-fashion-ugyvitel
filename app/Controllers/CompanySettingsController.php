@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\{Middleware, AuditLog};
 use App\Models\CompanySetting;
+use App\Services\GmailApiClient;
 
 class CompanySettingsController
 {
@@ -30,7 +31,7 @@ class CompanySettingsController
 
         $fields = [
             'company_name', 'company_name_variants', 'company_tax_number', 'company_eu_vat', 'company_address',
-            'imap_host', 'imap_port', 'imap_email', 'imap_password', 'imap_encryption',
+            'google_client_id', 'google_client_secret',
             'anthropic_api_key',
         ];
 
@@ -41,6 +42,51 @@ class CompanySettingsController
 
         AuditLog::log('update', 'company_settings', null, null, ['fields' => $fields]);
         set_flash('success', 'Cégbeállítások mentve.');
+        redirect('/settings/company');
+    }
+
+    public function connectGmail(): void
+    {
+        Middleware::owner();
+
+        // A client ID és secret a cégbeállításokból jön (google_client_id, google_client_secret)
+        // Ezeket az .env fájlból vagy a DB-ből olvassa a GmailApiClient
+
+        $gmail = new GmailApiClient();
+        header('Location: ' . $gmail->getAuthUrl());
+        exit;
+    }
+
+    public function googleCallback(): void
+    {
+        Middleware::owner();
+
+        $code = $_GET['code'] ?? '';
+        if (!$code) {
+            set_flash('error', 'Google hitelesítés sikertelen — nincs kód.');
+            redirect('/settings/company');
+        }
+
+        $gmail = new GmailApiClient();
+        if ($gmail->handleCallback($code)) {
+            set_flash('success', 'Gmail sikeresen csatlakoztatva: ' . $gmail->getEmail());
+        } else {
+            set_flash('error', 'Gmail csatlakoztatás sikertelen.');
+        }
+        redirect('/settings/company');
+    }
+
+    public function disconnectGmail(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        CompanySetting::set('google_access_token', null);
+        CompanySetting::set('google_refresh_token', null);
+        CompanySetting::set('google_token_expires', null);
+        CompanySetting::set('google_email', null);
+
+        set_flash('success', 'Gmail lecsatlakoztatva.');
         redirect('/settings/company');
     }
 
