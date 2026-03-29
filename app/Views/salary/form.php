@@ -19,6 +19,7 @@ $months = [
         </h3>
 
         <!-- Típus váltó -->
+        <?php if (Auth::isOwner()): ?>
         <div class="flex gap-1 bg-surface-container-low p-1 rounded-lg w-fit mb-6">
             <a href="<?= base_url('/salary/create?type=dolgozoi') ?>"
                class="px-4 py-2 rounded-lg text-xs font-semibold transition-all <?= $type === 'dolgozoi' ? 'bg-surface-container-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface' ?>">
@@ -29,6 +30,7 @@ $months = [
                 Tulajdonosi
             </a>
         </div>
+        <?php endif; ?>
 
         <form method="POST" action="<?= base_url('/salary') ?>" class="space-y-5">
             <?= csrf_field() ?>

@@ -13,13 +13,18 @@ class SalaryController
 
         $tab = $_GET['tab'] ?? 'dolgozoi';
 
+        // Nem tulajdonos nem láthatja a tulajdonosi fizetéseket
+        if ($tab === 'tulajdonosi' && !Auth::isOwner()) {
+            $tab = 'dolgozoi';
+        }
+
         $employeeId = !empty($_GET['employee_id']) ? (int)$_GET['employee_id'] : null;
         $ownerName = $_GET['owner_name'] ?? null;
         $year = !empty($_GET['year']) ? (int)$_GET['year'] : null;
         $month = !empty($_GET['month']) ? (int)$_GET['month'] : null;
 
         $records = SalaryPayment::all($employeeId, $year, $month);
-        $ownerRecords = OwnerPayment::all($ownerName ?: null, $year, $month);
+        $ownerRecords = Auth::isOwner() ? OwnerPayment::all($ownerName ?: null, $year, $month) : [];
         $employees = Employee::allActive();
 
         view('layouts/app', [
@@ -46,6 +51,9 @@ class SalaryController
         Middleware::tabPermission('fizetes', 'create');
 
         $type = $_GET['type'] ?? 'dolgozoi';
+        if ($type === 'tulajdonosi' && !Auth::isOwner()) {
+            redirect('/salary');
+        }
         $employees = Employee::allActive();
 
         view('layouts/app', [
@@ -65,6 +73,9 @@ class SalaryController
         Middleware::verifyCsrf();
 
         $type = $_POST['type'] ?? 'dolgozoi';
+        if ($type === 'tulajdonosi' && !Auth::isOwner()) {
+            redirect('/salary');
+        }
 
         if ($type === 'tulajdonosi') {
             $data = [

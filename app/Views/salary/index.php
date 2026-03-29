@@ -26,7 +26,9 @@ $months = [
     </a>
 </div>
 
+<?php $isOwner = Auth::isOwner(); ?>
 <!-- Fül váltó -->
+<?php if ($isOwner): ?>
 <div class="flex gap-1 bg-surface-container-low p-1 rounded-lg w-fit mb-6">
     <a href="<?= base_url('/salary?tab=dolgozoi') ?>"
        class="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all <?= $tab === 'dolgozoi' ? 'bg-surface-container-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface' ?>">
@@ -39,6 +41,7 @@ $months = [
         Tulajdonosi
     </a>
 </div>
+<?php endif; ?>
 
 <?php if ($tab === 'dolgozoi'): ?>
 <!-- ===================== DOLGOZÓI FIZETÉSEK ===================== -->
