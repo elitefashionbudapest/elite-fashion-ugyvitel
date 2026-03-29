@@ -59,7 +59,7 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
                 if ($value <= 0) continue;
             ?>
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600"><i class="fa-solid <?= $icon ?> text-xs text-gray-400 mr-1"></i><?= $label ?></span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid <?= $icon ?> text-xs text-gray-400 mr-1"></i><?= $label ?></span>
                 <span class="font-medium text-red-600"><?= format_money($value) ?></span>
             </div>
             <?php endforeach; ?>
@@ -98,33 +98,33 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
             <!-- Jelenlegi pozíció -->
             <div class="bg-gray-50 rounded-xl p-3">
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600"><i class="fa-solid fa-wallet text-gray-400 mr-1"></i>Jelenlegi likvid pozíció</span>
+                    <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-wallet text-gray-400 mr-1"></i>Jelenlegi likvid pozíció</span>
                     <span class="font-heading font-bold text-lg"><?= format_money($fc['currentCash'] ?? 0) ?></span>
                 </div>
             </div>
 
             <!-- Várható bevétel -->
             <div class="flex justify-between items-center py-1.5">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-chart-line text-emerald-400 mr-1"></i>Vetített havi forgalom</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-chart-line text-emerald-400 mr-1"></i>Vetített havi forgalom</span>
                 <span class="font-medium text-emerald-600"><?= format_money($fc['projectedRevenue'] ?? 0) ?></span>
             </div>
 
             <!-- Várható költségek -->
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-2">Várható havi költségek (3 havi átlag)</p>
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-money-bill text-gray-400 mr-1"></i>Üzleti költségek</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-money-bill text-gray-400 mr-1"></i>Üzleti költségek</span>
                 <span class="font-medium text-red-500"><?= format_money($fc['avgMonthlyCosts'] ?? 0) ?></span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-building text-gray-400 mr-1"></i>Szolgáltatók</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-building text-gray-400 mr-1"></i>Szolgáltatók</span>
                 <span class="font-medium text-red-500"><?= format_money($fc['avgMonthlyProviders'] ?? 0) ?></span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-landmark text-gray-400 mr-1"></i>Hiteltörlesztés</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-landmark text-gray-400 mr-1"></i>Hiteltörlesztés</span>
                 <span class="font-medium text-red-500"><?= format_money($fc['avgMonthlyLoan'] ?? 0) ?></span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-receipt text-gray-400 mr-1"></i>Várható ÁFA kötelezettség</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-receipt text-gray-400 mr-1"></i>Várható ÁFA kötelezettség</span>
                 <span class="font-medium text-red-500"><?= format_money($fc['projectedVat'] ?? 0) ?></span>
             </div>
 
@@ -328,8 +328,8 @@ $ownerTotal = $data['ownerTotal'] ?? 0;
 <?php endif; ?>
 
 <!-- Dátum szűrő -->
-<div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mb-6">
-    <form method="GET" action="<?= base_url('/finance/summary') ?>" class="flex flex-wrap gap-3 items-end">
+<div class="bg-white rounded-2xl shadow-sm p-3 sm:p-6 mb-4 sm:mb-6">
+    <form method="GET" action="<?= base_url('/finance/summary') ?>" class="flex flex-wrap gap-2 sm:gap-3 items-end">
         <div>
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Időszak kezdete</label>
             <input type="date" name="date_from" value="<?= e($dateFrom) ?>" class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-primary/50">
@@ -345,8 +345,8 @@ $ownerTotal = $data['ownerTotal'] ?? 0;
 <!-- Boltonkénti összesítő -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= min(count($summary), 3) ?> gap-4 sm:gap-6">
     <?php foreach ($summary as $store): ?>
-    <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h3 class="font-heading font-bold text-gray-900 mb-4 flex items-center gap-2">
+    <div class="bg-white rounded-2xl shadow-sm p-3 sm:p-6 overflow-hidden">
+        <h3 class="font-heading font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
             <i class="fa-solid fa-store text-primary"></i>
             <?= e($store['name']) ?>
         </h3>
@@ -354,50 +354,50 @@ $ownerTotal = $data['ownerTotal'] ?? 0;
             <!-- Bevételek -->
             <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mt-1 mb-1"><i class="fa-solid fa-arrow-down text-[8px] mr-0.5"></i>Bevételek</p>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-money-bill text-xs text-gray-400 mr-1.5"></i>Készpénz forgalom</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-money-bill text-xs text-gray-400 mr-1.5"></i>Készpénz forgalom</span>
                 <span class="font-medium"><?= format_money($store['keszpenz']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-credit-card text-xs text-gray-400 mr-1.5"></i>Bankkártya forgalom</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-credit-card text-xs text-gray-400 mr-1.5"></i>Bankkártya forgalom</span>
                 <span class="font-medium"><?= format_money($store['bankkartya']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-building-columns text-xs text-gray-400 mr-1.5"></i>Befizetés bankból</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-building-columns text-xs text-gray-400 mr-1.5"></i>Befizetés bankból</span>
                 <span class="font-medium text-emerald-600"><?= format_money($store['befizetes_bankbol']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-store text-xs text-gray-400 mr-1.5"></i>Befizetés másik boltból</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-store text-xs text-gray-400 mr-1.5"></i>Befizetés másik boltból</span>
                 <span class="font-medium text-emerald-600"><?= format_money($store['befizetes_boltbol']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-box-open text-xs text-gray-400 mr-1.5"></i>Selejt befizetés</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-box-open text-xs text-gray-400 mr-1.5"></i>Selejt befizetés</span>
                 <span class="font-medium text-emerald-600"><?= format_money($store['selejt_befizetes']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-box-open text-xs text-gray-400 mr-1.5"></i>Selejt összérték</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-box-open text-xs text-gray-400 mr-1.5"></i>Selejt összérték</span>
                 <span class="font-medium text-orange-600"><?= format_money($store['selejt']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-cash-register text-xs text-gray-400 mr-1.5"></i>Kassza nyitó</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-cash-register text-xs text-gray-400 mr-1.5"></i>Kassza nyitó</span>
                 <span class="font-medium"><?= format_money($store['kassza_nyito']) ?></span>
             </div>
 
             <!-- Kiadások -->
             <p class="text-[10px] font-bold uppercase tracking-widest text-red-500 mt-3 mb-1"><i class="fa-solid fa-arrow-up text-[8px] mr-0.5"></i>Kiadások</p>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-hand-holding-dollar text-xs text-gray-400 mr-1.5"></i>Munkabérek</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-hand-holding-dollar text-xs text-gray-400 mr-1.5"></i>Munkabérek</span>
                 <span class="font-medium text-red-600"><?= format_money($store['munkaber']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-building-columns text-xs text-gray-400 mr-1.5"></i>Bank kifizetés</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-building-columns text-xs text-gray-400 mr-1.5"></i>Bank kifizetés</span>
                 <span class="font-medium text-red-600"><?= format_money($store['bank_kifizetes']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-file-invoice text-xs text-gray-400 mr-1.5"></i>Számla kifizetés</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-file-invoice text-xs text-gray-400 mr-1.5"></i>Számla kifizetés</span>
                 <span class="font-medium text-red-600"><?= format_money($store['szamla_kifizetes']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
-                <span class="text-sm text-gray-600"><i class="fa-solid fa-file-invoice-dollar text-xs text-gray-400 mr-1.5"></i>Egyéb kiadások</span>
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-file-invoice-dollar text-xs text-gray-400 mr-1.5"></i>Egyéb kiadások</span>
                 <span class="font-medium text-red-600"><?= format_money($store['egyeb_kiadasok']) ?></span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-gray-200">

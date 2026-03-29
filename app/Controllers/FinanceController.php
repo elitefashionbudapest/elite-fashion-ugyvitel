@@ -255,7 +255,8 @@ class FinanceController
         // ÁFA számítás (előző hónap)
         $prevMonthFrom = date('Y-m-01', strtotime('-1 month'));
         $prevMonthTo = date('Y-m-t', strtotime('-1 month'));
-        $prevMonthName = strftime('%Y. %B', strtotime('-1 month'));
+        $hunMonths = ['','január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+        $prevMonthName = date('Y', strtotime('-1 month')) . '. ' . $hunMonths[(int)date('m', strtotime('-1 month'))];
 
         // Fizetendő ÁFA: előző havi bolti bruttó forgalom ÁFA-ja
         $stmt = $db->prepare(
