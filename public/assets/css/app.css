@@ -350,6 +350,14 @@ select:focus {
     * { max-width: 100%; box-sizing: border-box; }
     img, video, iframe, table { max-width: 100%; }
     pre, code { overflow-x: auto; word-break: break-all; }
+
+    /* Select dropdown nyíl ne lógjon a szövegbe */
+    select {
+        padding-right: 2rem !important;
+        background-position: right 0.5rem center !important;
+        background-size: 0.75rem !important;
+        text-overflow: ellipsis;
+    }
 }
 
 /* ==========================================
