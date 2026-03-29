@@ -6,6 +6,10 @@
 .deploy
 deploy.php
 JELSZAVAK.txt
+node_modules/
+package.json
+package-lock.json
+tests/
 
 # Adatmentések
 /storage/backups/
