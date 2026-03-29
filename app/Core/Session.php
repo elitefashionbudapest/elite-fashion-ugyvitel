@@ -12,7 +12,7 @@ class Session
 
         ini_set('session.cookie_httponly', '1');
         ini_set('session.use_strict_mode', '1');
-        ini_set('session.cookie_samesite', 'Strict');
+        ini_set('session.cookie_samesite', 'Lax');
 
         session_name('elite_session');
         session_set_cookie_params([
@@ -21,7 +21,7 @@ class Session
             'domain'   => '',
             'secure'   => isset($_SERVER['HTTPS']),
             'httponly'  => true,
-            'samesite'  => 'Strict',
+            'samesite'  => 'Lax',
         ]);
 
         session_start();
