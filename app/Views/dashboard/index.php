@@ -244,11 +244,11 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
             <button type="button" onclick="clearChatImage('mobile')" class="text-red-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="p-2 border-t border-gray-100 bg-gray-50 flex-shrink-0">
-            <form id="mobile-chat-form" class="flex gap-1.5" onsubmit="return sendMobileChat(event)" enctype="multipart/form-data">
+            <form id="mobile-chat-form" class="flex items-center gap-1" onsubmit="return sendMobileChat(event)" enctype="multipart/form-data">
                 <input type="file" id="mobile-chat-image-input" accept="image/*" capture="environment" class="hidden" onchange="previewChatImage(this, 'mobile')">
-                <button type="button" onclick="document.getElementById('mobile-chat-image-input').click()" class="px-2.5 py-2 text-gray-400 hover:text-primary rounded-xl"><i class="fa-solid fa-camera"></i></button>
-                <input type="text" id="mobile-chat-input" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm" placeholder="Üzenet..." autocomplete="off">
-                <button type="submit" class="px-3 py-2 bg-sidebar text-accent rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
+                <button type="button" onclick="document.getElementById('mobile-chat-image-input').click()" class="w-9 h-9 flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-primary rounded-full"><i class="fa-solid fa-camera text-sm"></i></button>
+                <input type="text" id="mobile-chat-input" class="flex-1 min-w-0 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm" placeholder="Üzenet..." autocomplete="off">
+                <button type="submit" class="w-9 h-9 flex-shrink-0 flex items-center justify-center bg-sidebar text-accent rounded-full"><i class="fa-solid fa-paper-plane text-sm"></i></button>
             </form>
         </div>
     </div>
