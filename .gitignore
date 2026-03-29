@@ -4,6 +4,7 @@
 # Környezeti beállítások (érzékeny adatok!)
 .env
 .deploy
+deploy.php
 
 # Adatmentések
 /storage/backups/
