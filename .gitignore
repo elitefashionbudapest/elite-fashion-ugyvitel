@@ -5,6 +5,7 @@
 .env
 .deploy
 deploy.php
+JELSZAVAK.txt
 
 # Adatmentések
 /storage/backups/
