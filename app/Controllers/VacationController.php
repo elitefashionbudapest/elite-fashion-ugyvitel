@@ -11,17 +11,14 @@ class VacationController
     {
         Middleware::tabPermission('szabadsag', 'view');
 
-        $storeId = Auth::isStore() ? Auth::storeId() : null;
+        // Szabadságok céges szintűek (max 1 fő) — mindenki az összeset látja
         $status = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : null;
         $employeeId = isset($_GET['employee_id']) && $_GET['employee_id'] !== '' ? (int)$_GET['employee_id'] : null;
 
-        $requests = VacationRequest::all($storeId, $status, $employeeId);
+        $requests = VacationRequest::all(null, $status, $employeeId);
 
-        // Dolgozók listája a szűrőhöz
-        if (Auth::isStore()) {
-            $employees = Employee::getByStore(Auth::storeId());
-        } else {
-            $employees = Employee::allActive();
+        // Dolgozók listája a szűrőhöz — mindenki az összeset látja
+        $employees = Employee::allActive();
         }
 
         view('layouts/app', [
