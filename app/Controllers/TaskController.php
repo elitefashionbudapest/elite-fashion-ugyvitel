@@ -66,9 +66,9 @@ class TaskController
 
             if ($cardDateFrom >= self::START_DATE) {
                 // Ünnepnapok az időszakban
-                $stmt = $db->prepare('SELECT holiday_date FROM holidays WHERE holiday_date BETWEEN :df AND :dt');
+                $stmt = $db->prepare('SELECT date FROM holidays WHERE date BETWEEN :df AND :dt');
                 $stmt->execute(['df' => $cardDateFrom, 'dt' => $cardDateTo]);
-                $holidays = array_column($stmt->fetchAll(), 'holiday_date');
+                $holidays = array_column($stmt->fetchAll(), 'date');
 
                 // Van-e legalább 1 nem ünnepnap az időszakban?
                 $hasWorkDay = false;
