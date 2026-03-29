@@ -1,5 +1,5 @@
-# Függőségek (composer install-lal visszaáll)
-/vendor/
+# Függőségek — benne hagyva mert a szerveren nincs composer
+# /vendor/
 
 # Környezeti beállítások (érzékeny adatok!)
 .env
