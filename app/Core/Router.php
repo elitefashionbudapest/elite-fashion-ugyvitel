@@ -22,6 +22,13 @@ class Router
     {
         // Alap URL path kinyerése (query string nélkül)
         $path = parse_url($uri, PHP_URL_PATH);
+
+        // Base path levágása (ha almappában fut, pl. /ugyvitel/public)
+        $basePath = getenv('APP_BASE_PATH') ?: '';
+        if ($basePath && str_starts_with($path, $basePath)) {
+            $path = substr($path, strlen($basePath));
+        }
+
         $path = rtrim($path, '/') ?: '/';
 
         $method = strtoupper($method);
