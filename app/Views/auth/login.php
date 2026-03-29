@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <?php $recaptchaSiteKey = getenv('RECAPTCHA_SITE_KEY'); ?>
+    <?php if ($recaptchaSiteKey): ?>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <?php endif; ?>
     <script>
         tailwind.config = {
             theme: {
@@ -39,7 +43,7 @@
 
             <?php if ($error = flash('error')): ?>
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
-                    <?= $error ?>
+                    <?= e($error) ?>
                 </div>
             <?php endif; ?>
 
@@ -96,6 +100,11 @@
                     >
                     <label for="remember" class="ml-2 text-sm text-gray-600">Emlékezz rám</label>
                 </div>
+
+                <!-- reCAPTCHA -->
+                <?php if ($recaptchaSiteKey): ?>
+                <div class="g-recaptcha" data-sitekey="<?= e($recaptchaSiteKey) ?>"></div>
+                <?php endif; ?>
 
                 <!-- Bejelentkezés gomb -->
                 <button
