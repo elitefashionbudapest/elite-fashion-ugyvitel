@@ -10,12 +10,12 @@ $allUsers = array_merge($ownerUsers, $storeUsers, $accountantUsers);
 <form method="POST" action="<?= base_url('/settings/permissions') ?>">
     <?= csrf_field() ?>
 
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+    <div class="flex flex-wrap flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div>
             <h1 class="text-3xl font-heading font-extrabold text-on-surface tracking-tight mb-1">Tab jogosultságok</h1>
-            <p class="text-on-surface-variant text-sm">Állítsd be melyik fiók mit láthat, rögzíthet és módosíthat.</p>
+            <p class="text-on-surface-variant text-xs sm:text-sm">Állítsd be melyik fiók mit láthat, rögzíthet és módosíthat.</p>
         </div>
-        <button type="submit" class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-sm">
+        <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center justify-center gap-2 shadow-lg shadow-primary/10 text-sm">
             <i class="fa-solid fa-check"></i> Mentés
         </button>
     </div>

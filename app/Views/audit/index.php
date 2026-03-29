@@ -1,10 +1,10 @@
 <?php $logs = $data['logs'] ?? []; ?>
 
 <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div class="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
         <h3 class="font-heading font-bold text-gray-900">Módosítási napló</h3>
         <form method="GET" class="flex gap-2 items-center">
-            <select name="table" class="px-3 py-1.5 border border-gray-300 rounded-xl text-sm focus:ring-primary/50" onchange="this.form.submit()">
+            <select name="table" class="px-3 py-1.5 border border-gray-300 rounded-xl text-xs sm:text-sm focus:ring-primary/50" onchange="this.form.submit()">
                 <option value="">Minden tábla</option>
                 <?php foreach (['users','stores','employees','financial_records','salary_payments','evaluations','vacation_requests','schedules','defect_items','tab_permissions'] as $t): ?>
                     <option value="<?= $t ?>" <?= ($data['tableName'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option>
@@ -17,12 +17,12 @@
             <thead>
                 <tr>
                     <th>Időpont</th>
-                    <th>Felhasználó</th>
+                    <th class="hide-mobile">Felhasználó</th>
                     <th>Művelet</th>
                     <th>Tábla</th>
-                    <th>Rekord ID</th>
-                    <th>IP cím</th>
-                    <th>Részletek</th>
+                    <th class="hide-mobile">ID</th>
+                    <th class="hide-mobile">IP</th>
+                    <th>Info</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,30 +31,30 @@
                 <?php else: ?>
                     <?php foreach ($logs as $log): ?>
                     <tr>
-                        <td class="whitespace-nowrap text-xs"><?= date('Y.m.d H:i:s', strtotime($log['created_at'])) ?></td>
-                        <td class="text-sm"><?= e($log['user_name'] ?? 'Rendszer') ?></td>
+                        <td class="whitespace-nowrap text-[10px] sm:text-xs"><?= date('m.d H:i', strtotime($log['created_at'])) ?></td>
+                        <td class="text-xs sm:text-sm hide-mobile"><?= e($log['user_name'] ?? 'Rendszer') ?></td>
                         <td>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold <?= match($log['action']) {
+                            <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold <?= match($log['action']) {
                                 'create' => 'bg-green-100 text-green-700',
                                 'update' => 'bg-blue-100 text-blue-700',
                                 'delete' => 'bg-red-100 text-red-700',
                                 default  => 'bg-gray-100 text-gray-600',
                             } ?>"><?= e($log['action']) ?></span>
                         </td>
-                        <td class="text-xs text-gray-500"><?= e($log['table_name']) ?></td>
-                        <td class="text-xs"><?= $log['record_id'] ?? '-' ?></td>
-                        <td class="text-xs text-gray-400"><?= e($log['ip_address'] ?? '-') ?></td>
+                        <td class="text-[10px] sm:text-xs text-gray-500"><?= e($log['table_name']) ?></td>
+                        <td class="text-xs hide-mobile"><?= $log['record_id'] ?? '-' ?></td>
+                        <td class="text-xs text-gray-400 hide-mobile"><?= e($log['ip_address'] ?? '-') ?></td>
                         <td class="text-xs">
                             <?php if ($log['old_values'] || $log['new_values']): ?>
-                                <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-blue-600 hover:text-blue-800 text-xs">Mutasd</button>
-                                <div class="hidden mt-2 p-2 bg-gray-50 rounded text-[10px] max-w-xs overflow-auto">
+                                <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-blue-600 hover:text-blue-800 text-[10px] sm:text-xs"><i class="fa-solid fa-eye"></i></button>
+                                <div class="hidden mt-2 p-2 bg-gray-50 rounded text-[10px] max-w-[200px] sm:max-w-xs overflow-auto">
                                     <?php if ($log['old_values']): ?>
                                         <p class="font-bold text-red-500">Régi:</p>
-                                        <pre class="whitespace-pre-wrap"><?= e($log['old_values']) ?></pre>
+                                        <pre class="whitespace-pre-wrap break-all"><?= e($log['old_values']) ?></pre>
                                     <?php endif; ?>
                                     <?php if ($log['new_values']): ?>
                                         <p class="font-bold text-green-500 mt-1">Új:</p>
-                                        <pre class="whitespace-pre-wrap"><?= e($log['new_values']) ?></pre>
+                                        <pre class="whitespace-pre-wrap break-all"><?= e($log['new_values']) ?></pre>
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
