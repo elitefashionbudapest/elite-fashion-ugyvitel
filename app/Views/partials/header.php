@@ -152,7 +152,7 @@ if ($isOwner) {
 
             <div class="h-5 w-px bg-gray-200"></div>
 
-            <!-- Profil -->
+            <!-- Profil + Kijelentkezés -->
             <div class="flex items-center gap-2">
                 <div class="h-8 w-8 rounded-full bg-sidebar text-accent flex items-center justify-center font-heading font-bold text-[10px]">
                     <?= e(mb_substr($currentUser['name'], 0, 2)) ?>
@@ -163,6 +163,12 @@ if ($isOwner) {
                         <?= $isOwner ? 'Tulajdonos' : (Auth::isAccountant() ? 'Könyvelő' : 'Bolt fiók') ?>
                     </p>
                 </div>
+                <form method="POST" action="<?= base_url('/logout') ?>" class="ml-1">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Kijelentkezés">
+                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
