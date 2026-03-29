@@ -49,7 +49,7 @@ if ($isOwner) {
 }
 ?>
 <header class="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] z-20 bg-surface/80 backdrop-blur-xl border-b border-gray-200/50">
-    <div class="flex items-center justify-between px-4 sm:px-6 py-2">
+    <div class="flex items-center justify-between px-2 sm:px-4 md:px-6 py-2">
         <!-- Left: Hamburger + Bolt név + Oldal címe -->
         <div class="flex items-center gap-3">
             <button onclick="toggleSidebar()" class="lg:hidden p-2.5 text-gray-600 hover:bg-gray-200/50 rounded-xl transition-colors">

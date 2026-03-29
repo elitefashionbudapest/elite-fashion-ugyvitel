@@ -67,7 +67,7 @@
             <?php include __DIR__ . '/../partials/header.php'; ?>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-y-auto p-4 sm:p-6 mt-16">
+            <main class="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 mt-16 overflow-x-hidden">
                 <!-- Flash messages -->
                 <?php include __DIR__ . '/../partials/flash.php'; ?>
 

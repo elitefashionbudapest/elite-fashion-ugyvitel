@@ -22,12 +22,12 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
     <div class="flex-1 min-w-0 flex flex-col gap-3 sm:gap-4">
 
         <!-- Banner -->
-        <div class="dash-fade flex-shrink-0 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b0f0e] via-[#1a1f1e] to-[#0b0f0e] px-6 py-5" style="animation-delay:0s">
+        <div class="dash-fade flex-shrink-0 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b0f0e] via-[#1a1f1e] to-[#0b0f0e] px-3 sm:px-6 py-3 sm:py-5" style="animation-delay:0s">
             <div class="absolute top-0 right-0 w-56 h-56 bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
             <div class="relative z-10 flex items-center justify-between">
                 <div>
                     <p class="text-accent/60 text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5"><?= date('Y. F j.') ?> · <?= ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'][date('w')] ?></p>
-                    <h1 class="text-white text-2xl font-heading font-extrabold tracking-tight"><?= $greeting ?>, <?= e($currentUser['name']) ?>!</h1>
+                    <h1 class="text-white text-lg sm:text-2xl font-heading font-extrabold tracking-tight"><?= $greeting ?>, <?= e($currentUser['name']) ?>!</h1>
                 </div>
                 <div class="hidden sm:flex gap-2">
                     <a href="<?= base_url('/finance/create') ?>" class="qa px-4 py-2.5 rounded-xl text-gray-300 hover:text-accent text-xs font-medium flex items-center gap-1.5"><i class="fa-solid fa-circle-plus"></i> Pénzmozgás</a>

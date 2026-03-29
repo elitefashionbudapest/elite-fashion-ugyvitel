@@ -10,25 +10,25 @@ $filters = $data['filters'] ?? [];
         <h1 class="text-3xl font-heading font-extrabold text-on-surface tracking-tight mb-1">Bank tranzakciók</h1>
         <p class="text-on-surface-variant text-sm">Kártyás beérkezések, szolgáltatói levonások, hitel törlesztések.</p>
     </div>
-    <div class="flex flex-wrap gap-2">
-        <a href="<?= base_url('/bank-transactions/card/create') ?>" class="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-sm">
-            <i class="fa-solid fa-credit-card"></i> Kártyás beérkezés
+    <div class="flex flex-wrap gap-1.5 sm:gap-2">
+        <a href="<?= base_url('/bank-transactions/card/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center gap-1.5 shadow-lg shadow-primary/10 text-xs sm:text-sm">
+            <i class="fa-solid fa-credit-card"></i> <span class="hidden sm:inline">Kártyás</span> <span class="sm:hidden">Kártya</span>
         </a>
-        <a href="<?= base_url('/bank-transactions/provider/create') ?>" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 hover:bg-surface-container transition-all text-sm border border-outline-variant">
-            <i class="fa-solid fa-building"></i> Szolgáltatói levonás
+        <a href="<?= base_url('/bank-transactions/provider/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
+            <i class="fa-solid fa-building"></i> Szolgáltató
         </a>
-        <a href="<?= base_url('/bank-transactions/loan/create') ?>" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 hover:bg-surface-container transition-all text-sm border border-outline-variant">
-            <i class="fa-solid fa-landmark"></i> Hitel törlesztés
+        <a href="<?= base_url('/bank-transactions/loan/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
+            <i class="fa-solid fa-landmark"></i> Törlesztés
         </a>
-        <a href="<?= base_url('/bank-transactions/transfer/create') ?>" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 hover:bg-surface-container transition-all text-sm border border-outline-variant">
+        <a href="<?= base_url('/bank-transactions/transfer/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
             <i class="fa-solid fa-arrow-right-arrow-left"></i> Átutalás
         </a>
     </div>
 </div>
 
 <!-- Szűrők -->
-<div class="bg-surface-container-lowest rounded-xl p-4 mb-6">
-    <form method="GET" action="<?= base_url('/bank-transactions') ?>" class="flex flex-wrap items-end gap-3">
+<div class="bg-surface-container-lowest rounded-xl p-2 sm:p-4 mb-4 sm:mb-6">
+    <form method="GET" action="<?= base_url('/bank-transactions') ?>" class="flex flex-wrap items-end gap-2 sm:gap-3">
         <div>
             <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Bank</label>
             <select name="bank_id" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
