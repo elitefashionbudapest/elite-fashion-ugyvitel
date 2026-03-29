@@ -3,11 +3,25 @@
 namespace App\Controllers;
 
 use App\Core\{Auth, Middleware, Database};
+use App\Models\TabPermission;
 
 class TaskController
 {
     // A rendszer indulási dátuma - ettől a naptól kezdődik a könyvelés
     private const START_DATE = '2026-03-28';
+
+    /**
+     * Van-e jogosultsága a felhasználónak egy adott tabhoz?
+     */
+    private function canSee(string $tabSlug): bool
+    {
+        // Tulajdonos jogosultság nélkül = mindent lát
+        if (Auth::isOwner() && !TabPermission::hasAnyPermissions(Auth::id())) {
+            return true;
+        }
+        $perm = TabPermission::getPermission(Auth::id(), $tabSlug);
+        return $perm && $perm['can_view'];
+    }
 
     /**
      * API: Napi feladatok ellenőrzése (mai + tegnapi hiányok)
@@ -33,21 +47,23 @@ class TaskController
             }
 
             // Módosított beosztások jóváhagyásra várnak
-            $modifiedSchedules = $db->query(
-                "SELECT sa.*, s.name as store_name FROM schedule_approvals sa
-                 JOIN stores s ON sa.store_id = s.id
-                 WHERE sa.status = 'modified' ORDER BY sa.modified_at DESC"
-            )->fetchAll();
-            foreach ($modifiedSchedules as $ms) {
-                $tasks[] = [
-                    'id'       => 'schedule_approve_' . $ms['store_id'] . '_' . $ms['year'] . '_' . $ms['month'],
-                    'text'     => 'Beosztás módosítás elfogadása — ' . $ms['store_name'] . ' (' . $ms['year'] . '. ' . $ms['month'] . '. hó)',
-                    'done'     => false,
-                    'overdue'  => true,
-                    'link'     => '/schedule',
-                    'icon'     => 'fa-calendar-check',
-                    'date'     => date('Y-m-d'),
-                ];
+            if ($this->canSee('beosztas')) {
+                $modifiedSchedules = $db->query(
+                    "SELECT sa.*, s.name as store_name FROM schedule_approvals sa
+                     JOIN stores s ON sa.store_id = s.id
+                     WHERE sa.status = 'modified' ORDER BY sa.modified_at DESC"
+                )->fetchAll();
+                foreach ($modifiedSchedules as $ms) {
+                    $tasks[] = [
+                        'id'       => 'schedule_approve_' . $ms['store_id'] . '_' . $ms['year'] . '_' . $ms['month'],
+                        'text'     => 'Beosztás módosítás elfogadása — ' . $ms['store_name'] . ' (' . $ms['year'] . '. ' . $ms['month'] . '. hó)',
+                        'done'     => false,
+                        'overdue'  => true,
+                        'link'     => '/schedule',
+                        'icon'     => 'fa-calendar-check',
+                        'date'     => date('Y-m-d'),
+                    ];
+                }
             }
 
             // Kártyás forgalom beérkezés emlékeztető
@@ -106,8 +122,8 @@ class TaskController
                 }
             }
 
-            // Bankszámlakivonat feltöltés emlékeztető (hónap 5. napjától az előző hónapra)
-            if ((int)date('j') >= 5) {
+            // Bankszámlakivonat feltöltés emlékeztető
+            if ($this->canSee('konyvelo_docs') && (int)date('j') >= 5) {
                 $prevYear = (int)date('Y', strtotime('-1 month'));
                 $prevMonth = (int)date('m', strtotime('-1 month'));
                 $allBanks = $db->query('SELECT id, name FROM banks WHERE is_active = 1 AND is_loan = 0 ORDER BY name')->fetchAll();
@@ -160,87 +176,91 @@ class TaskController
         $dayLabel = $label === 'Ma' ? 'Mai' : 'Tegnapi';
         $isOverdue = $label === 'Tegnap';
 
-        // Napi készpénz forgalom
-        $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'napi_keszpenz'");
-        $stmt->execute(['s' => $storeId, 'd' => $date]);
-        $hasKeszpenz = (int)$stmt->fetchColumn() > 0;
-
-        $tasks[] = [
-            'id'       => "keszpenz_{$storeId}_{$date}",
-            'text'     => "{$dayLabel} készpénz forgalom — {$storeName}",
-            'done'     => $hasKeszpenz,
-            'overdue'  => $isOverdue && !$hasKeszpenz,
-            'link'     => '/finance/create',
-            'icon'     => 'fa-money-bill',
-            'date'     => $date,
-        ];
-
-        // Napi bankkártya forgalom
-        $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'napi_bankkartya'");
-        $stmt->execute(['s' => $storeId, 'd' => $date]);
-        $hasBankkartya = (int)$stmt->fetchColumn() > 0;
-
-        $tasks[] = [
-            'id'       => "bankkartya_{$storeId}_{$date}",
-            'text'     => "{$dayLabel} bankkártya forgalom — {$storeName}",
-            'done'     => $hasBankkartya,
-            'overdue'  => $isOverdue && !$hasBankkartya,
-            'link'     => '/finance/create',
-            'icon'     => 'fa-credit-card',
-            'date'     => $date,
-        ];
-
-        // Kassza nyitó (csak mai napra)
-        if ($label === 'Ma') {
-            $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'kassza_nyito'");
+        // Könyvelés feladatok (csak ha van jogosultsága)
+        if ($this->canSee('konyveles')) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'napi_keszpenz'");
             $stmt->execute(['s' => $storeId, 'd' => $date]);
-            $hasKassza = (int)$stmt->fetchColumn() > 0;
+            $hasKeszpenz = (int)$stmt->fetchColumn() > 0;
 
             $tasks[] = [
-                'id'       => "kassza_{$storeId}_{$date}",
-                'text'     => "Mai kassza nyitó — {$storeName}",
-                'done'     => $hasKassza,
-                'overdue'  => false,
+                'id'       => "keszpenz_{$storeId}_{$date}",
+                'text'     => "{$dayLabel} készpénz forgalom — {$storeName}",
+                'done'     => $hasKeszpenz,
+                'overdue'  => $isOverdue && !$hasKeszpenz,
                 'link'     => '/finance/create',
-                'icon'     => 'fa-cash-register',
+                'icon'     => 'fa-money-bill',
+                'date'     => $date,
+            ];
+
+            $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'napi_bankkartya'");
+            $stmt->execute(['s' => $storeId, 'd' => $date]);
+            $hasBankkartya = (int)$stmt->fetchColumn() > 0;
+
+            $tasks[] = [
+                'id'       => "bankkartya_{$storeId}_{$date}",
+                'text'     => "{$dayLabel} bankkártya forgalom — {$storeName}",
+                'done'     => $hasBankkartya,
+                'overdue'  => $isOverdue && !$hasBankkartya,
+                'link'     => '/finance/create',
+                'icon'     => 'fa-credit-card',
+                'date'     => $date,
+            ];
+
+            if ($label === 'Ma') {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'kassza_nyito'");
+                $stmt->execute(['s' => $storeId, 'd' => $date]);
+                $hasKassza = (int)$stmt->fetchColumn() > 0;
+
+                $tasks[] = [
+                    'id'       => "kassza_{$storeId}_{$date}",
+                    'text'     => "Mai kassza nyitó — {$storeName}",
+                    'done'     => $hasKassza,
+                    'overdue'  => false,
+                    'link'     => '/finance/create',
+                    'icon'     => 'fa-cash-register',
+                    'date'     => $date,
+                ];
+            }
+        }
+
+        // Értékelés feladat
+        if ($this->canSee('ertekeles')) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM evaluations WHERE store_id = :s AND record_date = :d");
+            $stmt->execute(['s' => $storeId, 'd' => $date]);
+            $hasEval = (int)$stmt->fetchColumn() > 0;
+
+            $tasks[] = [
+                'id'       => "ertekeles_{$storeId}_{$date}",
+                'text'     => "{$dayLabel} értékelés — {$storeName}",
+                'done'     => $hasEval,
+                'overdue'  => $isOverdue && !$hasEval,
+                'link'     => '/evaluations/create',
+                'icon'     => 'fa-star',
                 'date'     => $date,
             ];
         }
 
-        // Értékelés
-        $stmt = $db->prepare("SELECT COUNT(*) FROM evaluations WHERE store_id = :s AND record_date = :d");
-        $stmt->execute(['s' => $storeId, 'd' => $date]);
-        $hasEval = (int)$stmt->fetchColumn() > 0;
-
-        $tasks[] = [
-            'id'       => "ertekeles_{$storeId}_{$date}",
-            'text'     => "{$dayLabel} értékelés — {$storeName}",
-            'done'     => $hasEval,
-            'overdue'  => $isOverdue && !$hasEval,
-            'link'     => '/evaluations/create',
-            'icon'     => 'fa-star',
-            'date'     => $date,
-        ];
-
-        // Selejt napi érték (csak ha volt selejt aznap)
-        $stmt = $db->prepare("SELECT COUNT(*) FROM defect_items WHERE store_id = :s AND DATE(scanned_at) = :d");
-        $stmt->execute(['s' => $storeId, 'd' => $date]);
-        $hasDefects = (int)$stmt->fetchColumn() > 0;
-
-        if ($hasDefects) {
-            $stmt = $db->prepare("SELECT COUNT(*) FROM defect_daily_values WHERE store_id = :s AND value_date = :d");
+        // Selejt napi érték
+        if ($this->canSee('selejt')) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM defect_items WHERE store_id = :s AND DATE(scanned_at) = :d");
             $stmt->execute(['s' => $storeId, 'd' => $date]);
-            $hasDailyValue = (int)$stmt->fetchColumn() > 0;
+            $hasDefects = (int)$stmt->fetchColumn() > 0;
 
-            $tasks[] = [
-                'id'       => "selejt_ertek_{$storeId}_{$date}",
-                'text'     => "{$dayLabel} selejt összérték — {$storeName}",
-                'done'     => $hasDailyValue,
-                'overdue'  => $isOverdue && !$hasDailyValue,
-                'link'     => '/defects',
-                'icon'     => 'fa-coins',
-                'date'     => $date,
-            ];
+            if ($hasDefects) {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM defect_daily_values WHERE store_id = :s AND value_date = :d");
+                $stmt->execute(['s' => $storeId, 'd' => $date]);
+                $hasDailyValue = (int)$stmt->fetchColumn() > 0;
+
+                $tasks[] = [
+                    'id'       => "selejt_ertek_{$storeId}_{$date}",
+                    'text'     => "{$dayLabel} selejt összérték — {$storeName}",
+                    'done'     => $hasDailyValue,
+                    'overdue'  => $isOverdue && !$hasDailyValue,
+                    'link'     => '/defects',
+                    'icon'     => 'fa-coins',
+                    'date'     => $date,
+                ];
+            }
         }
 
         return $tasks;
