@@ -4,7 +4,7 @@ $bankAccounts = array_values(array_filter($allBanks, fn($b) => !$b['is_loan']));
 $loans = array_values(array_filter($allBanks, fn($b) => $b['is_loan']));
 ?>
 
-<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+<div class="flex flex-wrap flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
     <div>
         <h1 class="text-3xl font-heading font-extrabold text-on-surface tracking-tight mb-1">Bankszámlák és hitelek</h1>
         <p class="text-on-surface-variant text-sm">Egyenleg követés, bankszámlák és hitelek kezelése.</p>

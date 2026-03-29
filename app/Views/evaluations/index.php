@@ -83,7 +83,7 @@ $filters         = $data['filters'] ?? [];
 
 <!-- Ertekelesek tabla -->
 <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-    <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+    <div class="px-6 py-4 flex flex-wrap items-center justify-between border-b border-gray-100">
         <h3 class="font-heading font-bold text-gray-900">Ertekelesek</h3>
         <a href="<?= base_url('/evaluations/create') ?>" class="bg-sidebar text-primary px-4 py-2 rounded-full text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-1">
             <i class="fa-solid fa-plus text-base"></i> Uj ertekeles

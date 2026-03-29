@@ -25,7 +25,7 @@ $allUsers = array_merge($ownerUsers, $storeUsers, $accountantUsers);
     <?php else: ?>
         <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
+                <table class="w-full text-sm border-collapse min-w-[800px]">
                     <thead>
                         <tr class="bg-surface-container-low">
                             <th class="px-5 py-4 text-left text-xs font-bold text-on-surface-variant uppercase tracking-widest">Tab</th>
@@ -47,9 +47,9 @@ $allUsers = array_merge($ownerUsers, $storeUsers, $accountantUsers);
                         <tr class="bg-surface-container-low/50 border-b border-surface-container">
                             <th></th>
                             <?php foreach ($allUsers as $u): ?>
-                            <th class="px-1 py-1 text-center text-[10px] text-gray-400 border-l border-surface-container">Lát</th>
-                            <th class="px-1 py-1 text-center text-[10px] text-emerald-500">Rögz.</th>
-                            <th class="px-1 py-1 text-center text-[10px] text-amber-500">Mód.</th>
+                            <th class="px-0.5 py-1 text-center text-[10px] text-gray-400 border-l border-surface-container">Lát</th>
+                            <th class="px-0.5 py-1 text-center text-[10px] text-emerald-500">Rögz.</th>
+                            <th class="px-0.5 py-1 text-center text-[10px] text-amber-500">Mód.</th>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
@@ -67,19 +67,19 @@ $allUsers = array_merge($ownerUsers, $storeUsers, $accountantUsers);
                                 $hasCreate = ($userPerms[$slug]['can_create'] ?? 0) == 1;
                                 $hasEdit   = ($userPerms[$slug]['can_edit'] ?? 0) == 1;
                             ?>
-                            <td class="px-1 py-3 text-center border-l border-surface-container">
+                            <td class="px-0.5 py-2 text-center border-l border-surface-container">
                                 <input type="checkbox"
                                        name="perms[<?= $u['id'] ?>][<?= $slug ?>][view]"
                                        value="1" <?= $hasView ? 'checked' : '' ?>
                                        class="h-4 w-4 text-primary border-outline-variant rounded focus:ring-primary-container">
                             </td>
-                            <td class="px-1 py-3 text-center">
+                            <td class="px-0.5 py-2 text-center">
                                 <input type="checkbox"
                                        name="perms[<?= $u['id'] ?>][<?= $slug ?>][create]"
                                        value="1" <?= $hasCreate ? 'checked' : '' ?>
                                        class="h-4 w-4 text-emerald-600 border-outline-variant rounded focus:ring-emerald-200">
                             </td>
-                            <td class="px-1 py-3 text-center">
+                            <td class="px-0.5 py-2 text-center">
                                 <input type="checkbox"
                                        name="perms[<?= $u['id'] ?>][<?= $slug ?>][edit]"
                                        value="1" <?= $hasEdit ? 'checked' : '' ?>

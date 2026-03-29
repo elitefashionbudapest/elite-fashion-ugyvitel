@@ -81,12 +81,12 @@ foreach ($invoices as $inv) {
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Beszállító</th>
                     <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Számlaszám</th>
                     <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Bolt</th>
+                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Bolt</th>
                     <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dátum</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Határidő</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Fiz. mód</th>
+                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Határidő</th>
+                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Fiz. mód</th>
                     <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Státusz</th>
-                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Kép</th>
+                    <th class="px-4 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Kép</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műveletek</th>
                 </tr>
             </thead>
@@ -114,13 +114,13 @@ foreach ($invoices as $inv) {
                                 ? number_format($inv['amount'], 2, ',', ' ') . ' €'
                                 : format_money($inv['amount']) ?>
                         </td>
-                        <td class="px-4 py-4 text-sm text-on-surface-variant"><?= e($inv['store_name']) ?></td>
+                        <td class="px-4 py-4 text-sm text-on-surface-variant hide-mobile"><?= e($inv['store_name']) ?></td>
                         <td class="px-4 py-4 text-sm text-on-surface-variant whitespace-nowrap"><?= date('Y.m.d', strtotime($inv['invoice_date'])) ?></td>
-                        <td class="px-4 py-4 text-sm whitespace-nowrap <?= $isOverdue ? 'text-red-600 font-bold' : 'text-on-surface-variant' ?>">
+                        <td class="px-4 py-4 text-sm whitespace-nowrap hide-mobile <?= $isOverdue ? 'text-red-600 font-bold' : 'text-on-surface-variant' ?>">
                             <?= $inv['due_date'] ? date('Y.m.d', strtotime($inv['due_date'])) : '—' ?>
                             <?php if ($isOverdue): ?><i class="fa-solid fa-triangle-exclamation text-[10px] ml-1"></i><?php endif; ?>
                         </td>
-                        <td class="px-4 py-4">
+                        <td class="px-4 py-4 hide-mobile">
                             <span class="px-2.5 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(Invoice::PAYMENT_METHODS[$inv['payment_method']] ?? $inv['payment_method']) ?></span>
                         </td>
                         <td class="px-4 py-4">
@@ -137,7 +137,7 @@ foreach ($invoices as $inv) {
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td class="px-4 py-4">
+                        <td class="px-4 py-4 hide-mobile">
                             <?php if (!empty($inv['image_path'])): ?>
                                 <a href="<?= base_url($inv['image_path']) ?>" target="_blank" class="text-blue-500 hover:text-blue-700" title="Számla megtekintése">
                                     <i class="fa-solid fa-file-image"></i>

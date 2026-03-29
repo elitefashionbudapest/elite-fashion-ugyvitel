@@ -241,7 +241,7 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
         <i class="fa-solid fa-receipt text-purple-500"></i>
         ÁFA kalkuláció — <?= e($data['prevMonthName'] ?? '') ?>
     </h3>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-gray-50 rounded-xl p-4">
             <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Bruttó forgalom</p>
             <p class="text-lg font-heading font-bold"><?= format_money($data['prevRevenueBrutto'] ?? 0) ?></p>

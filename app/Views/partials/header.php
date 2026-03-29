@@ -52,7 +52,7 @@ if ($isOwner) {
     <div class="flex items-center justify-between px-4 sm:px-6 py-2">
         <!-- Left: Hamburger + Bolt név + Oldal címe -->
         <div class="flex items-center gap-3">
-            <button onclick="toggleSidebar()" class="lg:hidden p-2 text-gray-600 hover:bg-gray-200/50 rounded-xl transition-colors">
+            <button onclick="toggleSidebar()" class="lg:hidden p-2.5 text-gray-600 hover:bg-gray-200/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-bars"></i>
             </button>
 
@@ -64,7 +64,7 @@ if ($isOwner) {
             <div class="h-5 w-px bg-gray-300 hidden sm:block"></div>
             <?php endif; ?>
 
-            <h2 class="font-heading font-bold text-base text-gray-900"><?= e($data['pageTitle'] ?? '') ?></h2>
+            <h2 class="font-heading font-bold text-sm sm:text-base text-gray-900 truncate max-w-[120px] sm:max-w-none"><?= e($data['pageTitle'] ?? '') ?></h2>
         </div>
 
         <!-- Center: Statisztikák -->
@@ -133,7 +133,7 @@ if ($isOwner) {
                     <span id="task-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-surface">0</span>
                 </button>
 
-                <div id="task-dropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                <div id="task-dropdown" class="hidden absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
                     <div class="px-4 py-3 bg-sidebar text-white flex items-center justify-between">
                         <span class="font-heading font-bold text-xs">Napi feladatok</span>
                         <span id="task-count-label" class="text-[9px] text-accent font-bold uppercase tracking-wider"></span>

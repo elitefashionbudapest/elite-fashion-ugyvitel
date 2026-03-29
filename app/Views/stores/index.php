@@ -1,4 +1,4 @@
-<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div class="flex flex-wrap flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
     <div>
         <h1 class="text-3xl font-heading font-extrabold text-on-surface tracking-tight mb-1">Boltok</h1>
         <p class="text-on-surface-variant text-sm">Az Elite Fashion üzletek kezelése.</p>

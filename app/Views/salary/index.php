@@ -81,7 +81,7 @@ $months = [
                 <tr class="bg-surface-container-low">
                     <th class="px-8 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dolgozó</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Időszak</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Honnan fizetve</th>
+                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Honnan fizetve</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
                     <th class="px-8 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műveletek</th>
                 </tr>
@@ -104,7 +104,7 @@ $months = [
                             </div>
                         </td>
                         <td class="px-6 py-5 text-sm font-medium text-on-surface"><?= (int)$r['year'] ?>. <?= e($months[(int)$r['month']] ?? $r['month']) ?></td>
-                        <td class="px-6 py-5">
+                        <td class="px-6 py-5 hide-mobile">
                             <span class="px-3 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(SalaryPayment::SOURCES[$r['source']] ?? $r['source']) ?></span>
                         </td>
                         <td class="px-6 py-5 text-right font-bold text-on-surface whitespace-nowrap"><?= format_money($r['amount']) ?></td>
@@ -168,7 +168,7 @@ $months = [
                 <tr class="bg-surface-container-low">
                     <th class="px-8 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Tulajdonos</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Időszak</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Honnan fizetve</th>
+                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Honnan fizetve</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
                     <th class="px-8 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műveletek</th>
                 </tr>
@@ -194,7 +194,7 @@ $months = [
                             </div>
                         </td>
                         <td class="px-6 py-5 text-sm font-medium text-on-surface"><?= (int)$r['year'] ?>. <?= e($months[(int)$r['month']] ?? $r['month']) ?></td>
-                        <td class="px-6 py-5">
+                        <td class="px-6 py-5 hide-mobile">
                             <span class="px-3 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(OwnerPayment::SOURCES[$r['payment_source']] ?? $r['payment_source']) ?></span>
                         </td>
                         <td class="px-6 py-5 text-right font-bold text-on-surface whitespace-nowrap"><?= format_money($r['amount']) ?></td>

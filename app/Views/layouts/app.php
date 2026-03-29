@@ -56,7 +56,7 @@
     <link rel="stylesheet" href="<?= base_url('/assets/css/app.css') ?>">
     <meta name="csrf-token" content="<?= e(App\Core\Session::csrfToken()) ?>">
 </head>
-<body class="bg-surface text-gray-900 font-body min-h-screen overflow-hidden">
+<body class="bg-surface text-gray-900 font-body min-h-screen overflow-x-hidden">
     <div class="flex h-screen">
         <!-- Sidebar -->
         <?php include __DIR__ . '/../partials/sidebar.php'; ?>

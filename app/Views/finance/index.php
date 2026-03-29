@@ -49,11 +49,11 @@ $filters = $data['filters'] ?? [];
             <thead>
                 <tr class="bg-surface-container-low">
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dátum</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Bolt</th>
+                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Bolt</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Típus</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Összeg</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Megjegyzés</th>
-                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Rögzítette</th>
+                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Megjegyzés</th>
+                    <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest hide-mobile">Rögzítette</th>
                     <th class="px-6 py-5 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Műveletek</th>
                 </tr>
             </thead>
@@ -67,15 +67,15 @@ $filters = $data['filters'] ?? [];
                     <?php foreach ($records as $r): ?>
                     <tr class="hover:bg-surface-container-low/50 transition-colors">
                         <td class="px-6 py-5 text-sm font-medium text-on-surface whitespace-nowrap"><?= date('Y.m.d', strtotime($r['record_date'])) ?></td>
-                        <td class="px-6 py-5 text-sm text-on-surface-variant"><?= e($r['store_name']) ?></td>
+                        <td class="px-6 py-5 text-sm text-on-surface-variant hide-mobile"><?= e($r['store_name']) ?></td>
                         <td class="px-6 py-5">
                             <span class="px-3 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(FinancialRecord::PURPOSES[$r['purpose']] ?? $r['purpose']) ?></span>
                         </td>
                         <td class="px-6 py-5 text-right font-bold text-on-surface whitespace-nowrap"><?= format_money($r['amount']) ?></td>
-                        <td class="px-6 py-5 text-sm text-on-surface-variant max-w-[200px] truncate">
+                        <td class="px-6 py-5 text-sm text-on-surface-variant max-w-[200px] truncate hide-mobile">
                             <?= e($r['paid_to_name'] ? "→ {$r['paid_to_name']}" : ($r['description'] ?? '')) ?>
                         </td>
-                        <td class="px-6 py-5 text-sm text-on-surface-variant"><?= e($r['recorded_by_name']) ?></td>
+                        <td class="px-6 py-5 text-sm text-on-surface-variant hide-mobile"><?= e($r['recorded_by_name']) ?></td>
                         <td class="px-6 py-5 text-right">
                             <div class="flex items-center justify-end gap-1">
                                 <a href="<?= base_url("/finance/{$r['id']}/edit") ?>" class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant">

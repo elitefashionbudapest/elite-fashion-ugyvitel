@@ -3,7 +3,7 @@ use App\Core\Auth;
 $employees = $data['employees'] ?? [];
 ?>
 <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-    <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+    <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
         <h3 class="font-heading font-bold text-gray-900">Szabadság kérvényező</h3>
         <a href="<?= base_url('/vacation/create') ?>" class="bg-sidebar text-primary px-4 py-2 rounded-full text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-1">
             <i class="fa-solid fa-plus text-base"></i> Új kérvény
@@ -35,6 +35,7 @@ $employees = $data['employees'] ?? [];
         </form>
     </div>
 
+    <div class="overflow-x-auto">
     <table class="data-table">
         <thead>
             <tr>
@@ -42,7 +43,7 @@ $employees = $data['employees'] ?? [];
                 <th>Mettől</th>
                 <th>Meddig</th>
                 <th>Státusz</th>
-                <th>Elbírálta</th>
+                <th class="hide-mobile">Elbírálta</th>
                 <th class="text-right">Műveletek</th>
             </tr>
         </thead>
@@ -64,7 +65,7 @@ $employees = $data['employees'] ?? [];
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Elutasítva</span>
                         <?php endif; ?>
                     </td>
-                    <td class="text-sm text-gray-500"><?= e($req['approved_by_name'] ?? '-') ?></td>
+                    <td class="text-sm text-gray-500 hide-mobile"><?= e($req['approved_by_name'] ?? '-') ?></td>
                     <td class="text-right">
                         <?php if (Auth::isOwner() && $req['status'] === 'pending'): ?>
                             <form method="POST" action="<?= base_url("/vacation/{$req['id']}/approve") ?>" class="inline">
@@ -86,4 +87,5 @@ $employees = $data['employees'] ?? [];
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>

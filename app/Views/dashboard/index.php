@@ -17,9 +17,9 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
 .qa:hover { background:rgba(217,255,84,0.1); border-color:rgba(217,255,84,0.25); }
 </style>
 
-<div class="flex gap-5 h-[calc(100vh-6.5rem)]">
+<div class="flex gap-5 lg:h-[calc(100vh-6.5rem)]">
     <!-- BAL -->
-    <div class="flex-1 min-w-0 flex flex-col gap-4">
+    <div class="flex-1 min-w-0 flex flex-col gap-3 sm:gap-4">
 
         <!-- Banner -->
         <div class="dash-fade flex-shrink-0 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b0f0e] via-[#1a1f1e] to-[#0b0f0e] px-6 py-5" style="animation-delay:0s">
@@ -29,7 +29,7 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
                     <p class="text-accent/60 text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5"><?= date('Y. F j.') ?> · <?= ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'][date('w')] ?></p>
                     <h1 class="text-white text-2xl font-heading font-extrabold tracking-tight"><?= $greeting ?>, <?= e($currentUser['name']) ?>!</h1>
                 </div>
-                <div class="flex gap-2">
+                <div class="hidden sm:flex gap-2">
                     <a href="<?= base_url('/finance/create') ?>" class="qa px-4 py-2.5 rounded-xl text-gray-300 hover:text-accent text-xs font-medium flex items-center gap-1.5"><i class="fa-solid fa-circle-plus"></i> Pénzmozgás</a>
                     <a href="<?= base_url('/evaluations/create') ?>" class="qa px-4 py-2.5 rounded-xl text-gray-300 hover:text-accent text-xs font-medium flex items-center gap-1.5"><i class="fa-solid fa-star"></i> Értékelés</a>
                     <a href="<?= base_url('/schedule') ?>" class="qa px-4 py-2.5 rounded-xl text-gray-300 hover:text-accent text-xs font-medium flex items-center gap-1.5"><i class="fa-solid fa-calendar-days"></i> Beosztás</a>
@@ -39,7 +39,7 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
 
         <?php if ($isOwner): ?>
         <!-- Kassza + Forgalom + Értékelések EGY sorban, egyforma magas -->
-        <div class="grid grid-cols-3 gap-4 flex-shrink-0 dash-fade" style="animation-delay:0.1s">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 flex-shrink-0 dash-fade" style="animation-delay:0.1s">
             <?php if (!empty($data['kasszaByStore'])): ?>
             <div class="dash-card p-5 flex flex-col justify-between">
                 <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3"><i class="fa-solid fa-vault text-amber-500 mr-1"></i>Kassza egyenleg</p>
@@ -174,7 +174,7 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
                 <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest"><?= $isOwner ? 'Elmaradt feladatok' : 'Napi feladatok' ?></p>
                 <span id="daily-tasks-count" class="text-xs font-bold"></span>
             </div>
-            <div id="daily-tasks-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2" data-owner="<?= $isOwner ? '1' : '0' ?>">
+            <div id="daily-tasks-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2" data-owner="<?= $isOwner ? '1' : '0' ?>">
                 <div class="text-xs text-gray-400 text-center py-2 col-span-full">Betöltés...</div>
             </div>
         </div>

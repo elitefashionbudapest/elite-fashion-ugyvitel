@@ -61,6 +61,7 @@ $filters = $data['filters'] ?? [];
 
 <!-- Táblázat -->
 <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="data-table">
         <thead>
             <tr>
@@ -68,10 +69,10 @@ $filters = $data['filters'] ?? [];
                 <th>Típus</th>
                 <th>Bank</th>
                 <th>Részletek</th>
-                <th class="text-right">Bruttó</th>
+                <th class="text-right hide-mobile">Bruttó</th>
                 <th class="text-right">Nettó (beérkezett)</th>
-                <th class="text-right">Jutalék/Levonás</th>
-                <th>Számla</th>
+                <th class="text-right hide-mobile">Jutalék/Levonás</th>
+                <th class="hide-mobile">Számla</th>
                 <th class="text-right">Műveletek</th>
             </tr>
         </thead>
@@ -121,7 +122,7 @@ $filters = $data['filters'] ?? [];
                             <span class="font-medium"><?= e($tx['provider_name']) ?></span>
                         <?php endif; ?>
                     </td>
-                    <td class="text-right text-sm">
+                    <td class="text-right text-sm hide-mobile">
                         <?php if ($tx['type'] === 'kartya_beerkezes'): ?>
                             <?= format_money($tx['gross_amount'] ?? 0) ?>
                         <?php else: ?>
@@ -131,14 +132,14 @@ $filters = $data['filters'] ?? [];
                     <td class="text-right font-medium <?= $tx['type'] === 'kartya_beerkezes' ? 'text-emerald-600' : 'text-red-600' ?>">
                         <?= $tx['type'] === 'kartya_beerkezes' ? '+' : '-' ?><?= format_money($tx['amount']) ?>
                     </td>
-                    <td class="text-right text-sm text-red-500">
+                    <td class="text-right text-sm text-red-500 hide-mobile">
                         <?php if ($tx['type'] === 'kartya_beerkezes'): ?>
                             <?= format_money($tx['commission'] ?? 0) ?>
                         <?php else: ?>
                             —
                         <?php endif; ?>
                     </td>
-                    <td class="text-sm">
+                    <td class="text-sm hide-mobile">
                         <?php if ($tx['type'] === 'szolgaltato_levon'): ?>
                             <?php if ($tx['invoice_id']): ?>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
@@ -174,4 +175,5 @@ $filters = $data['filters'] ?? [];
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>

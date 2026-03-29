@@ -39,7 +39,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Törlesztés dátuma</label>
                     <input type="date" name="transaction_date" value="<?= e(old('transaction_date', date('Y-m-d'))) ?>" class="<?= $inputCls ?>" required>

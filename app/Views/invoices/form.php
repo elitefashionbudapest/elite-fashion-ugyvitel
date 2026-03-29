@@ -44,7 +44,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                         </div>
 
                         <!-- Nettó + Bruttó + Pénznem -->
-                        <div class="grid grid-cols-3 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Nettó összeg</label>
                                 <input type="number" name="net_amount" id="net_amount" step="1" min="0" value="<?= e(old('net_amount')) ?>" class="<?= $inputCls ?>" placeholder="0" oninput="calcBrutto()">

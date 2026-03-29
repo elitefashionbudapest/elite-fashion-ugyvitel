@@ -49,7 +49,7 @@ $purposeGroups = [
                 <!-- BAL: Típus választó (3 oszlop széles) -->
                 <div class="md:col-span-3">
                     <!-- Bolt + Dátum egy sorban -->
-                    <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                         <?php if (Auth::isOwner()): ?>
                         <div>
                             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Üzlet</label>
