@@ -55,7 +55,8 @@ $activeTab = $data['activeTab'] ?? '';
             </a>
         <?php endforeach; ?>
 
-        <?php if ($isOwner): ?>
+        <?php $isSuperAdmin = $isOwner && !TabPermission::hasAnyPermissions($currentUser['id']); ?>
+        <?php if ($isSuperAdmin): ?>
             <div class="border-t border-white/10 mt-3 pt-3">
                 <p class="px-3 text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Kezelés</p>
 

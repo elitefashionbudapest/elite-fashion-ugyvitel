@@ -66,7 +66,8 @@ class TaskController
                 }
             }
 
-            // Kártyás forgalom beérkezés emlékeztető
+            // Kártyás forgalom beérkezés emlékeztető (csak super admin-nak)
+            if (!TabPermission::hasAnyPermissions(Auth::id())) {
             // Hétfőn: péntek-vasárnap, más napon: tegnap
             // Ünnepnapokon nincs kártyás forgalom → kihagyjuk
             $dayOfWeek = (int)date('N'); // 1=hétfő, 7=vasárnap
@@ -122,8 +123,10 @@ class TaskController
                 }
             }
 
-            // Bankszámlakivonat feltöltés emlékeztető
-            if ($this->canSee('konyvelo_docs') && (int)date('j') >= 5) {
+            } // super admin kártyás blokk vége
+
+            // Bankszámlakivonat feltöltés emlékeztető (csak super admin)
+            if (!TabPermission::hasAnyPermissions(Auth::id()) && $this->canSee('konyvelo_docs') && (int)date('j') >= 5) {
                 $prevYear = (int)date('Y', strtotime('-1 month'));
                 $prevMonth = (int)date('m', strtotime('-1 month'));
                 $allBanks = $db->query('SELECT id, name FROM banks WHERE is_active = 1 AND is_loan = 0 ORDER BY name')->fetchAll();
