@@ -105,8 +105,15 @@ $activeTab = $data['activeTab'] ?? '';
                 <a href="<?= base_url('/settings/permissions') ?>"
                    class="flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors duration-200
                           <?= ($activeTab === 'settings') ? 'bg-white/10 text-accent' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200' ?>">
+                    <i class="fa-solid fa-user-shield text-sm w-4 text-center"></i>
+                    Jogosultságok
+                </a>
+
+                <a href="<?= base_url('/settings/company') ?>"
+                   class="flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors duration-200
+                          <?= ($activeTab === 'settings') ? 'bg-white/10 text-accent' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200' ?>">
                     <i class="fa-solid fa-gear text-sm w-4 text-center"></i>
-                    Beállítások
+                    Cégbeállítások
                 </a>
 
                 <a href="<?= base_url('/backup') ?>"

@@ -124,6 +124,11 @@ foreach ($invoices as $inv) {
                             <span class="px-2.5 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(Invoice::PAYMENT_METHODS[$inv['payment_method']] ?? $inv['payment_method']) ?></span>
                         </td>
                         <td class="px-4 py-4">
+                            <?php if (!empty($inv['needs_review'])): ?>
+                                <div class="text-amber-600 font-semibold text-xs mb-1">
+                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Ellenőrizd!
+                                </div>
+                            <?php endif; ?>
                             <?php if ($inv['is_paid']): ?>
                                 <div class="text-emerald-600 font-semibold text-xs">
                                     <i class="fa-solid fa-circle-check text-[10px]"></i> Fizetve

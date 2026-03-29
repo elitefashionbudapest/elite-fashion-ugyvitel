@@ -125,6 +125,8 @@ $router->post('/employees/{id}/delete', [App\Controllers\EmployeeController::cla
 // Beállítások (tab jogosultságok)
 $router->get('/settings/permissions', [App\Controllers\SettingsController::class, 'permissions']);
 $router->post('/settings/permissions', [App\Controllers\SettingsController::class, 'savePermissions']);
+$router->get('/settings/company', [App\Controllers\CompanySettingsController::class, 'index']);
+$router->post('/settings/company', [App\Controllers\CompanySettingsController::class, 'save']);
 
 // Könyvelés
 $router->get('/finance', [App\Controllers\FinanceController::class, 'index']);
