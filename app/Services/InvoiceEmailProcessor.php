@@ -16,6 +16,7 @@ class InvoiceEmailProcessor
     private string $companyName;
     private array $companyNameVariants;
     private string $companyTaxNumber;
+    private string $companyEuVat;
 
     private array $log = [];
 
@@ -29,6 +30,7 @@ class InvoiceEmailProcessor
         $this->apiKey = CompanySetting::get('anthropic_api_key', '');
         $this->companyName = CompanySetting::get('company_name', '');
         $this->companyTaxNumber = CompanySetting::get('company_tax_number', '');
+        $this->companyEuVat = CompanySetting::get('company_eu_vat', '');
 
         $variants = CompanySetting::get('company_name_variants', '');
         $this->companyNameVariants = array_filter(array_map('trim', explode(',', $variants)));
@@ -301,7 +303,12 @@ class InvoiceEmailProcessor
         $buyerTax = $result['buyer_tax_number'] ?? '';
 
         // Adószám egyezés
-        if ($this->companyTaxNumber && $buyerTax && str_contains($buyerTax, str_replace('-', '', $this->companyTaxNumber))) {
+        if ($this->companyTaxNumber && $buyerTax && str_contains(str_replace('-', '', $buyerTax), str_replace('-', '', $this->companyTaxNumber))) {
+            return true;
+        }
+
+        // EU VAT szám egyezés
+        if ($this->companyEuVat && $buyerTax && str_contains(strtoupper($buyerTax), strtoupper($this->companyEuVat))) {
             return true;
         }
 

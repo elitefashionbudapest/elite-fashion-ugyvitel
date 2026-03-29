@@ -33,9 +33,15 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                     <input type="text" name="company_name_variants" value="<?= e($s['company_name_variants'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. Elite Divat, ELITE FASHION KFT">
                     <p class="text-[10px] text-on-surface-variant mt-1">Vesszővel elválasztva. Az AI ezeket is elfogadja a számlán.</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Adószám</label>
-                    <input type="text" name="company_tax_number" value="<?= e($s['company_tax_number'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. 12345678-2-42">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Adószám</label>
+                        <input type="text" name="company_tax_number" value="<?= e($s['company_tax_number'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. 12345678-2-42">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">EU adószám (VAT)</label>
+                        <input type="text" name="company_eu_vat" value="<?= e($s['company_eu_vat'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. HU12345678">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Cím</label>
@@ -50,7 +56,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 <i class="fa-solid fa-envelope text-blue-500"></i> Email számla feldolgozás
             </h3>
             <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">IMAP szerver</label>
                         <input type="text" name="imap_host" value="<?= e($s['imap_host'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="pl. imap.gmail.com">
@@ -77,6 +83,11 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                         <option value="none" <?= ($s['imap_encryption'] ?? '') === 'none' ? 'selected' : '' ?>>Nincs</option>
                     </select>
                 </div>
+                <!-- IMAP teszt gomb -->
+                <button type="button" onclick="testImap()" class="w-full px-4 py-2.5 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plug"></i> Email kapcsolat tesztelése
+                </button>
+                <div id="imap-result" class="hidden text-xs p-3 rounded-xl"></div>
             </div>
         </div>
 
@@ -85,12 +96,75 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
             <h3 class="font-heading font-bold text-on-surface mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-robot text-purple-500"></i> AI feldolgozás (Anthropic Claude)
             </h3>
-            <div>
-                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">API kulcs</label>
-                <input type="password" name="anthropic_api_key" value="<?= e($s['anthropic_api_key'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="sk-ant-...">
-                <p class="text-[10px] text-on-surface-variant mt-1">Anthropic Console → API Keys → <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-primary underline">Létrehozás</a></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">API kulcs</label>
+                    <input type="password" name="anthropic_api_key" value="<?= e($s['anthropic_api_key'] ?? '') ?>" class="<?= $inputCls ?>" placeholder="sk-ant-...">
+                    <p class="text-[10px] text-on-surface-variant mt-1">Anthropic Console → API Keys → <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-primary underline">Létrehozás</a></p>
+                </div>
+                <!-- API teszt gomb -->
+                <button type="button" onclick="testApi()" class="px-4 py-2.5 bg-purple-50 text-purple-700 font-bold text-xs rounded-xl border border-purple-200 hover:bg-purple-100 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-flask-vial"></i> API kulcs tesztelése
+                </button>
+                <div id="api-result" class="hidden text-xs p-3 rounded-xl"></div>
             </div>
         </div>
 
     </div>
 </form>
+
+<script>
+async function testImap() {
+    const btn = event.target.closest('button');
+    const result = document.getElementById('imap-result');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tesztelés...';
+    result.className = 'text-xs p-3 rounded-xl bg-gray-50 text-gray-500';
+    result.textContent = 'Kapcsolódás...';
+    result.classList.remove('hidden');
+
+    try {
+        const res = await fetch('<?= base_url('/settings/company/test-imap') ?>');
+        const data = await res.json();
+        if (data.success) {
+            result.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200';
+            result.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>' + data.message;
+        } else {
+            result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+            result.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>' + data.message;
+        }
+    } catch(e) {
+        result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+        result.textContent = 'Hiba: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-plug"></i> Email kapcsolat tesztelése';
+}
+
+async function testApi() {
+    const btn = event.target.closest('button');
+    const result = document.getElementById('api-result');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tesztelés...';
+    result.className = 'text-xs p-3 rounded-xl bg-gray-50 text-gray-500';
+    result.textContent = 'API hívás...';
+    result.classList.remove('hidden');
+
+    try {
+        const res = await fetch('<?= base_url('/settings/company/test-api') ?>');
+        const data = await res.json();
+        if (data.success) {
+            result.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200';
+            result.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>' + data.message;
+        } else {
+            result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+            result.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>' + data.message;
+        }
+    } catch(e) {
+        result.className = 'text-xs p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+        result.textContent = 'Hiba: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-flask-vial"></i> API kulcs tesztelése';
+}
+</script>

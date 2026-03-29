@@ -127,6 +127,8 @@ $router->get('/settings/permissions', [App\Controllers\SettingsController::class
 $router->post('/settings/permissions', [App\Controllers\SettingsController::class, 'savePermissions']);
 $router->get('/settings/company', [App\Controllers\CompanySettingsController::class, 'index']);
 $router->post('/settings/company', [App\Controllers\CompanySettingsController::class, 'save']);
+$router->get('/settings/company/test-imap', [App\Controllers\CompanySettingsController::class, 'testImap']);
+$router->get('/settings/company/test-api', [App\Controllers\CompanySettingsController::class, 'testApi']);
 
 // Könyvelés
 $router->get('/finance', [App\Controllers\FinanceController::class, 'index']);
