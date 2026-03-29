@@ -70,16 +70,16 @@ $employees = $data['employees'] ?? [];
                         <?php if (Auth::isOwner() && $req['status'] === 'pending'): ?>
                             <form method="POST" action="<?= base_url("/vacation/{$req['id']}/approve") ?>" class="inline">
                                 <?= csrf_field() ?>
-                                <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium mr-2"><i class="fa-solid fa-check mr-0.5"></i>Jóváhagyás</button>
+                                <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium mr-2"><i class="fa-solid fa-check"></i></button>
                             </form>
                             <form method="POST" action="<?= base_url("/vacation/{$req['id']}/reject") ?>" class="inline">
                                 <?= csrf_field() ?>
-                                <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium mr-2"><i class="fa-solid fa-xmark mr-0.5"></i>Elutasítás</button>
+                                <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium mr-2"><i class="fa-solid fa-xmark"></i></button>
                             </form>
                         <?php endif; ?>
                         <form method="POST" action="<?= base_url("/vacation/{$req['id']}/delete") ?>" class="inline" onsubmit="return confirmDelete(this, '<?= e($req['employee_name']) ?> szabadsága')">
                             <?= csrf_field() ?>
-                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium"><i class="fa-solid fa-trash mr-0.5"></i>Törlés</button>
+                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium"><i class="fa-solid fa-trash"></i></button>
                         </form>
                     </td>
                 </tr>
