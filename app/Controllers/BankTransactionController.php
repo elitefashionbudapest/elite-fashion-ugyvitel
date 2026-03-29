@@ -1,0 +1,357 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Core\{Auth, Middleware, AuditLog};
+use App\Models\{BankTransaction, Bank, Store, Invoice};
+
+class BankTransactionController
+{
+    public function index(): void
+    {
+        Middleware::owner();
+
+        $bankId = !empty($_GET['bank_id']) ? (int)$_GET['bank_id'] : null;
+        $type = $_GET['type'] ?? null;
+        $dateFrom = $_GET['date_from'] ?? null;
+        $dateTo = $_GET['date_to'] ?? null;
+
+        $transactions = BankTransaction::all(
+            $bankId,
+            $type ?: null,
+            $dateFrom ?: null,
+            $dateTo ?: null
+        );
+
+        $banks = Bank::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/index',
+            'data' => [
+                'pageTitle'    => 'Bank tranzakciók',
+                'activeTab'    => 'bank_transactions',
+                'transactions' => $transactions,
+                'banks'        => $banks,
+                'filters'      => ['bank_id' => $bankId, 'type' => $type, 'date_from' => $dateFrom, 'date_to' => $dateTo],
+            ]
+        ]);
+    }
+
+    /**
+     * Kártyás forgalom beérkezés rögzítése
+     */
+    public function createCard(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all();
+        $stores = Store::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/card-form',
+            'data' => [
+                'pageTitle' => 'Kártyás forgalom beérkezés',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+                'stores'    => $stores,
+            ]
+        ]);
+    }
+
+    public function storeCard(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $dateFrom = $_POST['date_from'] ?? '';
+        $dateTo = $_POST['date_to'] ?? '';
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $storeIds = $_POST['store_ids'] ?? [];
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || $amount <= 0 || !$dateFrom || !$dateTo || empty($storeIds)) {
+            save_old_input();
+            set_flash('error', 'Minden mező kitöltése kötelező (bank, összeg, időszak, boltok).');
+            redirect('/bank-transactions/card/create');
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+            save_old_input();
+            set_flash('error', 'Érvénytelen dátum formátum.');
+            redirect('/bank-transactions/card/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'kartya_beerkezes',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'date_from'        => $dateFrom,
+            'date_to'          => $dateTo,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        BankTransaction::assignStores($id, $storeIds);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Kártyás forgalom beérkezés rögzítve.');
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Szolgáltatói levonás rögzítése
+     */
+    public function createProvider(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all();
+        $invoices = $this->getUnlinkedInvoices();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/provider-form',
+            'data' => [
+                'pageTitle' => 'Szolgáltatói levonás',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+                'invoices'  => $invoices,
+            ]
+        ]);
+    }
+
+    public function storeProvider(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $providerName = trim($_POST['provider_name'] ?? '');
+        $invoiceId = !empty($_POST['invoice_id']) ? (int)$_POST['invoice_id'] : null;
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || $amount <= 0 || empty($providerName)) {
+            save_old_input();
+            set_flash('error', 'Bank, összeg és szolgáltató neve kötelező.');
+            redirect('/bank-transactions/provider/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'szolgaltato_levon',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'provider_name'    => $providerName,
+            'invoice_id'       => $invoiceId,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Szolgáltatói levonás rögzítve.');
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Szolgáltatói levonás összekötése számlával
+     */
+    public function linkInvoice(string $id): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $invoiceId = !empty($_POST['invoice_id']) ? (int)$_POST['invoice_id'] : null;
+        BankTransaction::linkInvoice((int)$id, $invoiceId);
+        AuditLog::log('update', 'bank_transactions', (int)$id, null, ['invoice_id' => $invoiceId]);
+        set_flash('success', 'Számla összekötve.');
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Hitel törlesztő részlet rögzítése
+     */
+    public function createLoan(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all(); // csak bankszámlák (nem hitelek)
+        $loans = Bank::allLoans();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/loan-form',
+            'data' => [
+                'pageTitle' => 'Hitel törlesztő részlet',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+                'loans'     => $loans,
+            ]
+        ]);
+    }
+
+    public function storeLoan(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $loanBankId = (int)($_POST['loan_bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || !$loanBankId || $amount <= 0) {
+            save_old_input();
+            set_flash('error', 'Bank, hitel és összeg megadása kötelező.');
+            redirect('/bank-transactions/loan/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'hitel_torlesztes',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'loan_bank_id'     => $loanBankId,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+
+        $loan = Bank::find($loanBankId);
+        set_flash('success', 'Hitel törlesztés rögzítve: ' . format_money($amount) . ' → ' . e($loan['name'] ?? ''));
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Számlák közötti átutalás
+     */
+    public function createTransfer(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::allWithInactive();
+        $banks = array_filter($banks, fn($b) => $b['is_active'] && !$b['is_loan']);
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/transfer-form',
+            'data' => [
+                'pageTitle' => 'Számlák közötti átutalás',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+            ]
+        ]);
+    }
+
+    public function storeTransfer(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $targetBankId = (int)($_POST['target_bank_id'] ?? 0);
+        $sourceAmount = (float)($_POST['source_amount'] ?? 0);
+        $targetAmount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || !$targetBankId || $sourceAmount <= 0 || $targetAmount <= 0) {
+            save_old_input();
+            set_flash('error', 'Mindkét számla és összeg megadása kötelező.');
+            redirect('/bank-transactions/transfer/create');
+        }
+
+        if ($bankId === $targetBankId) {
+            save_old_input();
+            set_flash('error', 'A küldő és fogadó számla nem lehet ugyanaz.');
+            redirect('/bank-transactions/transfer/create');
+        }
+
+        $targetBank = Bank::find($targetBankId);
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'szamla_kozti',
+            'amount'           => $targetAmount,
+            'source_amount'    => $sourceAmount,
+            'target_currency'  => $targetBank['currency'] ?? 'HUF',
+            'target_bank_id'   => $targetBankId,
+            'transaction_date' => $transactionDate,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Átutalás rögzítve.');
+        redirect('/bank-transactions');
+    }
+
+    public function destroy(string $id): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $tx = BankTransaction::find((int)$id);
+        if ($tx) {
+            BankTransaction::delete((int)$id);
+            AuditLog::log('delete', 'bank_transactions', (int)$id, $tx, null);
+            set_flash('success', 'Tranzakció törölve.');
+        }
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * API: Bruttó összeg lekérése kiválasztott boltok+időszak alapján
+     */
+    public function apiGross(): void
+    {
+        Middleware::owner();
+
+        $storeIds = $_GET['store_ids'] ?? [];
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+
+        if (empty($storeIds) || !$dateFrom || !$dateTo) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['gross' => 0]);
+            return;
+        }
+
+        $db = \App\Core\Database::getInstance();
+        $placeholders = implode(',', array_fill(0, count($storeIds), '?'));
+        $params = array_map('intval', $storeIds);
+        $params[] = $dateFrom;
+        $params[] = $dateTo;
+
+        $stmt = $db->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM financial_records
+             WHERE store_id IN ({$placeholders})
+             AND purpose = 'napi_bankkartya'
+             AND record_date >= ? AND record_date <= ?"
+        );
+        $stmt->execute($params);
+        $gross = (float)$stmt->fetchColumn();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['gross' => $gross], JSON_UNESCAPED_UNICODE);
+    }
+
+    private function getUnlinkedInvoices(): array
+    {
+        $db = \App\Core\Database::getInstance();
+        return $db->query(
+            "SELECT i.id, i.invoice_number, sp.name as supplier_name, i.amount, i.invoice_date
+             FROM invoices i
+             JOIN suppliers sp ON i.supplier_id = sp.id
+             WHERE i.store_id IS NULL
+             ORDER BY i.invoice_date DESC
+             LIMIT 50"
+        )->fetchAll();
+    }
+}

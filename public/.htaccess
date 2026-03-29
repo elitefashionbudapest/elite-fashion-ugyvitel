@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Ha a fájl vagy könyvtár létezik, ne írjuk át
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Minden mást az index.php-re irányítunk
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>

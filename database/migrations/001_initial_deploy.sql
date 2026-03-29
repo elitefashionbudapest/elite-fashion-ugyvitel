@@ -1,0 +1,13 @@
+-- ============================================
+-- Migration 001: Első telepítés utáni állapot
+-- Dátum: 2026-03-28
+-- NE FUTTASD ÚJA ha már egyszer importáltad a schema.sql-t!
+-- Ez csak dokumentáció, hogy tudjuk mi volt az alap.
+-- ============================================
+-- Alap schema: schema.sql importálva
+-- Kézi módosítások a fejlesztés során:
+--   - banks: opening_balance, min_balance, is_loan mezők hozzáadva
+--   - financial_records: bank_id mező, purpose ENUM bővítve (befizetes → befizetes_bankbol + befizetes_boltbol, szamla_kifizetes)
+--   - invoices: net_amount mező
+--   - bank_transactions + bank_transaction_stores táblák létrehozva
+-- Ezek mind benne vannak az aktuális schema.sql-ben.

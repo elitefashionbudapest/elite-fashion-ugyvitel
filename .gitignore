@@ -1,0 +1,27 @@
+# Függőségek (composer install-lal visszaáll)
+/vendor/
+
+# Környezeti beállítások (érzékeny adatok!)
+.env
+
+# Adatmentések
+/storage/backups/
+
+# Árfolyam cache
+/storage/cache/
+
+# Feltöltött fájlok (ezek a szerveren élnek)
+/public/uploads/
+
+# Referencia fájlok (nem kell a szerverre)
+/Formok/
+Képkivágás.JPG
+
+# IDE / rendszer fájlok
+.claude/
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store

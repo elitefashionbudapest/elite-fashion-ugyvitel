@@ -1,0 +1,314 @@
+/* Elite Fashion Ügyviteli Rendszer - Custom CSS */
+
+/* ==========================================
+   Scrollbar stílus
+   ========================================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c5c3;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0a4a2;
+}
+
+#sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#sidebar ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================
+   Flash message animáció
+   ========================================== */
+#flash-success, #flash-error, #flash-warning {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   Táblázat stílusok - Modern design
+   ========================================== */
+.data-table {
+    width: 100%;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.data-table thead th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+}
+
+.data-table thead th:first-child {
+    border-top-left-radius: 0.5rem;
+}
+
+.data-table thead th:last-child {
+    border-top-right-radius: 0.5rem;
+}
+
+.data-table tbody td {
+    padding: 0.875rem 1.25rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.15s ease;
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: all 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f0fdf4;
+}
+
+.data-table tbody tr:hover td {
+    color: #111827;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Sorok közti finom csíkozás */
+.data-table tbody tr:nth-child(even) {
+    background-color: #fafbfc;
+}
+
+.data-table tbody tr:nth-child(even):hover {
+    background-color: #f0fdf4;
+}
+
+/* Szám oszlopok jobbra igazítás */
+.data-table td.text-right,
+.data-table th.text-right {
+    text-align: right;
+}
+
+/* Pénzösszeg cella kiemelés */
+.data-table .amount-cell {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Üres állapot */
+.data-table .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+}
+
+.data-table .empty-state td {
+    border-bottom: none;
+}
+
+/* Akció gombok a táblázatban */
+.data-table .action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.data-table .action-link:hover {
+    transform: translateY(-1px);
+}
+
+.data-table .action-edit {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.data-table .action-edit:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.data-table .action-delete {
+    color: #dc2626;
+    background: #fef2f2;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.data-table .action-delete:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ==========================================
+   Badge / Tag stílusok
+   ========================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-warning {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-primary {
+    background: rgba(217, 255, 84, 0.2);
+    color: #3d5a00;
+}
+
+.badge-neutral {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* ==========================================
+   Kártya (card) wrapper a táblázatokhoz
+   ========================================== */
+.table-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    border: 1px solid #f3f4f6;
+}
+
+.table-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table-card-header h3 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    color: #111827;
+    font-size: 1rem;
+}
+
+/* ==========================================
+   Form stílusok
+   ========================================== */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+    border-color: #D9FF54;
+    box-shadow: 0 0 0 3px rgba(217, 255, 84, 0.15);
+    outline: none;
+}
+
+/* ==========================================
+   Responsive táblázat
+   ========================================== */
+@media (max-width: 768px) {
+    .data-table thead th,
+    .data-table tbody td {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .data-table thead th {
+        font-size: 0.6rem;
+    }
+
+    .table-card-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+}
+
+/* ==========================================
+   Print stílusok
+   ========================================== */
+@media print {
+    #sidebar, header, #sidebar-overlay, .no-print {
+        display: none !important;
+    }
+
+    main {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .data-table tbody tr:hover {
+        background-color: transparent;
+    }
+
+    .data-table thead th {
+        background: #f3f4f6 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .action-link, .action-delete {
+        display: none !important;
+    }
+}
