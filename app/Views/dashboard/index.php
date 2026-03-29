@@ -201,8 +201,14 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
             <div class="text-center text-xs text-gray-400 py-6"><i class="fa-solid fa-comments text-xl mb-1 block text-gray-300"></i>Betöltés...</div>
         </div>
 
+        <div id="chat-image-preview" class="hidden px-3 pt-2 flex items-center gap-2">
+            <img id="chat-preview-img" class="w-16 h-16 object-cover rounded-lg border">
+            <button type="button" onclick="clearChatImage('desktop')" class="text-red-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+        </div>
         <div class="p-3 border-t border-surface-container/80 bg-surface-container-low/50 flex-shrink-0">
-            <form id="chat-form" class="flex gap-2" onsubmit="return sendDashboardChat(event)">
+            <form id="chat-form" class="flex gap-2" onsubmit="return sendDashboardChat(event)" enctype="multipart/form-data">
+                <input type="file" id="chat-image-input" accept="image/*" capture="environment" class="hidden" onchange="previewChatImage(this, 'desktop')">
+                <button type="button" onclick="document.getElementById('chat-image-input').click()" class="px-3 py-2.5 text-gray-400 hover:text-accent rounded-xl transition-colors"><i class="fa-solid fa-camera"></i></button>
                 <input type="text" id="chat-input" class="flex-1 px-4 py-2.5 bg-white border border-surface-container rounded-xl text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent" placeholder="Üzenet írása..." autocomplete="off">
                 <button type="submit" class="px-4 py-2.5 bg-sidebar text-accent rounded-xl hover:bg-gray-800 transition-all active:scale-95"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
@@ -233,8 +239,14 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
         <div id="mobile-chat-messages" class="overflow-y-auto p-3 space-y-2" style="height: calc(60vh - 56px);">
             <div class="text-center text-xs text-gray-400 py-6">Betöltés...</div>
         </div>
+        <div id="mobile-chat-image-preview" class="hidden px-2 pt-1 flex items-center gap-2">
+            <img id="mobile-preview-img" class="w-12 h-12 object-cover rounded-lg border">
+            <button type="button" onclick="clearChatImage('mobile')" class="text-red-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+        </div>
         <div class="p-2 border-t border-gray-100 bg-gray-50 flex-shrink-0">
-            <form id="mobile-chat-form" class="flex gap-2" onsubmit="return sendMobileChat(event)">
+            <form id="mobile-chat-form" class="flex gap-1.5" onsubmit="return sendMobileChat(event)" enctype="multipart/form-data">
+                <input type="file" id="mobile-chat-image-input" accept="image/*" capture="environment" class="hidden" onchange="previewChatImage(this, 'mobile')">
+                <button type="button" onclick="document.getElementById('mobile-chat-image-input').click()" class="px-2.5 py-2 text-gray-400 hover:text-primary rounded-xl"><i class="fa-solid fa-camera"></i></button>
                 <input type="text" id="mobile-chat-input" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm" placeholder="Üzenet..." autocomplete="off">
                 <button type="submit" class="px-3 py-2 bg-sidebar text-accent rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
@@ -244,6 +256,52 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
 
 <script>
 let mobileChatOpen = false;
+let chatImageFile = { desktop: null, mobile: null };
+
+function previewChatImage(input, type) {
+    if (input.files && input.files[0]) {
+        chatImageFile[type] = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewId = type === 'desktop' ? 'chat-preview-img' : 'mobile-preview-img';
+            const wrapperId = type === 'desktop' ? 'chat-image-preview' : 'mobile-chat-image-preview';
+            document.getElementById(previewId).src = e.target.result;
+            document.getElementById(wrapperId).classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearChatImage(type) {
+    chatImageFile[type] = null;
+    const inputId = type === 'desktop' ? 'chat-image-input' : 'mobile-chat-image-input';
+    const wrapperId = type === 'desktop' ? 'chat-image-preview' : 'mobile-chat-image-preview';
+    document.getElementById(inputId).value = '';
+    document.getElementById(wrapperId).classList.add('hidden');
+}
+
+function renderChatMessage(m, userId, baseUrl) {
+    const isMine = parseInt(m.sender_id) === userId;
+    const initials = (m.sender_name || '??').substring(0, 2);
+    const align = isMine ? 'justify-end' : 'justify-start';
+    const bg = isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800';
+    const avatarBg = isMine ? 'bg-accent text-sidebar' : 'bg-gray-300 text-gray-600';
+
+    let content = '';
+    if (m.image_path) {
+        content += '<img src="' + baseUrl + m.image_path + '" class="max-w-[200px] rounded-lg cursor-pointer" onclick="window.open(this.src)" loading="lazy">';
+    }
+    if (m.message) {
+        content += '<span class="text-xs">' + escapeHtml(m.message) + '</span>';
+    }
+
+    let html = '<div class="flex ' + align + ' gap-1.5">';
+    if (!isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
+    html += '<div class="max-w-[75%] px-3 py-1.5 rounded-xl ' + bg + '">' + content + '</div>';
+    if (isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
+    html += '</div>';
+    return html;
+}
 
 function toggleMobileChat() {
     mobileChatOpen = !mobileChatOpen;
@@ -270,20 +328,7 @@ async function loadMobileChat() {
         }
 
         let html = '';
-        msgs.forEach(m => {
-            const isMine = parseInt(m.sender_id) === userId;
-            const initials = (m.sender_name || '??').substring(0, 2);
-            const align = isMine ? 'justify-end' : 'justify-start';
-            const bg = isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800';
-            const avatarBg = isMine ? 'bg-accent text-sidebar' : 'bg-gray-300 text-gray-600';
-
-            html += '<div class="flex ' + align + ' gap-1.5">';
-            if (!isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
-            html += '<div class="max-w-[75%] px-3 py-1.5 rounded-xl text-xs ' + bg + '">' + escapeHtml(m.message) + '</div>';
-            if (isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
-            html += '</div>';
-        });
-
+        msgs.forEach(m => { html += renderChatMessage(m, userId, baseUrl); });
         container.innerHTML = html;
         container.scrollTop = container.scrollHeight;
     } catch(e) {}
@@ -293,19 +338,26 @@ async function sendMobileChat(e) {
     e.preventDefault();
     const input = document.getElementById('mobile-chat-input');
     const msg = input.value.trim();
-    if (!msg) return false;
+    const imgFile = chatImageFile.mobile;
+    if (!msg && !imgFile) return false;
 
     const el = document.getElementById('mobile-chat-wrapper');
     const baseUrl = el.dataset.baseUrl;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
+    const fd = new FormData();
+    fd.append('_csrf', csrf);
+    fd.append('message', msg);
+    if (imgFile) fd.append('chat_image', imgFile);
+
     try {
         await fetch(baseUrl + '/chat/send', {
             method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrf},
-            body: '_csrf=' + encodeURIComponent(csrf) + '&message=' + encodeURIComponent(msg) + '&type=public'
+            headers: {'X-CSRF-TOKEN': csrf},
+            body: fd
         });
         input.value = '';
+        clearChatImage('mobile');
         loadMobileChat();
     } catch(e) {}
     return false;
@@ -439,11 +491,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if(ds!==ld){h+='<div class="text-center my-1"><span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider bg-surface-container/60 px-2 py-0.5 rounded-full">'+ds+'</span></div>';ld=ds;}
         const name = m.sender_name||'?';
         const mono = esc(name.substring(0,2));
-        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2"><div class="max-w-[75%]"><div class="bg-sidebar text-accent px-3.5 py-2 rounded-2xl rounded-br-md text-sm">'+esc(m.message)+'</div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
-        else h+='<div class="flex justify-start gap-2"><div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div><div class="max-w-[75%]"><p class="text-[9px] font-bold text-gray-400 mb-0.5">'+esc(name)+'</p><div class="bg-surface-container-high/80 px-3.5 py-2 rounded-2xl rounded-bl-md text-sm text-on-surface">'+esc(m.message)+'</div><p class="text-[9px] text-gray-400 mt-0.5">'+t+'</p></div></div>';});
+        let msgContent = '';
+        if(m.image_path) msgContent += '<img src="'+base+m.image_path+'" class="max-w-[200px] rounded-lg cursor-pointer mb-1" onclick="window.open(this.src)" loading="lazy">';
+        if(m.message) msgContent += esc(m.message);
+        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2"><div class="max-w-[75%]"><div class="bg-sidebar text-accent px-3.5 py-2 rounded-2xl rounded-br-md text-sm">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
+        else h+='<div class="flex justify-start gap-2"><div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div><div class="max-w-[75%]"><p class="text-[9px] font-bold text-gray-400 mb-0.5">'+esc(name)+'</p><div class="bg-surface-container-high/80 px-3.5 py-2 rounded-2xl rounded-bl-md text-sm text-on-surface">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5">'+t+'</p></div></div>';});
         md.innerHTML=h;md.scrollTop=md.scrollHeight;}catch(e){}}
-    window.sendDashboardChat=async function(e){e.preventDefault();const i=document.getElementById('chat-input'),m=i.value.trim();if(!m)return false;i.value='';
-    try{await fetch(base+'/chat/send',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':getCsrfToken()},body:JSON.stringify({message:m,receiver_id:null})});lid=0;await load();}catch(e){}return false;};
+    window.sendDashboardChat=async function(e){e.preventDefault();const i=document.getElementById('chat-input'),m=i.value.trim();const imgFile=chatImageFile.desktop;if(!m&&!imgFile)return false;i.value='';
+    const fd=new FormData();fd.append('_csrf',getCsrfToken());fd.append('message',m);if(imgFile)fd.append('chat_image',imgFile);
+    try{await fetch(base+'/chat/send',{method:'POST',headers:{'X-CSRF-TOKEN':getCsrfToken()},body:fd});clearChatImage('desktop');lid=0;await load();}catch(e){}return false;};
     load();setInterval(load,500);
 })();
 </script>

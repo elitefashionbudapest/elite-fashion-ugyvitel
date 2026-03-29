@@ -83,28 +83,39 @@ class ChatController
         Middleware::auth();
         Middleware::verifyCsrf();
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // JSON vagy form-data támogatás
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (str_contains($contentType, 'application/json')) {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        } else {
+            $input = $_POST;
+        }
 
         $message    = trim($input['message'] ?? '');
-        $receiverId = isset($input['receiver_id']) ? (int) $input['receiver_id'] : null;
+        $receiverId = isset($input['receiver_id']) && $input['receiver_id'] !== '' ? (int) $input['receiver_id'] : null;
 
-        if ($message === '') {
+        // Kép feltöltés ellenőrzése
+        $imagePath = null;
+        if (!empty($_FILES['chat_image']['tmp_name'])) {
+            $imagePath = $this->handleChatImage();
+        }
+
+        if ($message === '' && !$imagePath) {
             header('Content-Type: application/json; charset=utf-8');
             http_response_code(422);
-            echo json_encode(['success' => false, 'error' => 'Az uzenet nem lehet ures.']);
+            echo json_encode(['success' => false, 'error' => 'Az üzenet nem lehet üres.']);
             exit;
         }
 
-        // Max uzenet hossz
         if (mb_strlen($message) > 2000) {
             header('Content-Type: application/json; charset=utf-8');
             http_response_code(422);
-            echo json_encode(['success' => false, 'error' => 'Az uzenet maximum 2000 karakter lehet.']);
+            echo json_encode(['success' => false, 'error' => 'Az üzenet maximum 2000 karakter lehet.']);
             exit;
         }
 
         $senderId  = Auth::id();
-        $messageId = ChatMessage::send($senderId, $receiverId, $message);
+        $messageId = ChatMessage::send($senderId, $receiverId, $message ?: '', $imagePath);
 
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
@@ -112,6 +123,29 @@ class ChatController
             'message_id' => $messageId,
         ]);
         exit;
+    }
+
+    private function handleChatImage(): ?string
+    {
+        $file = $_FILES['chat_image'];
+        if ($file['error'] !== UPLOAD_ERR_OK || $file['size'] > 5 * 1024 * 1024) return null;
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        $allowedMimes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+        if (!isset($allowedMimes[$mime])) return null;
+
+        $ext = $allowedMimes[$mime];
+        $uploadDir = __DIR__ . '/../../public/uploads/chat/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $filename = bin2hex(random_bytes(16)) . '.' . $ext;
+        if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            return '/uploads/chat/' . $filename;
+        }
+        return null;
     }
 
     /**

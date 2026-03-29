@@ -136,17 +136,18 @@ class ChatMessage
      * Uzenet kuldese
      * $receiverId = null eseten publikus uzenet
      */
-    public static function send(int $senderId, ?int $receiverId, string $message): int
+    public static function send(int $senderId, ?int $receiverId, string $message, ?string $imagePath = null): int
     {
         $db = Database::getInstance();
         $stmt = $db->prepare(
-            'INSERT INTO chat_messages (sender_id, receiver_id, message, is_read, created_at)
-             VALUES (:sender_id, :receiver_id, :message, 0, NOW())'
+            'INSERT INTO chat_messages (sender_id, receiver_id, message, image_path, is_read, created_at)
+             VALUES (:sender_id, :receiver_id, :message, :image_path, 0, NOW())'
         );
         $stmt->execute([
             'sender_id'   => $senderId,
             'receiver_id' => $receiverId,
             'message'     => $message,
+            'image_path'  => $imagePath,
         ]);
 
         return (int) $db->lastInsertId();
