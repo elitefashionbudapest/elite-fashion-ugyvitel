@@ -154,6 +154,7 @@ $router->get('/vacation/create', [App\Controllers\VacationController::class, 'cr
 $router->post('/vacation', [App\Controllers\VacationController::class, 'store']);
 $router->post('/vacation/{id}/approve', [App\Controllers\VacationController::class, 'approve']);
 $router->post('/vacation/{id}/reject', [App\Controllers\VacationController::class, 'reject']);
+$router->post('/vacation/{id}/delete', [App\Controllers\VacationController::class, 'destroy']);
 
 // Beosztás
 $router->get('/schedule', [App\Controllers\ScheduleController::class, 'index']);
