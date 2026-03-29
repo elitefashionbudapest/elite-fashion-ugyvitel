@@ -15,5 +15,10 @@
         "files": [
             "app/Core/Helpers.php"
         ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.29"
+        }
     }
 }
