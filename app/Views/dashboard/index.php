@@ -286,24 +286,39 @@ function clearChatImage(type) {
     document.getElementById(wrapperId).classList.add('hidden');
 }
 
+function openChatImage(src) {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4';
+    overlay.onclick = () => overlay.remove();
+    overlay.innerHTML = '<img src="' + src + '" class="max-w-full max-h-full rounded-xl">' +
+        '<button class="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full text-xl flex items-center justify-center" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>';
+    document.body.appendChild(overlay);
+}
+
 function renderChatMessage(m, userId, baseUrl) {
     const isMine = parseInt(m.sender_id) === userId;
     const initials = (m.sender_name || '??').substring(0, 2);
     const align = isMine ? 'justify-end' : 'justify-start';
-    const bg = isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800';
     const avatarBg = isMine ? 'bg-accent text-sidebar' : 'bg-gray-300 text-gray-600';
 
     let content = '';
     if (m.image_path) {
-        content += '<img src="' + baseUrl + m.image_path + '" class="max-w-[200px] rounded-lg cursor-pointer" onclick="window.open(this.src)" loading="lazy">';
+        content += '<img src="' + baseUrl + m.image_path + '" class="max-w-[180px] rounded-lg cursor-pointer" onclick="openChatImage(this.src)" loading="lazy">';
     }
     if (m.message) {
         content += '<span class="text-xs">' + escapeHtml(m.message) + '</span>';
     }
 
+    // Ha csak kép van, ne legyen sötét háttér
+    const hasText = m.message && m.message.trim();
+    const bg = m.image_path && !hasText
+        ? (isMine ? 'bg-transparent' : 'bg-transparent')
+        : (isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800');
+    const padding = m.image_path && !hasText ? 'p-0.5' : 'px-3 py-1.5';
+
     let html = '<div class="flex ' + align + ' gap-1.5">';
     if (!isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
-    html += '<div class="max-w-[75%] px-3 py-1.5 rounded-xl ' + bg + '">' + content + '</div>';
+    html += '<div class="max-w-[75%] ' + padding + ' rounded-xl ' + bg + '">' + content + '</div>';
     if (isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
     html += '</div>';
     return html;
@@ -318,6 +333,7 @@ function toggleMobileChat() {
     if (mobileChatOpen) loadMobileChat();
 }
 
+let mobileLastMsgId = 0;
 async function loadMobileChat() {
     const el = document.getElementById('mobile-chat-wrapper');
     const baseUrl = el.dataset.baseUrl;
@@ -332,6 +348,11 @@ async function loadMobileChat() {
             container.innerHTML = '<div class="text-center text-xs text-gray-400 py-6">Nincs üzenet.</div>';
             return;
         }
+
+        // Csak frissítünk ha van új üzenet (ne villogjon)
+        const newLastId = Math.max(...msgs.map(m => m.id));
+        if (newLastId === mobileLastMsgId) return;
+        mobileLastMsgId = newLastId;
 
         let html = '';
         msgs.forEach(m => { html += renderChatMessage(m, userId, baseUrl); });
@@ -498,10 +519,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = m.sender_name||'?';
         const mono = esc(name.substring(0,2));
         let msgContent = '';
-        if(m.image_path) msgContent += '<img src="'+base+m.image_path+'" class="max-w-[200px] rounded-lg cursor-pointer mb-1" onclick="window.open(this.src)" loading="lazy">';
-        if(m.message) msgContent += esc(m.message);
-        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2"><div class="max-w-[75%]"><div class="bg-sidebar text-accent px-3.5 py-2 rounded-2xl rounded-br-md text-sm">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
-        else h+='<div class="flex justify-start gap-2"><div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div><div class="max-w-[75%]"><p class="text-[9px] font-bold text-gray-400 mb-0.5">'+esc(name)+'</p><div class="bg-surface-container-high/80 px-3.5 py-2 rounded-2xl rounded-bl-md text-sm text-on-surface">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5">'+t+'</p></div></div>';});
+        const hasImg = !!m.image_path;
+        const hasText = m.message && m.message.trim();
+        if(hasImg) msgContent += '<img src="'+base+m.image_path+'" class="max-w-[200px] rounded-lg cursor-pointer mb-1" onclick="openChatImage(this.src)" loading="lazy">';
+        if(hasText) msgContent += esc(m.message);
+        const bubbleBg = hasImg && !hasText ? 'p-0.5' : 'px-3.5 py-2';
+        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2"><div class="max-w-[75%]"><div class="'+(hasImg&&!hasText?'':'bg-sidebar text-accent')+' '+bubbleBg+' rounded-2xl rounded-br-md text-sm">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
+        else h+='<div class="flex justify-start gap-2"><div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div><div class="max-w-[75%]"><p class="text-[9px] font-bold text-gray-400 mb-0.5">'+esc(name)+'</p><div class="'+(hasImg&&!hasText?'':'bg-surface-container-high/80')+' '+bubbleBg+' rounded-2xl rounded-bl-md text-sm text-on-surface">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5">'+t+'</p></div></div>';});
         md.innerHTML=h;md.scrollTop=md.scrollHeight;}catch(e){}}
     window.sendDashboardChat=async function(e){e.preventDefault();const i=document.getElementById('chat-input'),m=i.value.trim();const imgFile=chatImageFile.desktop;if(!m&&!imgFile)return false;i.value='';
     const fd=new FormData();fd.append('_csrf',getCsrfToken());fd.append('message',m);if(imgFile)fd.append('chat_image',imgFile);
