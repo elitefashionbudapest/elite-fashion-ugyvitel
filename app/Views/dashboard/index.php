@@ -235,14 +235,20 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
     </div>
 
     <!-- Kinyitott chat -->
-    <div id="mobile-chat-panel" class="hidden bg-white border-t border-gray-200" style="height: 60vh;">
-        <div id="mobile-chat-messages" class="overflow-y-auto p-3 space-y-2" style="height: calc(60vh - 56px);">
+    <div id="mobile-chat-panel" class="hidden bg-white border-t border-gray-200 flex flex-col" style="height: 55vh;">
+        <!-- Üzenetek (flex-1 = maradék helyet foglalja) -->
+        <div id="mobile-chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
             <div class="text-center text-xs text-gray-400 py-6">Betöltés...</div>
         </div>
-        <div id="mobile-chat-image-preview" class="hidden px-2 pt-1 flex items-center gap-2">
-            <img id="mobile-preview-img" class="w-12 h-12 object-cover rounded-lg border">
-            <button type="button" onclick="clearChatImage('mobile')" class="text-red-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Kép előnézet (ha van kiválasztott kép) -->
+        <div id="mobile-chat-image-preview" class="hidden px-3 py-2 bg-gray-50 border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
+            <img id="mobile-preview-img" class="w-14 h-14 object-cover rounded-lg border border-gray-300">
+            <span class="text-xs text-gray-500 flex-1">Kép csatolva</span>
+            <button type="button" onclick="clearChatImage('mobile')" class="w-7 h-7 flex items-center justify-center bg-red-100 text-red-500 rounded-full text-xs"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
+        <!-- Input sor (mindig alul, flex-shrink-0) -->
         <div class="p-2 border-t border-gray-100 bg-gray-50 flex-shrink-0">
             <form id="mobile-chat-form" class="flex items-center gap-1" onsubmit="return sendMobileChat(event)" enctype="multipart/form-data">
                 <input type="file" id="mobile-chat-image-input" accept="image/*" capture="environment" class="hidden" onchange="previewChatImage(this, 'mobile')">
