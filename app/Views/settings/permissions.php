@@ -23,74 +23,123 @@ $allUsers = array_merge($ownerUsers, $storeUsers, $accountantUsers);
     <?php if (empty($allUsers)): ?>
         <div class="bg-surface-container-lowest rounded-xl p-8 text-center text-on-surface-variant">Nincs fiók a rendszerben.</div>
     <?php else: ?>
-        <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse min-w-[800px]">
-                    <thead>
-                        <tr class="bg-surface-container-low">
-                            <th class="px-5 py-4 text-left text-xs font-bold text-on-surface-variant uppercase tracking-widest">Tab</th>
-                            <?php foreach ($allUsers as $u): ?>
-                            <th class="px-2 py-4 text-center text-xs font-bold text-on-surface-variant uppercase tracking-widest border-l border-surface-container" colspan="3">
-                                <div class="flex flex-col items-center gap-0.5">
-                                    <span><?= e($u['name']) ?></span>
-                                    <span class="text-[9px] font-medium px-2 py-0.5 rounded-full <?php
-                                        if ($u['role'] === 'tulajdonos') echo 'bg-amber-100 text-amber-700';
-                                        elseif ($u['role'] === 'konyvelo') echo 'bg-blue-100 text-blue-600';
-                                        else echo 'bg-surface-container text-on-surface-variant';
-                                    ?>">
-                                        <?= match($u['role']) { 'tulajdonos' => 'Tulajdonos', 'konyvelo' => 'Könyvelő', default => 'Bolt' } ?>
-                                    </span>
-                                </div>
-                            </th>
-                            <?php endforeach; ?>
-                        </tr>
-                        <tr class="bg-surface-container-low/50 border-b border-surface-container">
-                            <th></th>
-                            <?php foreach ($allUsers as $u): ?>
-                            <th class="px-0.5 py-1 text-center text-[10px] text-gray-400 border-l border-surface-container">Lát</th>
-                            <th class="px-0.5 py-1 text-center text-[10px] text-emerald-500">Rögz.</th>
-                            <th class="px-0.5 py-1 text-center text-[10px] text-amber-500">Mód.</th>
-                            <?php endforeach; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($allTabs as $slug => $tab): ?>
-                        <tr class="border-t border-surface-container hover:bg-surface-container-low/30 transition-colors">
-                            <td class="px-5 py-3 font-medium flex items-center gap-2">
-                                <i class="fa-solid <?= $tab['icon'] ?> text-sm text-on-surface-variant"></i>
-                                <?= $tab['label'] ?>
-                            </td>
-                            <?php foreach ($allUsers as $u): ?>
-                            <?php
-                                $userPerms = array_column($permissions[$u['id']] ?? [], null, 'tab_slug');
-                                $hasView   = ($userPerms[$slug]['can_view'] ?? 0) == 1;
-                                $hasCreate = ($userPerms[$slug]['can_create'] ?? 0) == 1;
-                                $hasEdit   = ($userPerms[$slug]['can_edit'] ?? 0) == 1;
-                            ?>
-                            <td class="px-0.5 py-2 text-center border-l border-surface-container">
-                                <input type="checkbox"
-                                       name="perms[<?= $u['id'] ?>][<?= $slug ?>][view]"
-                                       value="1" <?= $hasView ? 'checked' : '' ?>
-                                       class="h-4 w-4 text-primary border-outline-variant rounded focus:ring-primary-container">
-                            </td>
-                            <td class="px-0.5 py-2 text-center">
-                                <input type="checkbox"
-                                       name="perms[<?= $u['id'] ?>][<?= $slug ?>][create]"
-                                       value="1" <?= $hasCreate ? 'checked' : '' ?>
-                                       class="h-4 w-4 text-emerald-600 border-outline-variant rounded focus:ring-emerald-200">
-                            </td>
-                            <td class="px-0.5 py-2 text-center">
-                                <input type="checkbox"
-                                       name="perms[<?= $u['id'] ?>][<?= $slug ?>][edit]"
-                                       value="1" <?= $hasEdit ? 'checked' : '' ?>
-                                       class="h-4 w-4 text-amber-600 border-outline-variant rounded focus:ring-amber-200">
-                            </td>
-                            <?php endforeach; ?>
-                        </tr>
+
+        <!-- Desktop: táblázat -->
+        <div class="hidden md:block bg-surface-container-lowest rounded-xl overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-5 py-4 text-left text-xs font-bold text-on-surface-variant uppercase tracking-widest">Tab</th>
+                        <?php foreach ($allUsers as $u): ?>
+                        <th class="px-2 py-4 text-center text-xs font-bold text-on-surface-variant uppercase tracking-widest border-l border-surface-container" colspan="3">
+                            <div class="flex flex-col items-center gap-0.5">
+                                <span><?= e($u['name']) ?></span>
+                                <span class="text-[9px] font-medium px-2 py-0.5 rounded-full <?php
+                                    if ($u['role'] === 'tulajdonos') echo 'bg-amber-100 text-amber-700';
+                                    elseif ($u['role'] === 'konyvelo') echo 'bg-blue-100 text-blue-600';
+                                    else echo 'bg-surface-container text-on-surface-variant';
+                                ?>">
+                                    <?= match($u['role']) { 'tulajdonos' => 'Tulajdonos', 'konyvelo' => 'Könyvelő', default => 'Bolt' } ?>
+                                </span>
+                            </div>
+                        </th>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                    </tr>
+                    <tr class="bg-surface-container-low/50 border-b border-surface-container">
+                        <th></th>
+                        <?php foreach ($allUsers as $u): ?>
+                        <th class="px-0.5 py-1 text-center text-[10px] text-gray-400 border-l border-surface-container">Lát</th>
+                        <th class="px-0.5 py-1 text-center text-[10px] text-emerald-500">Rögz.</th>
+                        <th class="px-0.5 py-1 text-center text-[10px] text-amber-500">Mód.</th>
+                        <?php endforeach; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($allTabs as $slug => $tab): ?>
+                    <tr class="border-t border-surface-container hover:bg-surface-container-low/30 transition-colors">
+                        <td class="px-5 py-3 font-medium flex items-center gap-2">
+                            <i class="fa-solid <?= $tab['icon'] ?> text-sm text-on-surface-variant"></i>
+                            <?= $tab['label'] ?>
+                        </td>
+                        <?php foreach ($allUsers as $u): ?>
+                        <?php
+                            $userPerms = array_column($permissions[$u['id']] ?? [], null, 'tab_slug');
+                            $hasView   = ($userPerms[$slug]['can_view'] ?? 0) == 1;
+                            $hasCreate = ($userPerms[$slug]['can_create'] ?? 0) == 1;
+                            $hasEdit   = ($userPerms[$slug]['can_edit'] ?? 0) == 1;
+                        ?>
+                        <td class="px-0.5 py-2 text-center border-l border-surface-container">
+                            <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][view]" value="1" <?= $hasView ? 'checked' : '' ?>
+                                   class="h-4 w-4 text-primary border-outline-variant rounded focus:ring-primary-container">
+                        </td>
+                        <td class="px-0.5 py-2 text-center">
+                            <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][create]" value="1" <?= $hasCreate ? 'checked' : '' ?>
+                                   class="h-4 w-4 text-emerald-600 border-outline-variant rounded focus:ring-emerald-200">
+                        </td>
+                        <td class="px-0.5 py-2 text-center">
+                            <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][edit]" value="1" <?= $hasEdit ? 'checked' : '' ?>
+                                   class="h-4 w-4 text-amber-600 border-outline-variant rounded focus:ring-amber-200">
+                        </td>
+                        <?php endforeach; ?>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
+
+        <!-- Mobil: kártyák felhasználónként -->
+        <div class="md:hidden space-y-3">
+            <?php foreach ($allUsers as $u): ?>
+            <?php $userPerms = array_column($permissions[$u['id']] ?? [], null, 'tab_slug'); ?>
+            <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+                <div class="px-4 py-3 bg-surface-container-low/50 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-sidebar text-accent flex items-center justify-center font-bold text-[10px]">
+                        <?= e(mb_substr($u['name'], 0, 2)) ?>
+                    </div>
+                    <div>
+                        <span class="font-bold text-on-surface text-sm"><?= e($u['name']) ?></span>
+                        <span class="text-[9px] font-medium px-1.5 py-0.5 rounded-full ml-1 <?php
+                            if ($u['role'] === 'tulajdonos') echo 'bg-amber-100 text-amber-700';
+                            elseif ($u['role'] === 'konyvelo') echo 'bg-blue-100 text-blue-600';
+                            else echo 'bg-surface-container text-on-surface-variant';
+                        ?>"><?= match($u['role']) { 'tulajdonos' => 'Tulajdonos', 'konyvelo' => 'Könyvelő', default => 'Bolt' } ?></span>
+                    </div>
+                </div>
+                <div class="divide-y divide-surface-container">
+                    <?php foreach ($allTabs as $slug => $tab): ?>
+                    <?php
+                        $hasView   = ($userPerms[$slug]['can_view'] ?? 0) == 1;
+                        $hasCreate = ($userPerms[$slug]['can_create'] ?? 0) == 1;
+                        $hasEdit   = ($userPerms[$slug]['can_edit'] ?? 0) == 1;
+                    ?>
+                    <div class="flex items-center justify-between px-4 py-2">
+                        <span class="text-xs text-on-surface flex items-center gap-1.5">
+                            <i class="fa-solid <?= $tab['icon'] ?> text-[10px] text-on-surface-variant"></i>
+                            <?= $tab['label'] ?>
+                        </span>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][view]" value="1" <?= $hasView ? 'checked' : '' ?>
+                                       class="h-3.5 w-3.5 text-primary border-outline-variant rounded">
+                                <span class="text-[9px] text-gray-400">L</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][create]" value="1" <?= $hasCreate ? 'checked' : '' ?>
+                                       class="h-3.5 w-3.5 text-emerald-600 border-outline-variant rounded">
+                                <span class="text-[9px] text-emerald-500">R</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" name="perms[<?= $u['id'] ?>][<?= $slug ?>][edit]" value="1" <?= $hasEdit ? 'checked' : '' ?>
+                                       class="h-3.5 w-3.5 text-amber-600 border-outline-variant rounded">
+                                <span class="text-[9px] text-amber-500">M</span>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+
     <?php endif; ?>
 </form>
