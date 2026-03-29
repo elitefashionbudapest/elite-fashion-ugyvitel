@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
+    RewriteBase /ugyvitel/
 
     # Ha a fájl vagy könyvtár létezik, ne írjuk át
     RewriteCond %{REQUEST_FILENAME} !-f

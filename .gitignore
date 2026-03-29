@@ -3,6 +3,7 @@
 
 # Környezeti beállítások (érzékeny adatok!)
 .env
+.deploy
 
 # Adatmentések
 /storage/backups/
