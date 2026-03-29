@@ -181,7 +181,7 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
 
     </div>
 
-    <!-- JOBB: Chat -->
+    <!-- JOBB: Chat (desktop) -->
     <div class="w-[26rem] flex-shrink-0 hidden lg:flex flex-col rounded-2xl overflow-hidden border border-surface-container dash-fade"
          style="animation-delay:0.1s;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);"
          id="dashboard-chat" data-user-id="<?= Auth::id() ?>" data-base-url="<?= base_url('') ?>">
@@ -209,6 +209,113 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
         </div>
     </div>
 </div>
+
+<!-- MOBIL: Chat panel alul -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300" id="mobile-chat-wrapper"
+     data-user-id="<?= Auth::id() ?>" data-base-url="<?= base_url('') ?>">
+
+    <!-- Összecsukott sáv -->
+    <div id="mobile-chat-bar" class="bg-gradient-to-r from-[#0b0f0e] to-[#1a1f1e] text-white px-4 py-2.5 flex items-center justify-between cursor-pointer shadow-lg"
+         onclick="toggleMobileChat()">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-comments text-accent text-sm"></i>
+            <span class="font-heading font-bold text-xs">Közös chat</span>
+            <span id="mobile-chat-badge" class="hidden min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+            <i class="fa-solid fa-chevron-up text-gray-400 text-xs transition-transform" id="mobile-chat-arrow"></i>
+        </div>
+    </div>
+
+    <!-- Kinyitott chat -->
+    <div id="mobile-chat-panel" class="hidden bg-white border-t border-gray-200" style="height: 60vh;">
+        <div id="mobile-chat-messages" class="overflow-y-auto p-3 space-y-2" style="height: calc(60vh - 56px);">
+            <div class="text-center text-xs text-gray-400 py-6">Betöltés...</div>
+        </div>
+        <div class="p-2 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+            <form id="mobile-chat-form" class="flex gap-2" onsubmit="return sendMobileChat(event)">
+                <input type="text" id="mobile-chat-input" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm" placeholder="Üzenet..." autocomplete="off">
+                <button type="submit" class="px-3 py-2 bg-sidebar text-accent rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let mobileChatOpen = false;
+
+function toggleMobileChat() {
+    mobileChatOpen = !mobileChatOpen;
+    const panel = document.getElementById('mobile-chat-panel');
+    const arrow = document.getElementById('mobile-chat-arrow');
+    panel.classList.toggle('hidden', !mobileChatOpen);
+    arrow.style.transform = mobileChatOpen ? 'rotate(180deg)' : '';
+    if (mobileChatOpen) loadMobileChat();
+}
+
+async function loadMobileChat() {
+    const el = document.getElementById('mobile-chat-wrapper');
+    const baseUrl = el.dataset.baseUrl;
+    try {
+        const res = await fetch(baseUrl + '/chat/messages?type=public');
+        const data = await res.json();
+        const msgs = data.messages || data || [];
+        const userId = parseInt(el.dataset.userId);
+        const container = document.getElementById('mobile-chat-messages');
+
+        if (msgs.length === 0) {
+            container.innerHTML = '<div class="text-center text-xs text-gray-400 py-6">Nincs üzenet.</div>';
+            return;
+        }
+
+        let html = '';
+        msgs.forEach(m => {
+            const isMine = parseInt(m.sender_id) === userId;
+            const initials = (m.sender_name || '??').substring(0, 2);
+            const align = isMine ? 'justify-end' : 'justify-start';
+            const bg = isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800';
+            const avatarBg = isMine ? 'bg-accent text-sidebar' : 'bg-gray-300 text-gray-600';
+
+            html += '<div class="flex ' + align + ' gap-1.5">';
+            if (!isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
+            html += '<div class="max-w-[75%] px-3 py-1.5 rounded-xl text-xs ' + bg + '">' + escapeHtml(m.message) + '</div>';
+            if (isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+        container.scrollTop = container.scrollHeight;
+    } catch(e) {}
+}
+
+async function sendMobileChat(e) {
+    e.preventDefault();
+    const input = document.getElementById('mobile-chat-input');
+    const msg = input.value.trim();
+    if (!msg) return false;
+
+    const el = document.getElementById('mobile-chat-wrapper');
+    const baseUrl = el.dataset.baseUrl;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    try {
+        await fetch(baseUrl + '/chat/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrf},
+            body: '_csrf=' + encodeURIComponent(csrf) + '&message=' + encodeURIComponent(msg) + '&type=public'
+        });
+        input.value = '';
+        loadMobileChat();
+    } catch(e) {}
+    return false;
+}
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+// Periodikus frissítés
+setInterval(() => { if (mobileChatOpen) loadMobileChat(); }, 3000);
+</script>
 
 <!-- Chart.js -->
 <?php if ($isOwner && !empty($data['monthlyByStore'])): ?>
