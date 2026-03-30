@@ -112,7 +112,7 @@ class VacationController
 
         $request = VacationRequest::find((int) $id);
         if (!$request) {
-            redirect('/vacation');
+            $this->redirectBack();
         }
 
         try {
@@ -124,7 +124,7 @@ class VacationController
             set_flash('error', $e->getMessage());
         }
 
-        redirect('/vacation');
+        $this->redirectBack();
     }
 
     public function reject(string $id): void
@@ -134,14 +134,14 @@ class VacationController
 
         $request = VacationRequest::find((int) $id);
         if (!$request) {
-            redirect('/vacation');
+            $this->redirectBack();
         }
 
         $old = $request;
         VacationRequest::reject((int) $id, Auth::id());
         AuditLog::log('reject', 'vacation_requests', (int) $id, $old, ['status' => 'rejected']);
         set_flash('success', 'Szabadság elutasítva.');
-        redirect('/vacation');
+        $this->redirectBack();
     }
 
     public function destroy(string $id): void
@@ -154,6 +154,22 @@ class VacationController
             VacationRequest::delete((int) $id);
             AuditLog::log('delete', 'vacation_requests', (int) $id, $request, null);
             set_flash('success', 'Szabadság kérvény törölve.');
+        }
+        $this->redirectBack();
+    }
+
+    private function redirectBack(): never
+    {
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $basePath = getenv('APP_BASE_PATH') ?: '';
+        if ($referer && str_contains($referer, '/vacation')) {
+            $parsed = parse_url($referer);
+            $path = $parsed['path'] ?? '/vacation';
+            if ($basePath && str_starts_with($path, $basePath)) {
+                $path = substr($path, strlen($basePath));
+            }
+            $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+            redirect($path . $query);
         }
         redirect('/vacation');
     }
