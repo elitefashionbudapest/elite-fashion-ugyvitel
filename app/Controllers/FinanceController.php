@@ -351,18 +351,16 @@ class FinanceController
 
             $bankJutalek = 0;
             if ($hasCardIncome) {
-                // Bruttó kártyás CSAK azokra a napokra amikre van beérkezés rögzítve
+                // Bruttó kártyás forgalom CSAK azokra a napokra amikre van beérkezés
                 $stmt = $db->prepare(
                     "SELECT COALESCE(SUM(f.amount), 0)
                      FROM financial_records f
                      WHERE f.purpose = 'napi_bankkartya'
                      AND EXISTS (
                          SELECT 1 FROM bank_transactions bt
-                         JOIN bank_transaction_stores bts ON bt.id = bts.bank_transaction_id
                          WHERE bt.type = 'kartya_beerkezes'
                          AND bt.transaction_date BETWEEN :df AND :dt
                          AND f.record_date BETWEEN bt.date_from AND bt.date_to
-                         AND bts.store_id = f.store_id
                      )"
                 );
                 $stmt->execute(['df' => $from, 'dt' => $to]);
