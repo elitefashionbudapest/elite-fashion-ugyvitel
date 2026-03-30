@@ -30,13 +30,17 @@ if ($isOwner) {
     $_navTodayStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE store_id = :s AND record_date = CURDATE() AND purpose IN ('napi_keszpenz','napi_bankkartya')");
     $_navTodayStmt->execute(['s' => $storeId]);
     $_navTodayRevenue = (float)$_navTodayStmt->fetchColumn();
-    // Kassza egyenleg
+    // Kassza egyenleg = induló + bevételek - kiadások
+    $_navOpenCash = $db->prepare("SELECT COALESCE(opening_cash, 0) FROM stores WHERE id = :s");
+    $_navOpenCash->execute(['s' => $storeId]);
+    $_navOpenCash = (float)$_navOpenCash->fetchColumn();
+
     $_navKasszaStmt = $db->prepare("SELECT
-        COALESCE(SUM(CASE WHEN purpose IN ('kassza_nyito','befizetes_bankbol','befizetes_boltbol','napi_keszpenz','selejt_befizetes') THEN amount ELSE 0 END),0)
+        COALESCE(SUM(CASE WHEN purpose IN ('befizetes_bankbol','befizetes_boltbol','napi_keszpenz','selejt_befizetes') THEN amount ELSE 0 END),0)
         - COALESCE(SUM(CASE WHEN purpose IN ('meretre_igazitas','tankolas','munkaber','egyeb_kifizetes','szamla_kifizetes','bank_kifizetes') THEN amount ELSE 0 END),0)
         FROM financial_records WHERE store_id = :s");
     $_navKasszaStmt->execute(['s' => $storeId]);
-    $_navKassza = (float)$_navKasszaStmt->fetchColumn();
+    $_navKassza = $_navOpenCash + (float)$_navKasszaStmt->fetchColumn();
 
     // Mai dolgozók (saját bolt)
     $stmt = $db->prepare(

@@ -227,14 +227,15 @@ class FinanceController
         // Össz pénzügyi helyzet: kasszák + bankszámlák + hitelek
         $cashPosition = [];
 
-        // Kasszák boltonként
+        // Kasszák boltonként = induló + bevételek - kiadások
         $kasszak = $db->query(
             "SELECT s.name,
-                COALESCE(SUM(CASE WHEN f.purpose IN ('kassza_nyito', 'befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN f.amount ELSE 0 END), 0)
+                COALESCE(s.opening_cash, 0)
+                + COALESCE(SUM(CASE WHEN f.purpose IN ('befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN f.amount ELSE 0 END), 0)
                 - COALESCE(SUM(CASE WHEN f.purpose IN ('meretre_igazitas', 'tankolas', 'munkaber', 'egyeb_kifizetes', 'szamla_kifizetes', 'bank_kifizetes') THEN f.amount ELSE 0 END), 0)
                 as egyenleg
              FROM stores s LEFT JOIN financial_records f ON s.id = f.store_id
-             GROUP BY s.id, s.name ORDER BY s.name"
+             GROUP BY s.id, s.name, s.opening_cash ORDER BY s.name"
         )->fetchAll();
 
         // Bankszámlák + hitelek egyenleggel

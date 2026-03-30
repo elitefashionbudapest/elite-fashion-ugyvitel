@@ -50,15 +50,16 @@ class DashboardController
         )->fetchAll();
 
         // Kasszában lévő pénz boltonként
-        // Kassza nyitó + befizetések (bankból+boltból) + készpénz forgalom - kiadások
+        // Induló kassza + bevételek - kiadások (kassza_nyito NEM számít, az csak ellenőrzés)
         $kasszaByStore = $db->query(
-            "SELECT s.id, s.name,
-                COALESCE(SUM(CASE WHEN f.purpose IN ('kassza_nyito', 'befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN f.amount ELSE 0 END), 0)
+            "SELECT s.id, s.name, s.opening_cash,
+                COALESCE(s.opening_cash, 0)
+                + COALESCE(SUM(CASE WHEN f.purpose IN ('befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN f.amount ELSE 0 END), 0)
                 - COALESCE(SUM(CASE WHEN f.purpose IN ('meretre_igazitas', 'tankolas', 'munkaber', 'egyeb_kifizetes', 'szamla_kifizetes', 'bank_kifizetes') THEN f.amount ELSE 0 END), 0)
                 as kassza_egyenleg
              FROM stores s
              LEFT JOIN financial_records f ON s.id = f.store_id
-             GROUP BY s.id, s.name
+             GROUP BY s.id, s.name, s.opening_cash
              ORDER BY s.name"
         )->fetchAll();
 
@@ -159,16 +160,20 @@ class DashboardController
         $stmt->execute(['store_id' => $storeId]);
         $todayWorkers = $stmt->fetchAll();
 
-        // Kasszában lévő pénz (saját bolt)
+        // Kasszában lévő pénz (saját bolt) = induló + bevételek - kiadások
+        $storeData = $db->prepare("SELECT opening_cash FROM stores WHERE id = :id");
+        $storeData->execute(['id' => $storeId]);
+        $openingCash = (float)$storeData->fetchColumn();
+
         $stmt = $db->prepare(
             "SELECT
-                COALESCE(SUM(CASE WHEN purpose IN ('kassza_nyito', 'befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN amount ELSE 0 END), 0)
+                COALESCE(SUM(CASE WHEN purpose IN ('befizetes_bankbol', 'befizetes_boltbol', 'napi_keszpenz', 'selejt_befizetes') THEN amount ELSE 0 END), 0)
                 - COALESCE(SUM(CASE WHEN purpose IN ('meretre_igazitas', 'tankolas', 'munkaber', 'egyeb_kifizetes', 'szamla_kifizetes', 'bank_kifizetes') THEN amount ELSE 0 END), 0)
                 as kassza_egyenleg
              FROM financial_records WHERE store_id = :store_id"
         );
         $stmt->execute(['store_id' => $storeId]);
-        $kasszaEgyenleg = (float)$stmt->fetchColumn();
+        $kasszaEgyenleg = $openingCash + (float)$stmt->fetchColumn();
 
         // Értékelések dolgozónként (aktuális hónap, saját bolt)
         $stmt = $db->prepare(
