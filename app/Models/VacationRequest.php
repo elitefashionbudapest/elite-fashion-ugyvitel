@@ -167,7 +167,7 @@ class VacationRequest
         $db = Database::getInstance();
 
         $sql = "SELECT COUNT(*) FROM vacation_requests
-                WHERE status = 'approved'
+                WHERE status = 'approved' AND type = 'szabadsag'
                 AND date_from <= :date_to
                 AND date_to >= :date_from";
         $params = [
