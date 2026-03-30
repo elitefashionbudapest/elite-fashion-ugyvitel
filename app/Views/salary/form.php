@@ -1,4 +1,5 @@
 <?php
+use App\Core\Auth;
 use App\Models\{SalaryPayment, OwnerPayment};
 
 $employees = $data['employees'] ?? [];
