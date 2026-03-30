@@ -269,8 +269,8 @@ class TaskController
                     'date'     => $date,
                 ];
 
-                // Selejt befizetés emlékeztető
-                if ($this->canSee('konyveles')) {
+                // Selejt befizetés emlékeztető (selejt jogosultság elég)
+                {
                     $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'selejt_befizetes'");
                     $stmt->execute(['s' => $storeId, 'd' => $date]);
                     $hasSelejtPay = (int)$stmt->fetchColumn() > 0;
