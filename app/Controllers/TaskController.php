@@ -248,7 +248,7 @@ class TaskController
             ];
         }
 
-        // Selejt napi érték
+        // Selejt napi érték + selejt befizetés
         if ($this->canSee('selejt')) {
             $stmt = $db->prepare("SELECT COUNT(*) FROM defect_items WHERE store_id = :s AND DATE(scanned_at) = :d");
             $stmt->execute(['s' => $storeId, 'd' => $date]);
@@ -268,6 +268,23 @@ class TaskController
                     'icon'     => 'fa-coins',
                     'date'     => $date,
                 ];
+
+                // Selejt befizetés emlékeztető
+                if ($this->canSee('konyveles')) {
+                    $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'selejt_befizetes'");
+                    $stmt->execute(['s' => $storeId, 'd' => $date]);
+                    $hasSelejtPay = (int)$stmt->fetchColumn() > 0;
+
+                    $tasks[] = [
+                        'id'       => "selejt_befizetes_{$storeId}_{$date}",
+                        'text'     => "{$dayLabel} selejt befizetés — {$storeName}",
+                        'done'     => $hasSelejtPay,
+                        'overdue'  => $isOverdue && !$hasSelejtPay,
+                        'link'     => '/finance/create',
+                        'icon'     => 'fa-box-open',
+                        'date'     => $date,
+                    ];
+                }
             }
         }
 

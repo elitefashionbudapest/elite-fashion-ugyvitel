@@ -127,8 +127,13 @@ if ($isOwner) {
             <?php endif; ?>
         </div>
 
-        <!-- Right: Feladatok + Értesítések + Profil -->
+        <!-- Right: Nap zárása + Feladatok + Értesítések + Profil -->
         <div class="flex items-center gap-1.5">
+
+            <!-- Nap zárása gomb -->
+            <button onclick="openDayClose()" class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors" title="Nap zárása">
+                <i class="fa-solid fa-lock text-sm"></i>
+            </button>
 
             <!-- Feladat jelző -->
             <div class="relative" id="task-wrapper">
@@ -246,5 +251,43 @@ if ($isOwner) {
 
     loadTasks();
     setInterval(function() { if (!taskDropdownOpen) loadTasks(); }, 60000);
+
+    // === Nap zárása ===
+    window.openDayClose = async function() {
+        try {
+            const res = await fetch(baseUrl + '/day-close/check');
+            const data = await res.json();
+            const missing = data.missing || [];
+
+            if (missing.length === 0) {
+                alert('Minden feladat ki van töltve! A nap lezárható.');
+                return;
+            }
+
+            let msg = '⚠ A következő feladatok nincsenek kitöltve ma:\n\n';
+            missing.forEach(m => { msg += '• ' + m.store + ' — ' + m.label + '\n'; });
+            msg += '\nSzeretné 0 értékkel rögzíteni ezeket?';
+
+            if (!confirm(msg)) return;
+
+            const closeRes = await fetch(baseUrl + '/day-close/close', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken()},
+                body: JSON.stringify({items: missing, _csrf: getCsrfToken()})
+            });
+            const closeData = await closeRes.json();
+
+            if (closeData.success) {
+                alert('Nap lezárva! ' + closeData.count + ' feladat rögzítve 0 értékkel.');
+                loadTasks();
+            }
+        } catch(e) {
+            alert('Hiba történt: ' + e.message);
+        }
+    };
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    }
 })();
 </script>

@@ -239,6 +239,10 @@ $router->post('/holidays/{id}/delete', [App\Controllers\HolidayController::class
 // Feladat jelző
 $router->get('/tasks/api', [App\Controllers\TaskController::class, 'apiCheck']);
 
+// Nap zárása
+$router->get('/day-close/check', [App\Controllers\DayCloseController::class, 'check']);
+$router->post('/day-close/close', [App\Controllers\DayCloseController::class, 'close']);
+
 // Audit log
 $router->get('/audit', [App\Controllers\AuditController::class, 'index']);
 
