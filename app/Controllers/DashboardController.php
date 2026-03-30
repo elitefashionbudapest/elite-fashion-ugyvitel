@@ -39,6 +39,16 @@ class DashboardController
         );
         $todayRevenue->execute();
 
+        // Mai bevételek összesítve (készpénz + bankkártya külön)
+        $todayDetails = $db->query(
+            "SELECT
+                COALESCE(SUM(CASE WHEN purpose = 'napi_keszpenz' THEN amount ELSE 0 END), 0) as keszpenz,
+                COALESCE(SUM(CASE WHEN purpose = 'napi_bankkartya' THEN amount ELSE 0 END), 0) as bankkartya,
+                COALESCE(SUM(CASE WHEN purpose = 'selejt_befizetes' THEN amount ELSE 0 END), 0) as selejt,
+                COALESCE(SUM(CASE WHEN purpose IN ('meretre_igazitas','tankolas','munkaber','egyeb_kifizetes','szamla_kifizetes','bank_kifizetes') THEN amount ELSE 0 END), 0) as kiadasok
+             FROM financial_records WHERE record_date = CURDATE()"
+        )->fetch();
+
         $monthlyByStore = $db->query(
             "SELECT s.name, COALESCE(SUM(f.amount), 0) as total
              FROM stores s
@@ -132,6 +142,7 @@ class DashboardController
             'storeCount'     => $storeCount,
             'employeeCount'  => $employeeCount,
             'todayRevenue'   => (float)$todayRevenue->fetchColumn(),
+            'todayDetails'   => $todayDetails,
             'monthlyByStore' => $monthlyByStore,
             'kasszaByStore'  => $kasszaByStore,
             'employeeEvals'  => $employeeEvals,

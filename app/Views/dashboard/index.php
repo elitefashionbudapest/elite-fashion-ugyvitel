@@ -39,7 +39,39 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
 
         <?php if ($isOwner): ?>
         <!-- Kassza + Forgalom + Értékelések EGY sorban, egyforma magas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 flex-shrink-0 dash-fade" style="animation-delay:0.1s">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 flex-shrink-0 dash-fade" style="animation-delay:0.1s">
+            <!-- Mai bevétel részletezve -->
+            <?php $td = $data['todayDetails'] ?? []; $todayTotal = (float)($td['keszpenz'] ?? 0) + (float)($td['bankkartya'] ?? 0); ?>
+            <div class="dash-card p-4 sm:p-5 flex flex-col">
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3"><i class="fa-solid fa-receipt text-emerald-500 mr-1"></i>Mai bevétel</p>
+                <div class="space-y-2 flex-1 flex flex-col justify-center">
+                    <div class="flex items-center justify-between px-3 py-1.5 bg-emerald-50/50 rounded-lg">
+                        <span class="text-xs text-gray-600 flex items-center gap-1"><i class="fa-solid fa-money-bill text-[10px] text-emerald-400"></i>Készpénz</span>
+                        <span class="text-sm font-bold text-emerald-700"><?= format_money($td['keszpenz'] ?? 0) ?></span>
+                    </div>
+                    <div class="flex items-center justify-between px-3 py-1.5 bg-blue-50/50 rounded-lg">
+                        <span class="text-xs text-gray-600 flex items-center gap-1"><i class="fa-solid fa-credit-card text-[10px] text-blue-400"></i>Bankkártya</span>
+                        <span class="text-sm font-bold text-blue-700"><?= format_money($td['bankkartya'] ?? 0) ?></span>
+                    </div>
+                    <?php if (($td['selejt'] ?? 0) > 0): ?>
+                    <div class="flex items-center justify-between px-3 py-1.5 bg-orange-50/50 rounded-lg">
+                        <span class="text-xs text-gray-600 flex items-center gap-1"><i class="fa-solid fa-box-open text-[10px] text-orange-400"></i>Selejt befiz.</span>
+                        <span class="text-sm font-bold text-orange-700"><?= format_money($td['selejt'] ?? 0) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (($td['kiadasok'] ?? 0) > 0): ?>
+                    <div class="flex items-center justify-between px-3 py-1.5 bg-red-50/50 rounded-lg">
+                        <span class="text-xs text-gray-600 flex items-center gap-1"><i class="fa-solid fa-arrow-up text-[10px] text-red-400"></i>Kiadások</span>
+                        <span class="text-sm font-bold text-red-600"><?= format_money($td['kiadasok'] ?? 0) ?></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-on-surface-variant uppercase">Összesen</span>
+                    <span class="font-heading font-extrabold text-base text-on-surface"><?= format_money($todayTotal) ?></span>
+                </div>
+            </div>
+
             <?php if (!empty($data['kasszaByStore'])): ?>
             <div class="dash-card p-5 flex flex-col justify-between">
                 <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3"><i class="fa-solid fa-vault text-amber-500 mr-1"></i>Kassza egyenleg</p>
