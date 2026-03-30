@@ -299,6 +299,18 @@ class ScheduleController
             return;
         }
 
+        // Toggle: ha már létezik → töröljük, ha nem → beszúrjuk
+        $existing = $db->prepare('SELECT id FROM schedules WHERE employee_id = :e AND store_id = :s AND work_date = :d');
+        $existing->execute(['e' => $employeeId, 's' => $storeId, 'd' => $workDate]);
+        $existingId = $existing->fetchColumn();
+
+        if ($existingId) {
+            Schedule::delete((int)$existingId);
+            $this->markMonthModifiedIfApproved($storeId, $workDate);
+            $this->json(['success' => true, 'action' => 'deleted', 'id' => (int)$existingId]);
+            return;
+        }
+
         $id = Schedule::create([
             'store_id'    => $storeId,
             'employee_id' => $employeeId,
