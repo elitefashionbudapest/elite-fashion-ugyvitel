@@ -98,7 +98,7 @@ class DashboardController
             if ($yesterdayOpen === false) continue; // Nem volt tegnap nyitó, nem tudunk számolni
 
             // Tegnapi bevételek (kassza szempontjából)
-            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose IN ('napi_keszpenz', 'befizetes_bankbol', 'befizetes_boltbol')");
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose IN ('napi_keszpenz', 'befizetes_bankbol', 'befizetes_boltbol', 'selejt_befizetes')");
             $stmt->execute(['s' => $sid, 'd' => $yesterday]);
             $yesterdayIn = (float)$stmt->fetchColumn();
 
