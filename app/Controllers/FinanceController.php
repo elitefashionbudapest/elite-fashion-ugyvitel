@@ -341,13 +341,13 @@ class FinanceController
 
             // Bank jutalék (bruttó - nettó a kártyás beérkezéseknél)
             // Csak akkor számolunk jutalékot ha van rögzített kártyás beérkezés
-            $stmt = $db->prepare("SELECT COUNT(*), COALESCE(SUM(amount), 0)
+            $stmt = $db->prepare("SELECT COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total
                 FROM bank_transactions WHERE type = 'kartya_beerkezes'
                 AND transaction_date BETWEEN :df AND :dt");
             $stmt->execute(['df' => $from, 'dt' => $to]);
             $cardRow = $stmt->fetch();
-            $hasCardIncome = (int)$cardRow[0] > 0;
-            $netCard = (float)$cardRow[1];
+            $hasCardIncome = (int)($cardRow['cnt'] ?? 0) > 0;
+            $netCard = (float)($cardRow['total'] ?? 0);
 
             $bankJutalek = 0;
             if ($hasCardIncome) {
