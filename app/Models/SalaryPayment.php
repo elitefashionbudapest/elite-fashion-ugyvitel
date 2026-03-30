@@ -65,17 +65,17 @@ class SalaryPayment
     {
         $db = Database::getInstance();
         $stmt = $db->prepare(
-            'INSERT INTO salary_payments (employee_id, issuer, year, month, source, amount, created_by)
-             VALUES (:employee_id, :issuer, :year, :month, :source, :amount, :created_by)'
+            'INSERT INTO salary_payments (employee_id, issued_by, year, month, payment_source, amount, recorded_by)
+             VALUES (:employee_id, :issued_by, :year, :month, :payment_source, :amount, :recorded_by)'
         );
         $stmt->execute([
-            'employee_id' => $data['employee_id'],
-            'issuer'      => $data['issuer'],
-            'year'        => $data['year'],
-            'month'       => $data['month'],
-            'source'      => $data['source'],
-            'amount'      => $data['amount'],
-            'created_by'  => $data['created_by'],
+            'employee_id'    => $data['employee_id'],
+            'issued_by'      => $data['issuer'] ?? $data['issued_by'] ?? '',
+            'year'           => $data['year'],
+            'month'          => $data['month'],
+            'payment_source' => $data['source'] ?? $data['payment_source'] ?? '',
+            'amount'         => $data['amount'],
+            'recorded_by'    => $data['created_by'] ?? $data['recorded_by'] ?? 1,
         ]);
         return (int)$db->lastInsertId();
     }
