@@ -23,16 +23,16 @@ class Store
     public static function create(array $data): int
     {
         $db = Database::getInstance();
-        $stmt = $db->prepare('INSERT INTO stores (name) VALUES (:name)');
-        $stmt->execute(['name' => $data['name']]);
+        $stmt = $db->prepare('INSERT INTO stores (name, open_days) VALUES (:name, :open_days)');
+        $stmt->execute(['name' => $data['name'], 'open_days' => $data['open_days'] ?? '1,2,3,4,5,6']);
         return (int)$db->lastInsertId();
     }
 
     public static function update(int $id, array $data): bool
     {
         $db = Database::getInstance();
-        $stmt = $db->prepare('UPDATE stores SET name = :name WHERE id = :id');
-        return $stmt->execute(['name' => $data['name'], 'id' => $id]);
+        $stmt = $db->prepare('UPDATE stores SET name = :name, open_days = :open_days WHERE id = :id');
+        return $stmt->execute(['name' => $data['name'], 'open_days' => $data['open_days'] ?? '1,2,3,4,5,6', 'id' => $id]);
     }
 
     public static function delete(int $id): bool

@@ -37,7 +37,7 @@ class TaskController
         $tasks = [];
 
         if (Auth::isOwner()) {
-            $stores = $db->query('SELECT id, name FROM stores ORDER BY name')->fetchAll();
+            $stores = $db->query('SELECT id, name, open_days FROM stores ORDER BY name')->fetchAll();
             foreach ($stores as $store) {
                 $tasks = array_merge($tasks, $this->checkStoreDay($db, $store, $today, 'Ma'));
                 // Tegnapit csak akkor kérjük, ha tegnap >= kezdődátum
@@ -152,7 +152,7 @@ class TaskController
         } else {
             $storeId = Auth::storeId();
             if ($storeId) {
-                $store = $db->prepare('SELECT id, name FROM stores WHERE id = :id');
+                $store = $db->prepare('SELECT id, name, open_days FROM stores WHERE id = :id');
                 $store->execute(['id' => $storeId]);
                 $store = $store->fetch();
                 if ($store) {
@@ -177,6 +177,11 @@ class TaskController
         $storeId = $store['id'];
         $storeName = $store['name'];
         $dayLabel = $label === 'Ma' ? 'Mai' : 'Tegnapi';
+
+        // Nyitvatartás ellenőrzés — ha az adott nap nem nyitvatartási nap, nem kérünk feladatot
+        $openDays = explode(',', $store['open_days'] ?? '1,2,3,4,5,6');
+        $dayOfWeek = (string)date('N', strtotime($date)); // 1=hétfő, 7=vasárnap
+        if (!in_array($dayOfWeek, $openDays)) return $tasks;
         $isOverdue = $label === 'Tegnap';
 
         // Könyvelés feladatok (csak ha van jogosultsága)

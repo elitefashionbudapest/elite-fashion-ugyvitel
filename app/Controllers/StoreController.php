@@ -38,7 +38,8 @@ class StoreController
             redirect('/stores/create');
         }
 
-        $id = Store::create(['name' => $name]);
+        $openDays = implode(',', $_POST['open_days'] ?? ['1','2','3','4','5','6']);
+        $id = Store::create(['name' => $name, 'open_days' => $openDays]);
         AuditLog::log('create', 'stores', $id, null, ['name' => $name]);
         set_flash('success', 'Bolt sikeresen létrehozva.');
         redirect('/stores');
@@ -71,7 +72,8 @@ class StoreController
             redirect("/stores/{$id}/edit");
         }
 
-        Store::update((int)$id, ['name' => $name]);
+        $openDays = implode(',', $_POST['open_days'] ?? ['1','2','3','4','5','6']);
+        Store::update((int)$id, ['name' => $name, 'open_days' => $openDays]);
         AuditLog::log('update', 'stores', (int)$id, ['name' => $store['name']], ['name' => $name]);
         set_flash('success', 'Bolt sikeresen frissítve.');
         redirect('/stores');
