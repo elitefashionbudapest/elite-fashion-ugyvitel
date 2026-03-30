@@ -131,9 +131,11 @@ if ($isOwner) {
         <div class="flex items-center gap-1.5">
 
             <!-- Nap zárása gomb -->
-            <button onclick="openDayClose()" class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors" title="Nap zárása">
-                <i class="fa-solid fa-lock text-sm"></i>
+            <button onclick="openDayClose()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-colors animate-pulse-slow bg-amber-50 border border-amber-200 hover:bg-amber-100" title="Nap zárása">
+                <i class="fa-solid fa-lock text-sm text-amber-600"></i>
+                <span class="text-xs font-bold text-amber-700 hidden sm:inline">Nap zárása</span>
             </button>
+            <style>.animate-pulse-slow { animation: pulseGlow 2s ease-in-out infinite; } @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow: 0 0 8px 2px rgba(245,158,11,0.3); } }</style>
 
             <!-- Feladat jelző -->
             <div class="relative" id="task-wrapper">
