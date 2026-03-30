@@ -21,6 +21,34 @@ class FinancialRecord
         'selejt_befizetes' => 'Selejt befizetés',
     ];
 
+    public static function allMultiStore(?array $storeIds = null, ?string $dateFrom = null, ?string $dateTo = null, ?string $purpose = null): array
+    {
+        $db = Database::getInstance();
+        $sql = 'SELECT f.*, s.name as store_name, u.name as recorded_by_name, e.name as paid_to_name, b.name as bank_name
+                FROM financial_records f
+                JOIN stores s ON f.store_id = s.id
+                JOIN users u ON f.recorded_by = u.id
+                LEFT JOIN employees e ON f.paid_to_employee_id = e.id
+                LEFT JOIN banks b ON f.bank_id = b.id
+                WHERE 1=1';
+        $params = [];
+
+        if (!empty($storeIds)) {
+            $placeholders = implode(',', array_fill(0, count($storeIds), '?'));
+            $sql .= " AND f.store_id IN ({$placeholders})";
+            $params = array_map('intval', $storeIds);
+        }
+        if ($dateFrom) { $sql .= ' AND f.record_date >= ?'; $params[] = $dateFrom; }
+        if ($dateTo) { $sql .= ' AND f.record_date <= ?'; $params[] = $dateTo; }
+        if ($purpose) { $sql .= ' AND f.purpose = ?'; $params[] = $purpose; }
+
+        $sql .= ' ORDER BY f.record_date DESC, f.created_at DESC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
     public static function all(?int $storeId = null, ?string $dateFrom = null, ?string $dateTo = null, ?string $purpose = null): array
     {
         $db = Database::getInstance();

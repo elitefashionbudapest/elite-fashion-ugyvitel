@@ -22,12 +22,21 @@ $filters = $data['filters'] ?? [];
     <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Szűrők</span>
     <form method="GET" action="<?= base_url('/finance') ?>" class="flex flex-wrap gap-3 items-center flex-1">
         <?php if (Auth::isOwner()): ?>
-        <select name="store_id" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container cursor-pointer">
-            <option value="">Minden bolt</option>
+        <?php
+            $selectedStores = $filters['store_ids'] ?? [];
+            if (!empty($filters['store_id']) && empty($selectedStores)) $selectedStores = [(string)$filters['store_id']];
+        ?>
+        <div class="flex items-center gap-1.5">
             <?php foreach ($stores as $s): ?>
-                <option value="<?= $s['id'] ?>" <?= ($filters['store_id'] ?? '') == $s['id'] ? 'selected' : '' ?>><?= e($s['name']) ?></option>
+            <label class="flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold transition-all
+                <?= in_array((string)$s['id'], $selectedStores) ? 'bg-sidebar text-accent' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container' ?>">
+                <input type="checkbox" name="store_ids[]" value="<?= $s['id'] ?>"
+                    <?= in_array((string)$s['id'], $selectedStores) ? 'checked' : '' ?>
+                    class="hidden" onchange="this.form.submit()">
+                <?= e($s['name']) ?>
+            </label>
             <?php endforeach; ?>
-        </select>
+        </div>
         <?php endif; ?>
         <input type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">
         <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">

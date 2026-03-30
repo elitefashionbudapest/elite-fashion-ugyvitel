@@ -11,13 +11,18 @@ class FinanceController
     {
         Middleware::tabPermission('konyveles', 'view');
 
-        $storeId = Auth::isStore() ? Auth::storeId() : ($_GET['store_id'] ?? null);
+        $storeIds = Auth::isStore() ? [Auth::storeId()] : ($_GET['store_ids'] ?? []);
         $dateFrom = $_GET['date_from'] ?? null;
         $dateTo = $_GET['date_to'] ?? null;
         $purpose = $_GET['purpose'] ?? null;
 
-        $records = FinancialRecord::all(
-            $storeId ? (int)$storeId : null,
+        // Kompatibilitás régi store_id paraméterrel
+        if (empty($storeIds) && !empty($_GET['store_id'])) {
+            $storeIds = [(int)$_GET['store_id']];
+        }
+
+        $records = FinancialRecord::allMultiStore(
+            $storeIds ?: null,
             $dateFrom ?: null,
             $dateTo ?: null,
             $purpose ?: null
@@ -32,7 +37,7 @@ class FinanceController
                 'activeTab' => 'konyveles',
                 'records'   => $records,
                 'stores'    => $stores,
-                'filters'   => ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'purpose' => $purpose],
+                'filters'   => ['store_ids' => array_map('strval', $storeIds), 'date_from' => $dateFrom, 'date_to' => $dateTo, 'purpose' => $purpose],
             ]
         ]);
     }
