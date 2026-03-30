@@ -349,22 +349,20 @@ class FinanceController
             $hasCardIncome = (int)($cardRow['cnt'] ?? 0) > 0;
             $netCard = (float)($cardRow['total'] ?? 0);
 
+            // Jutalék = a kártyás beérkezéseknél a bruttó összeg - nettó beérkezett összeg
+            // A bruttó összeget a bank_transactions-ból számoljuk (calculateGross)
             $bankJutalek = 0;
             if ($hasCardIncome) {
-                // Bruttó kártyás forgalom CSAK azokra a napokra amikre van beérkezés
                 $stmt = $db->prepare(
-                    "SELECT COALESCE(SUM(f.amount), 0)
-                     FROM financial_records f
-                     WHERE f.purpose = 'napi_bankkartya'
-                     AND EXISTS (
-                         SELECT 1 FROM bank_transactions bt
-                         WHERE bt.type = 'kartya_beerkezes'
-                         AND bt.transaction_date BETWEEN :df AND :dt
-                         AND f.record_date BETWEEN bt.date_from AND bt.date_to
-                     )"
+                    "SELECT bt.id FROM bank_transactions bt
+                     WHERE bt.type = 'kartya_beerkezes' AND bt.transaction_date BETWEEN :df AND :dt"
                 );
                 $stmt->execute(['df' => $from, 'dt' => $to]);
-                $grossCard = (float)$stmt->fetchColumn();
+                $cardIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+                $grossCard = 0;
+                foreach ($cardIds as $cid) {
+                    $grossCard += \App\Models\BankTransaction::calculateGross((int)$cid);
+                }
                 $bankJutalek = $grossCard - $netCard;
                 if ($bankJutalek < 0) $bankJutalek = 0;
             }
