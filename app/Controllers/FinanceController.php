@@ -340,19 +340,24 @@ class FinanceController
             $costs = $stmt->fetch();
 
             // Bank jutalék (bruttó - nettó a kártyás beérkezéseknél)
-            $stmt = $db->prepare("SELECT
-                COALESCE(SUM(amount), 0) as net_card
+            // Csak akkor számolunk jutalékot ha van rögzített kártyás beérkezés
+            $stmt = $db->prepare("SELECT COUNT(*), COALESCE(SUM(amount), 0)
                 FROM bank_transactions WHERE type = 'kartya_beerkezes'
                 AND transaction_date BETWEEN :df AND :dt");
             $stmt->execute(['df' => $from, 'dt' => $to]);
-            $netCard = (float)$stmt->fetchColumn();
+            $cardRow = $stmt->fetch();
+            $hasCardIncome = (int)$cardRow[0] > 0;
+            $netCard = (float)$cardRow[1];
 
-            // Bruttó kártyás a boltokból
-            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE purpose = 'napi_bankkartya' AND record_date BETWEEN :df AND :dt");
-            $stmt->execute(['df' => $from, 'dt' => $to]);
-            $grossCard = (float)$stmt->fetchColumn();
-            $bankJutalek = $grossCard - $netCard;
-            if ($bankJutalek < 0) $bankJutalek = 0;
+            $bankJutalek = 0;
+            if ($hasCardIncome) {
+                // Bruttó kártyás a boltokból
+                $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE purpose = 'napi_bankkartya' AND record_date BETWEEN :df AND :dt");
+                $stmt->execute(['df' => $from, 'dt' => $to]);
+                $grossCard = (float)$stmt->fetchColumn();
+                $bankJutalek = $grossCard - $netCard;
+                if ($bankJutalek < 0) $bankJutalek = 0;
+            }
 
             // Szolgáltatói levonások
             $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'szolgaltato_levon' AND transaction_date BETWEEN :df AND :dt");
