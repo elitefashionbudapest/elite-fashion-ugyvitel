@@ -14,7 +14,7 @@ class ScheduleController
     {
         Middleware::tabPermission('beosztas', 'view');
 
-        $stores = Auth::isOwner() ? Store::all() : [];
+        $stores = Store::all();
         $storeId = Auth::isStore() ? Auth::storeId() : null;
 
         // Minden aktív dolgozó beosztható bármelyik boltba

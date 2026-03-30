@@ -23,18 +23,11 @@ $isOwner = Auth::isOwner();
 <div class="bg-surface-container-lowest rounded-xl p-4 mb-4 flex flex-wrap gap-4 items-end no-print">
     <div class="flex-1 min-w-[180px]">
         <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Bolt</label>
-        <?php if ($isOwner): ?>
         <select id="store-select" class="w-full px-4 py-3 border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-container focus:border-primary bg-surface-container-lowest">
             <?php foreach ($stores as $s): ?>
                 <option value="<?= $s['id'] ?>" <?= $s['id'] == $currentStoreId ? 'selected' : '' ?>><?= e($s['name']) ?></option>
             <?php endforeach; ?>
         </select>
-        <?php else: ?>
-        <div class="px-4 py-3 bg-primary-container/20 rounded-xl text-sm font-bold text-on-primary-container">
-            <?php foreach ($stores as $s): if ($s['id'] == $currentStoreId) echo e($s['name']); endforeach; ?>
-        </div>
-        <input type="hidden" id="store-select" value="<?= $currentStoreId ?>">
-        <?php endif; ?>
     </div>
 
     <div class="flex-1 min-w-[200px]">
