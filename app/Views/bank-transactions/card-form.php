@@ -80,7 +80,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
                     <label class="block text-xs font-bold text-blue-700 uppercase tracking-widest mb-1">Beérkezett összeg (nettó)</label>
                     <div class="relative">
-                        <input type="number" name="amount" id="net-amount" step="1" min="0" value="<?= e(old('amount')) ?>"
+                        <input type="number" name="amount" id="net-amount" step="0.01" min="0" value="<?= e(old('amount')) ?>"
                                class="w-full px-3 py-2 border border-blue-300 rounded-lg text-lg font-heading font-bold text-center focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
                                placeholder="0" required onchange="updateCommission()" oninput="updateCommission()">
                         <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-blue-400">Ft</span>
