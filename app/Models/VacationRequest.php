@@ -79,21 +79,24 @@ class VacationRequest
      */
     public static function create(array $data): int
     {
-        // Ellenorzes: nincs-e mar jovahagyott szabadsag ebben az idoszakban
-        if (self::hasOverlap($data['date_from'], $data['date_to'])) {
+        $type = $data['type'] ?? 'szabadsag';
+
+        // Átfedés ellenőrzés csak szabadságnál (szabadnapnál nem)
+        if ($type === 'szabadsag' && self::hasOverlap($data['date_from'], $data['date_to'])) {
             throw new \RuntimeException('Ebben az idoszakban mar van jovahagyott szabadsag. Egyszerre csak 1 fo lehet szabadsagon!');
         }
 
         $db = Database::getInstance();
         $stmt = $db->prepare(
-            'INSERT INTO vacation_requests (employee_id, date_from, date_to, status, confirmed_no_overlap, created_at)
-             VALUES (:employee_id, :date_from, :date_to, :status, :confirmed_no_overlap, NOW())'
+            'INSERT INTO vacation_requests (employee_id, type, date_from, date_to, status, confirmed_no_overlap, created_at)
+             VALUES (:employee_id, :type, :date_from, :date_to, :status, :confirmed_no_overlap, NOW())'
         );
         $stmt->execute([
             'employee_id'          => $data['employee_id'],
+            'type'                 => $type,
             'date_from'            => $data['date_from'],
             'date_to'              => $data['date_to'],
-            'status'               => 'pending',
+            'status'               => $type === 'szabadnap' ? 'approved' : 'pending',
             'confirmed_no_overlap' => $data['confirmed_no_overlap'] ?? 0,
         ]);
         return (int) $db->lastInsertId();

@@ -59,6 +59,7 @@ class VacationController
         $employeeId = (int) ($_POST['employee_id'] ?? 0);
         $dateFrom   = $_POST['date_from'] ?? '';
         $dateTo     = $_POST['date_to'] ?? '';
+        $type       = $_POST['type'] ?? 'szabadsag';
         $confirmed  = isset($_POST['confirmed_no_overlap']) ? 1 : 0;
 
         if (empty($employeeId) || empty($dateFrom) || empty($dateTo)) {
@@ -73,29 +74,34 @@ class VacationController
             redirect('/vacation/create');
         }
 
-        if (!$confirmed) {
-            save_old_input();
-            set_flash('error', 'Kérlek erősítsd meg, hogy ellenőrizted: nincs átfedés más jóváhagyott szabadsággal.');
-            redirect('/vacation/create');
-        }
+        // Szabadságnál: átfedés ellenőrzés + megerősítés
+        if ($type === 'szabadsag') {
+            if (!$confirmed) {
+                save_old_input();
+                set_flash('error', 'Kérlek erősítsd meg, hogy ellenőrizted: nincs átfedés más jóváhagyott szabadsággal.');
+                redirect('/vacation/create');
+            }
 
-        if (VacationRequest::hasOverlap($dateFrom, $dateTo)) {
-            save_old_input();
-            set_flash('error', 'Ebben az időszakban már van jóváhagyott szabadság! Egyszerre csak 1 fő lehet szabadságon az egész cégnél.');
-            redirect('/vacation/create');
+            if (VacationRequest::hasOverlap($dateFrom, $dateTo)) {
+                save_old_input();
+                set_flash('error', 'Ebben az időszakban már van jóváhagyott szabadság! Egyszerre csak 1 fő lehet szabadságon az egész cégnél.');
+                redirect('/vacation/create');
+            }
         }
 
         $data = [
             'employee_id'          => $employeeId,
+            'type'                 => $type,
             'date_from'            => $dateFrom,
             'date_to'              => $dateTo,
-            'confirmed_no_overlap' => $confirmed,
+            'confirmed_no_overlap' => $type === 'szabadsag' ? $confirmed : 0,
         ];
 
         try {
             $id = VacationRequest::create($data);
             AuditLog::log('create', 'vacation_requests', $id, null, $data);
-            set_flash('success', 'Szabadság kérvény sikeresen beadva.');
+            $msg = $type === 'szabadnap' ? 'Kivételes szabadnap sikeresen rögzítve.' : 'Szabadság kérvény sikeresen beadva.';
+            set_flash('success', $msg);
         } catch (\RuntimeException $e) {
             save_old_input();
             set_flash('error', $e->getMessage());

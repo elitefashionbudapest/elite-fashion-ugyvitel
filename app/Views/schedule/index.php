@@ -114,7 +114,7 @@ $isOwner = Auth::isOwner();
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let scheduleData = {};
-    let vacationDays = new Set();
+    let vacationDays = new Map(); // date -> type ('szabadsag'|'szabadnap')
     let holidayData = {}; // { 'YYYY-MM-DD': 'Ünnep neve' }
     let loading = false;
     let editMode = false;
@@ -232,10 +232,10 @@ $isOwner = Auth::isOwner();
             const res = await fetch(baseUrl + '/schedule/api/employee?employee_id=' + empId + '&start=' + first + '&end=' + last);
             const data = await res.json();
             scheduleData = {};
-            vacationDays = new Set();
+            vacationDays = new Map();
             holidayData = {};
             (data.schedules||[]).forEach(s => { scheduleData[s.work_date] = { storeId: parseInt(s.store_id), storeName: s.store_name, id: s.id }; });
-            (data.vacations||[]).forEach(v => { let d = new Date(v.date_from); const end = new Date(v.date_to); while (d <= end) { vacationDays.add(d.toISOString().split('T')[0]); d.setDate(d.getDate()+1); } });
+            (data.vacations||[]).forEach(v => { let d = new Date(v.date_from); const end = new Date(v.date_to); const vType = v.type || 'szabadsag'; while (d <= end) { vacationDays.set(d.toISOString().split('T')[0], vType); d.setDate(d.getDate()+1); } });
             (data.holidays||[]).forEach(h => { holidayData[h.date] = h.name; });
             render();
         } catch(e) { console.error(e); }
@@ -273,16 +273,19 @@ $isOwner = Auth::isOwner();
             const ds = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
             const wd = (startWD + day - 1) % 7;
             const isWE = wd >= 5, isToday = ds === today, isVac = vacationDays.has(ds);
+            const vacType = vacationDays.get(ds); // 'szabadsag' vagy 'szabadnap'
+            const isSzabadnap = vacType === 'szabadnap';
             const isHoliday = holidayData[ds] !== undefined;
             const sch = scheduleData[ds], here = sch && sch.storeId === storeId, elsewhere = sch && sch.storeId !== storeId;
 
             let cls = 'border-b border-r border-surface-container/50 p-2 min-h-[72px] transition-all relative select-none ';
             if (isHoliday) cls += 'cursor-not-allowed ';
             else if (!canEdit) cls += 'cursor-default ';
-            else if (isVac) cls += 'cursor-not-allowed ';
+            else if (isVac && !isSzabadnap) cls += 'cursor-not-allowed ';
             else cls += 'cursor-pointer ';
 
             if (isHoliday) cls += 'bg-purple-100/80 ';
+            else if (isVac && isSzabadnap) cls += 'bg-blue-100/80 ';
             else if (isVac) cls += 'bg-red-100/80 ';
             else if (here) cls += 'bg-[#D9FF54]/40 ' + (canEdit ? 'hover:bg-[#D9FF54]/50 ' : '');
             else if (elsewhere) cls += 'bg-orange-100/80 ' + (canEdit ? 'hover:bg-orange-200/80 ' : '');
@@ -299,6 +302,7 @@ $isOwner = Auth::isOwner();
             const isDayOff = !isHoliday && !isVac && !here && !elsewhere && monthStatus === 'approved';
 
             if (isHoliday) html += '<div class="mt-1"><span class="text-[9px] font-bold text-purple-600"><i class="fa-solid fa-flag text-[8px] mr-0.5"></i>' + escapeHtml(holidayData[ds]) + '</span></div>';
+            else if (isVac && isSzabadnap) html += '<div class="mt-1"><span class="text-[9px] font-bold text-blue-600"><i class="fa-solid fa-calendar-xmark text-[8px] mr-0.5"></i>Szabadnap</span></div>';
             else if (isVac) html += '<div class="mt-1"><span class="text-[9px] font-bold text-red-500"><i class="fa-solid fa-umbrella-beach text-[8px] mr-0.5"></i>Szabadság</span></div>';
             else if (here) html += '<div class="mt-1"><span class="text-[9px] font-bold text-[#506300]"><i class="fa-solid fa-check text-[8px] mr-0.5"></i>Dolgozik</span></div>';
             else if (elsewhere) html += '<div class="mt-1"><span class="text-[9px] font-bold text-orange-600"><i class="fa-solid fa-store text-[8px] mr-0.5"></i>' + escapeHtml(sch.storeName) + '</span></div>';
@@ -323,7 +327,7 @@ $isOwner = Auth::isOwner();
     window.toggleDay = async function(dateStr) {
         const empId = getEmployeeId(), storeId = parseInt(getStoreId());
         if (!empId || loading || !editMode) return;
-        if (vacationDays.has(dateStr)) return;
+        if (vacationDays.has(dateStr) && vacationDays.get(dateStr) !== 'szabadnap') return;
         if (holidayData[dateStr]) return;
 
         const sch = scheduleData[dateStr];

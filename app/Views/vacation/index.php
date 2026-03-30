@@ -59,11 +59,18 @@ $employees = $data['employees'] ?? [];
             <?php else: ?>
                 <?php foreach ($data['requests'] as $req): ?>
                 <tr>
-                    <td class="font-medium"><?= e($req['employee_name']) ?></td>
+                    <td class="font-medium">
+                        <?= e($req['employee_name']) ?>
+                        <?php if (($req['type'] ?? 'szabadsag') === 'szabadnap'): ?>
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-600 ml-1">szabadnap</span>
+                        <?php endif; ?>
+                    </td>
                     <td class="text-sm text-gray-600"><?= e($req['date_from']) ?></td>
                     <td class="text-sm text-gray-600"><?= e($req['date_to']) ?></td>
                     <td>
-                        <?php if ($req['status'] === 'pending'): ?>
+                        <?php if (($req['type'] ?? 'szabadsag') === 'szabadnap'): ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700"><i class="fa-solid fa-calendar-xmark mr-1 text-[9px]"></i>Szabadnap</span>
+                        <?php elseif ($req['status'] === 'pending'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Függőben</span>
                         <?php elseif ($req['status'] === 'approved'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Jóváhagyva</span>
