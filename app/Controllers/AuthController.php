@@ -46,8 +46,10 @@ class AuthController
             $elapsed = time() - $attempts['last'];
             if ($elapsed < self::LOCKOUT_SECONDS) {
                 $remaining = self::LOCKOUT_SECONDS - $elapsed;
-                $minutes = ceil($remaining / 60);
-                set_flash('error', "Túl sok sikertelen próbálkozás. Próbáld újra {$minutes} perc múlva.");
+                $minutes = floor($remaining / 60);
+                $seconds = $remaining % 60;
+                $timeText = $minutes > 0 ? "{$minutes} perc {$seconds} másodperc" : "{$seconds} másodperc";
+                set_flash('error', "Túl sok sikertelen próbálkozás (5/5). Próbáld újra {$timeText} múlva.");
                 redirect('/login');
             }
             $attempts = ['count' => 0, 'last' => 0];
@@ -83,8 +85,13 @@ class AuthController
         $attempts['last'] = time();
         $_SESSION['login_attempts'][$ip] = $attempts;
 
+        $remaining = self::MAX_ATTEMPTS - $attempts['count'];
         save_old_input();
-        set_flash('error', 'Hibás email cím vagy jelszó.');
+        if ($remaining > 0) {
+            set_flash('error', "Hibás email cím vagy jelszó. Még {$remaining} próbálkozás.");
+        } else {
+            set_flash('error', 'Hibás email cím vagy jelszó. A fiók zárolva lett 15 percre.');
+        }
         redirect('/login');
     }
 

@@ -149,8 +149,11 @@
                         <div class="relative">
                             <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
                             <input type="password" id="password" name="password"
-                                class="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                                class="w-full pl-11 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                                 placeholder="••••••••" required>
+                            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fa-solid fa-eye" id="pw-toggle-icon"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -195,6 +198,13 @@
     </style>
 
     <script>
+    function togglePassword() {
+        const pw = document.getElementById('password');
+        const icon = document.getElementById('pw-toggle-icon');
+        if (pw.type === 'password') { pw.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
+        else { pw.type = 'password'; icon.className = 'fa-solid fa-eye'; }
+    }
+
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
     const baseUrl = '<?= base_url('') ?>';
     let pinCode = '';
