@@ -206,7 +206,7 @@ $greeting = $hour < 12 ? 'Jó reggelt' : ($hour < 18 ? 'Jó napot' : 'Jó estét
                 <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest"><?= $isOwner ? 'Elmaradt feladatok' : 'Napi feladatok' ?></p>
                 <span id="daily-tasks-count" class="text-xs font-bold"></span>
             </div>
-            <div id="daily-tasks-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2" data-owner="<?= $isOwner ? '1' : '0' ?>">
+            <div id="daily-tasks-list" class="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2" data-owner="<?= $isOwner ? '1' : '0' ?>">
                 <div class="text-xs text-gray-400 text-center py-2 col-span-full">Betöltés...</div>
             </div>
         </div>
