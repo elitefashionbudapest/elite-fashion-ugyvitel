@@ -165,6 +165,7 @@ $filters = $data['filters'] ?? [];
                         <?php endif; ?>
                     </td>
                     <td class="text-right">
+                        <a href="<?= base_url("/bank-transactions/{$tx['id']}/edit") ?>" class="text-blue-500 hover:text-blue-700 text-sm mr-1"><i class="fa-solid fa-pen-to-square"></i></a>
                         <form method="POST" action="<?= base_url("/bank-transactions/{$tx['id']}/delete") ?>" class="inline" onsubmit="return confirmDelete(this, 'tranzakció')">
                             <?= csrf_field() ?>
                             <button type="submit" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>

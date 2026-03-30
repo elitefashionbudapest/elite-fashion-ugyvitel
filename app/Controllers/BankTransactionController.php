@@ -160,6 +160,65 @@ class BankTransactionController
     /**
      * Szolgáltatói levonás összekötése számlával
      */
+    public function edit(string $id): void
+    {
+        Middleware::owner();
+
+        $tx = BankTransaction::find((int)$id);
+        if (!$tx) redirect('/bank-transactions');
+
+        $banks = Bank::allWithInactive();
+        $allBanks = array_filter($banks, fn($b) => $b['is_active'] && !$b['is_loan']);
+        $loans = Bank::allLoans();
+        $stores = \App\Models\Store::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/edit-form',
+            'data' => [
+                'pageTitle'   => 'Tranzakció szerkesztése',
+                'activeTab'   => 'bank_transactions',
+                'transaction' => $tx,
+                'banks'       => $allBanks,
+                'loans'       => $loans,
+                'stores'      => $stores,
+            ]
+        ]);
+    }
+
+    public function update(string $id): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $tx = BankTransaction::find((int)$id);
+        if (!$tx) redirect('/bank-transactions');
+
+        $db = \App\Core\Database::getInstance();
+        $stmt = $db->prepare(
+            'UPDATE bank_transactions SET bank_id = :bank_id, amount = :amount, source_amount = :source_amount,
+             transaction_date = :tdate, date_from = :df, date_to = :dt,
+             provider_name = :prov, loan_bank_id = :loan, target_bank_id = :target, notes = :notes
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'bank_id'  => (int)($_POST['bank_id'] ?? $tx['bank_id']),
+            'amount'   => (float)($_POST['amount'] ?? $tx['amount']),
+            'source_amount' => !empty($_POST['source_amount']) ? (float)$_POST['source_amount'] : $tx['source_amount'],
+            'tdate'    => $_POST['transaction_date'] ?? $tx['transaction_date'],
+            'df'       => $_POST['date_from'] ?? $tx['date_from'],
+            'dt'       => $_POST['date_to'] ?? $tx['date_to'],
+            'prov'     => trim($_POST['provider_name'] ?? '') ?: $tx['provider_name'],
+            'loan'     => !empty($_POST['loan_bank_id']) ? (int)$_POST['loan_bank_id'] : $tx['loan_bank_id'],
+            'target'   => !empty($_POST['target_bank_id']) ? (int)$_POST['target_bank_id'] : $tx['target_bank_id'],
+            'notes'    => trim($_POST['notes'] ?? '') ?: null,
+            'id'       => (int)$id,
+        ]);
+
+        AuditLog::log('update', 'bank_transactions', (int)$id, $tx, $_POST);
+        set_flash('success', 'Tranzakció frissítve.');
+        redirect('/bank-transactions');
+    }
+
     public function linkInvoice(string $id): void
     {
         Middleware::owner();
