@@ -349,22 +349,14 @@ class FinanceController
             $hasCardIncome = (int)($cardRow['cnt'] ?? 0) > 0;
             $netCard = (float)($cardRow['total'] ?? 0);
 
-            // Jutalék = a kártyás beérkezéseknél a bruttó összeg - nettó beérkezett összeg
-            // A bruttó összeget a bank_transactions-ból számoljuk (calculateGross)
+            // Jutalék: lekérjük az összes kártyás beérkezést és összesítjük a jutalékot
             $bankJutalek = 0;
             if ($hasCardIncome) {
-                $stmt = $db->prepare(
-                    "SELECT bt.id FROM bank_transactions bt
-                     WHERE bt.type = 'kartya_beerkezes' AND bt.transaction_date BETWEEN :df AND :dt"
-                );
-                $stmt->execute(['df' => $from, 'dt' => $to]);
-                $cardIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-                $grossCard = 0;
-                foreach ($cardIds as $cid) {
-                    $grossCard += \App\Models\BankTransaction::calculateGross((int)$cid);
+                $cardTxs = \App\Models\BankTransaction::all(null, 'kartya_beerkezes', $from, $to);
+                foreach ($cardTxs as $ctx) {
+                    $commission = ($ctx['gross_amount'] ?? 0) - (float)$ctx['amount'];
+                    if ($commission > 0) $bankJutalek += $commission;
                 }
-                $bankJutalek = $grossCard - $netCard;
-                if ($bankJutalek < 0) $bankJutalek = 0;
             }
 
             // Szolgáltatói levonások
