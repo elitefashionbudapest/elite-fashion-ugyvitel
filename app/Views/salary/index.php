@@ -105,7 +105,7 @@ $months = [
                         </td>
                         <td class="px-6 py-5 text-sm font-medium text-on-surface"><?= (int)$r['year'] ?>. <?= e($months[(int)$r['month']] ?? $r['month']) ?></td>
                         <td class="px-6 py-5 hide-mobile">
-                            <span class="px-3 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(SalaryPayment::SOURCES[$r['source']] ?? $r['source']) ?></span>
+                            <span class="px-3 py-1 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e(SalaryPayment::SOURCES[$r['payment_source']] ?? $r['payment_source']) ?></span>
                         </td>
                         <td class="px-6 py-5 text-right font-bold text-on-surface whitespace-nowrap"><?= format_money($r['amount']) ?></td>
                         <td class="px-8 py-5 text-right">
