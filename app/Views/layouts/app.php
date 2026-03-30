@@ -88,6 +88,14 @@
     <!-- Mobile sidebar overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
+    <!-- Nap zárása modal -->
+    <div id="dayclose-overlay" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" onclick="if(event.target===this)closeDayCloseModal()">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 max-h-[90vh] overflow-y-auto" id="dayclose-content">
+            <div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+    </div>
+
     <script src="<?= base_url('/assets/js/app.js') ?>"></script>
 
     <!-- PWA: Service Worker + Install Prompt -->

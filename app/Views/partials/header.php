@@ -252,38 +252,108 @@ if ($isOwner) {
     loadTasks();
     setInterval(function() { if (!taskDropdownOpen) loadTasks(); }, 60000);
 
-    // === Nap zárása ===
+    // === Nap zárása (szép modal) ===
+    let dayCloseData = null;
+
     window.openDayClose = async function() {
         try {
             const res = await fetch(baseUrl + '/day-close/check');
-            const data = await res.json();
-            const missing = data.missing || [];
+            dayCloseData = await res.json();
+            const missing = dayCloseData.missing || [];
+
+            const overlay = document.getElementById('dayclose-overlay');
+            const content = document.getElementById('dayclose-content');
 
             if (missing.length === 0) {
-                alert('Minden feladat ki van töltve! A nap lezárható.');
-                return;
+                content.innerHTML = `
+                    <div class="text-center py-6">
+                        <div class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-circle-check text-4xl text-emerald-500"></i>
+                        </div>
+                        <h3 class="font-heading font-bold text-xl text-gray-900 mb-2">Minden kész!</h3>
+                        <p class="text-sm text-gray-500 mb-6">Az összes mai feladat ki van töltve. A nap lezárható.</p>
+                        <button onclick="closeDayCloseModal()" class="px-6 py-3 bg-sidebar text-accent font-bold rounded-full text-sm">Bezárás</button>
+                    </div>`;
+            } else {
+                let itemsHtml = '';
+                missing.forEach(m => {
+                    const iconMap = {
+                        'napi_keszpenz': 'fa-money-bill text-emerald-500',
+                        'napi_bankkartya': 'fa-credit-card text-blue-500',
+                        'ertekeles': 'fa-star text-amber-500',
+                        'selejt_ertek': 'fa-coins text-orange-500',
+                        'selejt_befizetes': 'fa-box-open text-purple-500',
+                    };
+                    const icon = iconMap[m.type] || 'fa-circle text-gray-400';
+                    itemsHtml += `<div class="flex items-center gap-3 px-4 py-2.5 bg-red-50/50 rounded-xl">
+                        <i class="fa-solid ${icon} text-sm"></i>
+                        <div class="flex-1">
+                            <span class="text-sm font-medium text-gray-900">${escapeHtml(m.label)}</span>
+                            <span class="text-xs text-gray-400 ml-1">— ${escapeHtml(m.store)}</span>
+                        </div>
+                        <span class="text-xs font-bold text-red-500">0</span>
+                    </div>`;
+                });
+
+                content.innerHTML = `
+                    <div class="text-center mb-5">
+                        <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-lock text-2xl text-amber-600"></i>
+                        </div>
+                        <h3 class="font-heading font-bold text-xl text-gray-900">Nap zárása</h3>
+                        <p class="text-xs text-gray-500 mt-1">${dayCloseData.date || ''}</p>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                            <span><strong>${missing.length} feladat</strong> nincs kitöltve. 0 értékkel rögzítjük?</span>
+                        </p>
+                        <div class="space-y-1.5 max-h-[300px] overflow-y-auto">${itemsHtml}</div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="confirmDayClose()" class="flex-1 px-6 py-3 bg-sidebar text-accent font-bold rounded-full text-sm flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors">
+                            <i class="fa-solid fa-lock"></i> Lezárás (0 értékkel)
+                        </button>
+                        <button onclick="closeDayCloseModal()" class="px-6 py-3 text-gray-500 hover:text-gray-700 font-medium text-sm">
+                            Mégse
+                        </button>
+                    </div>`;
             }
 
-            let msg = '⚠ A következő feladatok nincsenek kitöltve ma:\n\n';
-            missing.forEach(m => { msg += '• ' + m.store + ' — ' + m.label + '\n'; });
-            msg += '\nSzeretné 0 értékkel rögzíteni ezeket?';
+            overlay.classList.remove('hidden');
+        } catch(e) {}
+    };
 
-            if (!confirm(msg)) return;
+    window.closeDayCloseModal = function() {
+        document.getElementById('dayclose-overlay').classList.add('hidden');
+    };
 
+    window.confirmDayClose = async function() {
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rögzítés...';
+
+        try {
             const closeRes = await fetch(baseUrl + '/day-close/close', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken()},
-                body: JSON.stringify({items: missing, _csrf: getCsrfToken()})
+                body: JSON.stringify({items: dayCloseData.missing, _csrf: getCsrfToken()})
             });
             const closeData = await closeRes.json();
 
-            if (closeData.success) {
-                alert('Nap lezárva! ' + closeData.count + ' feladat rögzítve 0 értékkel.');
-                loadTasks();
-            }
-        } catch(e) {
-            alert('Hiba történt: ' + e.message);
-        }
+            const content = document.getElementById('dayclose-content');
+            content.innerHTML = `
+                <div class="text-center py-6">
+                    <div class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-circle-check text-4xl text-emerald-500"></i>
+                    </div>
+                    <h3 class="font-heading font-bold text-xl text-gray-900 mb-2">Nap lezárva!</h3>
+                    <p class="text-sm text-gray-500 mb-6">${closeData.count} feladat rögzítve 0 értékkel.</p>
+                    <button onclick="closeDayCloseModal()" class="px-6 py-3 bg-sidebar text-accent font-bold rounded-full text-sm">Bezárás</button>
+                </div>`;
+
+            loadTasks();
+        } catch(e) {}
     };
 
     function getCsrfToken() {
