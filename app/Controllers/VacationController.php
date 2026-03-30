@@ -38,11 +38,8 @@ class VacationController
     {
         Middleware::tabPermission('szabadsag', 'create');
 
-        if (Auth::isStore()) {
-            $employees = Employee::getByStore(Auth::storeId());
-        } else {
-            $employees = Employee::allActive();
-        }
+        // Szabadság céges szintű — mindenki az összes dolgozót látja
+        $employees = Employee::allActive();
 
         view('layouts/app', [
             'content' => 'vacation/form',
