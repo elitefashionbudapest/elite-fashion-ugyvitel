@@ -12,10 +12,11 @@ class OwnerPayment
     ];
 
     public const SOURCES = [
-        'bank'     => 'Bank',
-        'selmeci'  => 'Selmeci',
-        'ulloi_ut' => 'Üllői út',
-        'egyeb'    => 'Egyéb',
+        'bank'        => 'Bank',
+        'vorosmarty'  => 'Vörösmarty',
+        'selmeci'     => 'Selmeci',
+        'ulloi_ut'    => 'Üllői út',
+        'egyeb'       => 'Egyéb',
     ];
 
     public static function all(?string $ownerName = null, ?int $year = null, ?int $month = null): array

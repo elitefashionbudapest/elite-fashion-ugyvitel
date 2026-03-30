@@ -7,10 +7,11 @@ use App\Core\Database;
 class SalaryPayment
 {
     public const SOURCES = [
-        'bank'     => 'Bank',
-        'selmeci'  => 'Selmeci',
-        'ulloi_ut' => 'Ulloi ut',
-        'egyeb'    => 'Egyeb',
+        'bank'        => 'Bank',
+        'vorosmarty'  => 'Vörösmarty',
+        'selmeci'     => 'Selmeci',
+        'ulloi_ut'    => 'Üllői út',
+        'egyeb'       => 'Egyéb',
     ];
 
     public const ISSUERS = [
