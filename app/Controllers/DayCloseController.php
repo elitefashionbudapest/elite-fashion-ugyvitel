@@ -67,6 +67,13 @@ class DayCloseController
                     $missing[] = ['store_id' => $sid, 'store' => $sName, 'type' => 'selejt_ertek', 'label' => 'Selejt összérték'];
                 }
             }
+
+            // Selejt befizetés (minden nap kötelező)
+            $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'selejt_befizetes'");
+            $stmt->execute(['s' => $sid, 'd' => $today]);
+            if (!(int)$stmt->fetchColumn()) {
+                $missing[] = ['store_id' => $sid, 'store' => $sName, 'type' => 'selejt_befizetes', 'label' => 'Selejt befizetés'];
+            }
         }
 
         header('Content-Type: application/json; charset=utf-8');
@@ -96,6 +103,7 @@ class DayCloseController
             switch ($type) {
                 case 'napi_keszpenz':
                 case 'napi_bankkartya':
+                case 'selejt_befizetes':
                     // Ellenőrzés hogy ne legyen duplikátum
                     $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = :p");
                     $stmt->execute(['s' => $storeId, 'd' => $today, 'p' => $type]);
