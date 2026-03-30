@@ -29,7 +29,13 @@ $employees = $data['employees'] ?? [];
                 <option value="rejected" <?= ($data['filters']['status'] ?? '') === 'rejected' ? 'selected' : '' ?>>Elutasítva</option>
             </select>
 
-            <?php if (!empty($data['filters']['employee_id']) || !empty($data['filters']['status'])): ?>
+            <label class="text-sm text-gray-600 font-medium ml-2">Mettől:</label>
+            <input type="date" name="date_from" value="<?= e($data['filters']['date_from'] ?? '') ?>" onchange="this.form.submit()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-primary/50 focus:border-primary">
+
+            <label class="text-sm text-gray-600 font-medium">Meddig:</label>
+            <input type="date" name="date_to" value="<?= e($data['filters']['date_to'] ?? '') ?>" onchange="this.form.submit()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-primary/50 focus:border-primary">
+
+            <?php if (!empty($data['filters']['employee_id']) || !empty($data['filters']['status']) || !empty($data['filters']['date_from']) || !empty($data['filters']['date_to'])): ?>
                 <a href="<?= base_url('/vacation') ?>" class="text-xs text-gray-500 hover:text-gray-700 font-medium"><i class="fa-solid fa-xmark"></i> Szűrők törlése</a>
             <?php endif; ?>
         </form>

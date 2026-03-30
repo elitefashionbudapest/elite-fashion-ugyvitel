@@ -14,8 +14,10 @@ class VacationController
         // Szabadságok céges szintűek (max 1 fő) — mindenki az összeset látja
         $status = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : null;
         $employeeId = isset($_GET['employee_id']) && $_GET['employee_id'] !== '' ? (int)$_GET['employee_id'] : null;
+        $dateFrom = isset($_GET['date_from']) && $_GET['date_from'] !== '' ? $_GET['date_from'] : null;
+        $dateTo = isset($_GET['date_to']) && $_GET['date_to'] !== '' ? $_GET['date_to'] : null;
 
-        $requests = VacationRequest::all(null, $status, $employeeId);
+        $requests = VacationRequest::all(null, $status, $employeeId, $dateFrom, $dateTo);
 
         // Dolgozók listája a szűrőhöz — mindenki az összeset látja
         $employees = Employee::allActive();
@@ -27,7 +29,7 @@ class VacationController
                 'activeTab'  => 'szabadsag',
                 'requests'   => $requests,
                 'employees'  => $employees,
-                'filters'    => ['status' => $status, 'employee_id' => $employeeId],
+                'filters'    => ['status' => $status, 'employee_id' => $employeeId, 'date_from' => $dateFrom, 'date_to' => $dateTo],
             ]
         ]);
     }

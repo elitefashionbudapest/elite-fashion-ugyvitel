@@ -9,7 +9,7 @@ class VacationRequest
     /**
      * Osszes szabadsag kerveny lekerese, opcionalis bolt- es statusz-szures
      */
-    public static function all(?int $storeId = null, ?string $status = null, ?int $employeeId = null): array
+    public static function all(?int $storeId = null, ?string $status = null, ?int $employeeId = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $db = Database::getInstance();
 
@@ -34,6 +34,16 @@ class VacationRequest
         if ($employeeId !== null) {
             $conditions[] = 'vr.employee_id = :employee_id';
             $params['employee_id'] = $employeeId;
+        }
+
+        if ($dateFrom !== null) {
+            $conditions[] = 'vr.date_to >= :date_from';
+            $params['date_from'] = $dateFrom;
+        }
+
+        if ($dateTo !== null) {
+            $conditions[] = 'vr.date_from <= :date_to';
+            $params['date_to'] = $dateTo;
         }
 
         if (!empty($conditions)) {
