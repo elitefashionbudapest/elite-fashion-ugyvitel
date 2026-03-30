@@ -270,26 +270,20 @@ class TaskController
                 ];
             }
 
-            // Selejt befizetés emlékeztető — ha volt selejt (szkennelt VAGY napi érték beírva)
-            $stmt = $db->prepare("SELECT COUNT(*) FROM defect_daily_values WHERE store_id = :s AND value_date = :d AND total_value > 0");
+            // Selejt befizetés — minden nap kötelező (mint a kassza nyitó)
+            $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'selejt_befizetes'");
             $stmt->execute(['s' => $storeId, 'd' => $date]);
-            $hasSelejtValue = $hasDefects || (int)$stmt->fetchColumn() > 0;
+            $hasSelejtPay = (int)$stmt->fetchColumn() > 0;
 
-            if ($hasSelejtValue) {
-                $stmt = $db->prepare("SELECT COUNT(*) FROM financial_records WHERE store_id = :s AND record_date = :d AND purpose = 'selejt_befizetes'");
-                $stmt->execute(['s' => $storeId, 'd' => $date]);
-                $hasSelejtPay = (int)$stmt->fetchColumn() > 0;
-
-                $tasks[] = [
-                    'id'       => "selejt_befizetes_{$storeId}_{$date}",
-                    'text'     => "{$dayLabel} selejt befizetés — {$storeName}",
-                    'done'     => $hasSelejtPay,
-                    'overdue'  => $isOverdue && !$hasSelejtPay,
-                    'link'     => '/finance/create',
-                    'icon'     => 'fa-box-open',
-                    'date'     => $date,
-                ];
-            }
+            $tasks[] = [
+                'id'       => "selejt_befizetes_{$storeId}_{$date}",
+                'text'     => "{$dayLabel} selejt befizetés — {$storeName}",
+                'done'     => $hasSelejtPay,
+                'overdue'  => $isOverdue && !$hasSelejtPay,
+                'link'     => '/finance/create',
+                'icon'     => 'fa-box-open',
+                'date'     => $date,
+            ];
         }
 
         return $tasks;
