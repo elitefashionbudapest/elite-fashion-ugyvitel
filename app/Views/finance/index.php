@@ -38,8 +38,8 @@ $filters = $data['filters'] ?? [];
             <?php endforeach; ?>
         </div>
         <?php endif; ?>
-        <input type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">
-        <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">
+        <input type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>" placeholder="Mettől" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">
+        <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>" placeholder="Meddig" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container">
         <select name="purpose" class="bg-surface-container-lowest border-none rounded-full text-xs font-semibold py-2 px-4 focus:ring-2 focus:ring-primary-container cursor-pointer">
             <option value="">Minden típus</option>
             <?php foreach (FinancialRecord::PURPOSES as $key => $label): ?>

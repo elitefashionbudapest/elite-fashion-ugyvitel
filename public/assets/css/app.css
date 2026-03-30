@@ -359,6 +359,17 @@ select {
     .text-xl { font-size: 1.1rem !important; }
     .text-3xl { font-size: 1.25rem !important; }
 
+    /* Üres date input placeholder mobilon */
+    input[type="date"]:not([value]):not(:focus)::before,
+    input[type="date"][value=""]::before {
+        content: attr(placeholder);
+        color: #9ca3af;
+        font-size: 0.75rem;
+    }
+    input[type="date"] {
+        min-width: 110px;
+    }
+
     /* Fix kilógó elemek */
     * { max-width: 100%; box-sizing: border-box; }
     img, video, iframe, table { max-width: 100%; }

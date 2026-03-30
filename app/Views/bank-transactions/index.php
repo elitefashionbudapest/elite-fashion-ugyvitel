@@ -51,8 +51,8 @@ $filters = $data['filters'] ?? [];
         <div>
             <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Időszak</label>
             <div class="flex gap-1">
-                <input type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
-                <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
+                <input type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>" placeholder="Mettől" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
+                <input type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>" placeholder="Meddig" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
             </div>
         </div>
         <button type="submit" class="px-4 py-1.5 bg-sidebar text-primary rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors">Szűrés</button>
