@@ -98,9 +98,33 @@ $filters = $data['filters'] ?? [];
         </table>
     </div>
     <!-- Table Footer -->
-    <?php if (!empty($records)): ?>
-    <div class="bg-surface-container-low px-8 py-4 flex items-center justify-between border-t border-surface-container">
-        <p class="text-xs font-medium text-on-surface-variant"><?= count($records) ?> bejegyzés</p>
+    <?php if (!empty($records)):
+        $totalAmount = array_sum(array_column($records, 'amount'));
+        $bevetelek = ['napi_keszpenz','napi_bankkartya','befizetes_bankbol','befizetes_boltbol','kassza_nyito','selejt_befizetes'];
+        $totalBev = 0; $totalKiad = 0;
+        foreach ($records as $r) {
+            if (in_array($r['purpose'], $bevetelek)) $totalBev += (float)$r['amount'];
+            else $totalKiad += (float)$r['amount'];
+        }
+    ?>
+    <div class="bg-surface-container-low px-3 sm:px-8 py-3 sm:py-4 border-t border-surface-container">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs font-medium text-on-surface-variant"><?= count($records) ?> bejegyzés</p>
+            <div class="flex flex-wrap items-center gap-3 sm:gap-5">
+                <div class="text-right">
+                    <p class="text-[10px] text-emerald-500 font-bold uppercase">Bevételek</p>
+                    <p class="text-sm font-heading font-bold text-emerald-600"><?= format_money($totalBev) ?></p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-red-500 font-bold uppercase">Kiadások</p>
+                    <p class="text-sm font-heading font-bold text-red-600"><?= format_money($totalKiad) ?></p>
+                </div>
+                <div class="text-right pl-3 sm:pl-5 border-l border-surface-container">
+                    <p class="text-[10px] text-on-surface-variant font-bold uppercase">Összesen</p>
+                    <p class="text-sm font-heading font-extrabold <?= ($totalBev - $totalKiad) >= 0 ? 'text-emerald-700' : 'text-red-700' ?>"><?= format_money($totalBev - $totalKiad) ?></p>
+                </div>
+            </div>
+        </div>
     </div>
     <?php endif; ?>
 </div>
