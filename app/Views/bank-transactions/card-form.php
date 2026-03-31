@@ -38,18 +38,11 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 </div>
             </div>
 
-            <!-- Időszak (melyik napok forgalma) -->
+            <!-- Melyik nap forgalma -->
             <div>
-                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Melyik napok forgalma?</label>
-                <div class="flex items-center gap-2">
-                    <input type="date" name="date_from" id="date_from" value="<?= e(old('date_from')) ?>" class="<?= $inputCls ?>" required>
-                    <span class="text-on-surface-variant font-bold">—</span>
-                    <input type="date" name="date_to" id="date_to" value="<?= e(old('date_to')) ?>" class="<?= $inputCls ?>" required>
-                </div>
-                <p class="text-xs text-on-surface-variant mt-1">
-                    <i class="fa-solid fa-circle-info mr-0.5"></i>
-                    Hétfőn a péntek–vasárnap forgalmát add meg. Más napokon az előző nap dátumát.
-                </p>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Melyik nap forgalma?</label>
+                <input type="date" name="date_from" id="date_from" value="<?= e(old('date_from')) ?>" class="<?= $inputCls ?>" required>
+                <input type="hidden" name="date_to" id="date_to" value="<?= e(old('date_to')) ?>">
             </div>
 
             <!-- Melyik boltok forgalma -->
@@ -156,6 +149,8 @@ function updateCommission() {
     }
 }
 
-document.getElementById('date_from').addEventListener('change', updateGross);
-document.getElementById('date_to').addEventListener('change', updateGross);
+document.getElementById('date_from').addEventListener('change', function() {
+    document.getElementById('date_to').value = this.value;
+    updateGross();
+});
 </script>
