@@ -65,7 +65,6 @@ class BankTransactionController
 
         $bankId = (int)($_POST['bank_id'] ?? 0);
         $amount = (float)($_POST['amount'] ?? 0);
-        $commission = isset($_POST['commission']) && $_POST['commission'] !== '' ? (float)$_POST['commission'] : null;
         $dateFrom = $_POST['date_from'] ?? '';
         $dateTo = $_POST['date_to'] ?? '';
         $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
@@ -88,7 +87,6 @@ class BankTransactionController
             'bank_id'          => $bankId,
             'type'             => 'kartya_beerkezes',
             'amount'           => $amount,
-            'commission'       => $commission,
             'transaction_date' => $transactionDate,
             'date_from'        => $dateFrom,
             'date_to'          => $dateTo,

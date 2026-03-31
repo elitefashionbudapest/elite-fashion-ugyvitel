@@ -83,13 +83,6 @@ $ti = $typeIcons[$tx['type']] ?? ['icon' => 'fa-circle', 'color' => 'text-gray-6
                     <input type="date" name="date_to" value="<?= e($tx['date_to']) ?>" class="<?= $inputCls ?>">
                 </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-red-600 uppercase tracking-widest mb-1.5">Banki jutalék</label>
-                <div class="relative">
-                    <input type="number" name="commission" step="0.01" min="0" value="<?= e($tx['commission'] ?? '') ?>" class="<?= $inputCls ?> font-bold" placeholder="0">
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ft</span>
-                </div>
-            </div>
             <?php endif; ?>
 
             <?php if ($tx['type'] === 'szolgaltato_levon'): ?>

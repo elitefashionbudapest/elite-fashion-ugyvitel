@@ -65,12 +65,8 @@ class BankTransaction
         foreach ($results as &$row) {
             if ($row['type'] === 'kartya_beerkezes') {
                 $row['stores'] = self::getStores($row['id']);
-                if ($row['commission'] !== null) {
-                    $row['gross_amount'] = (float)$row['amount'] + (float)$row['commission'];
-                } else {
-                    $row['gross_amount'] = self::calculateGross($row['id']);
-                    $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
-                }
+                $row['gross_amount'] = self::calculateGross($row['id']);
+                $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
             }
         }
 
@@ -93,12 +89,8 @@ class BankTransaction
         if ($row['type'] === 'kartya_beerkezes') {
             $row['stores'] = self::getStores($row['id']);
             $row['store_ids'] = array_column($row['stores'], 'store_id');
-            if ($row['commission'] !== null) {
-                $row['gross_amount'] = (float)$row['amount'] + (float)$row['commission'];
-            } else {
-                $row['gross_amount'] = self::calculateGross($row['id']);
-                $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
-            }
+            $row['gross_amount'] = self::calculateGross($row['id']);
+            $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
         }
 
         return $row;
