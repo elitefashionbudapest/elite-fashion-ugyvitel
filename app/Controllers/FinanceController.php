@@ -364,6 +364,12 @@ class FinanceController
             $stmt->execute(['df' => $from, 'dt' => $to]);
             $szolgaltatok = (float)$stmt->fetchColumn();
 
+            // Banki jutalékok (külön rögzített banki költségek)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'banki_jutalek' AND transaction_date BETWEEN :df AND :dt");
+            $stmt->execute(['df' => $from, 'dt' => $to]);
+            $bankiKoltseg = (float)$stmt->fetchColumn();
+            $bankJutalek += $bankiKoltseg;
+
             $totalCosts = (float)$costs['munkaber'] + (float)$costs['meretre'] + (float)$costs['tankolas']
                         + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok;
 
