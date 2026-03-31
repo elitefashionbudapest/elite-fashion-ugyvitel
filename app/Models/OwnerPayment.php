@@ -76,4 +76,11 @@ class OwnerPayment
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: null;
     }
+
+    public static function linkBankTransaction(int $paymentId, int $bankTransactionId): void
+    {
+        $db = Database::getInstance();
+        $db->prepare('UPDATE owner_payments SET bank_transaction_id = :tx_id WHERE id = :id')
+           ->execute(['tx_id' => $bankTransactionId, 'id' => $paymentId]);
+    }
 }

@@ -7,11 +7,13 @@ use App\Core\Database;
 class BankTransaction
 {
     public const TYPES = [
-        'kartya_beerkezes' => 'Kártyás forgalom beérkezés',
-        'szolgaltato_levon' => 'Szolgáltatói levonás',
-        'hitel_torlesztes' => 'Hitel törlesztő részlet',
-        'szamla_kozti'     => 'Számlák közötti átutalás',
-        'banki_jutalek'    => 'Banki jutalék',
+        'kartya_beerkezes'    => 'Kártyás forgalom beérkezés',
+        'szolgaltato_levon'   => 'Szolgáltatói levonás',
+        'hitel_torlesztes'    => 'Hitel törlesztő részlet',
+        'szamla_kozti'        => 'Számlák közötti átutalás',
+        'banki_jutalek'       => 'Banki jutalék',
+        'tulajdonosi_fizetes' => 'Tulajdonosi fizetés',
+        'tagi_kolcson'        => 'Tagi kölcsön',
     ];
 
     /**

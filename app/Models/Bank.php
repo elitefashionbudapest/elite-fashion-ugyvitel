@@ -136,6 +136,16 @@ class Bank
             $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE bank_id = :bank_id AND type = 'banki_jutalek'");
             $stmt->execute(['bank_id' => $bankId]);
             $balance -= (float)$stmt->fetchColumn();
+
+            // - Tulajdonosi fizetések (bankból)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE bank_id = :bank_id AND type = 'tulajdonosi_fizetes'");
+            $stmt->execute(['bank_id' => $bankId]);
+            $balance -= (float)$stmt->fetchColumn();
+
+            // +/- Tagi kölcsön (pozitív = kölcsön adtak a cégnek, negatív = visszafizették)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE bank_id = :bank_id AND type = 'tagi_kolcson'");
+            $stmt->execute(['bank_id' => $bankId]);
+            $balance += (float)$stmt->fetchColumn();
         }
 
         return $balance;

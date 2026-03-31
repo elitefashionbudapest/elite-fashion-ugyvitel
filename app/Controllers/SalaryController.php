@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\{Auth, Middleware, AuditLog};
-use App\Models\{SalaryPayment, OwnerPayment, Employee};
+use App\Models\{SalaryPayment, OwnerPayment, Employee, Bank, BankTransaction};
 
 class SalaryController
 {
@@ -55,6 +55,7 @@ class SalaryController
             redirect('/salary');
         }
         $employees = Employee::allActive();
+        $banks = Bank::all();
 
         view('layouts/app', [
             'content' => 'salary/form',
@@ -63,6 +64,7 @@ class SalaryController
                 'activeTab'  => 'fizetes',
                 'type'       => $type,
                 'employees'  => $employees,
+                'banks'      => $banks,
             ]
         ]);
     }
@@ -103,8 +105,32 @@ class SalaryController
                 redirect('/salary/create?type=tulajdonosi');
             }
 
+            $bankId = !empty($_POST['bank_id']) ? (int)$_POST['bank_id'] : null;
+            if ($data['source'] === 'bank' && !$bankId) {
+                save_old_input();
+                set_flash('error', 'Válasszon bankszámlát.');
+                redirect('/salary/create?type=tulajdonosi');
+            }
+
+            $data['bank_id'] = $bankId;
             $id = OwnerPayment::create($data);
             AuditLog::log('create', 'owner_payments', $id, null, $data);
+
+            // Banki tranzakció létrehozása ha bankból fizetve
+            if ($data['source'] === 'bank' && $bankId) {
+                $txData = [
+                    'bank_id'          => $bankId,
+                    'type'             => 'tulajdonosi_fizetes',
+                    'amount'           => $data['amount'],
+                    'transaction_date' => date('Y-m-d'),
+                    'notes'            => 'Tulajdonosi fizetés: ' . $data['owner_name'] . ' (' . $data['year'] . '/' . str_pad($data['month'], 2, '0', STR_PAD_LEFT) . ')',
+                    'recorded_by'      => Auth::id(),
+                ];
+                $txId = BankTransaction::create($txData);
+                // Összekapcsolás
+                OwnerPayment::linkBankTransaction($id, $txId);
+            }
+
             set_flash('success', 'Tulajdonosi fizetés sikeresen rögzítve.');
             redirect('/salary?tab=tulajdonosi');
         } else {
@@ -134,8 +160,32 @@ class SalaryController
                 redirect('/salary/create');
             }
 
+            $bankId = !empty($_POST['bank_id']) ? (int)$_POST['bank_id'] : null;
+            if ($data['source'] === 'bank' && !$bankId) {
+                save_old_input();
+                set_flash('error', 'Válasszon bankszámlát.');
+                redirect('/salary/create');
+            }
+
+            $data['bank_id'] = $bankId;
             $id = SalaryPayment::create($data);
             AuditLog::log('create', 'salary_payments', $id, null, $data);
+
+            // Banki tranzakció létrehozása ha bankból fizetve
+            if ($data['source'] === 'bank' && $bankId) {
+                $emp = Employee::find($data['employee_id']);
+                $txData = [
+                    'bank_id'          => $bankId,
+                    'type'             => 'tulajdonosi_fizetes',
+                    'amount'           => $data['amount'],
+                    'transaction_date' => date('Y-m-d'),
+                    'notes'            => 'Dolgozói fizetés: ' . ($emp['name'] ?? '') . ' (' . $data['year'] . '/' . str_pad($data['month'], 2, '0', STR_PAD_LEFT) . ')',
+                    'recorded_by'      => Auth::id(),
+                ];
+                $txId = BankTransaction::create($txData);
+                SalaryPayment::linkBankTransaction($id, $txId);
+            }
+
             set_flash('success', 'Dolgozói fizetés sikeresen rögzítve.');
             redirect('/salary?tab=dolgozoi');
         }
@@ -151,6 +201,9 @@ class SalaryController
         if ($type === 'tulajdonosi') {
             $record = OwnerPayment::find((int)$id);
             if ($record) {
+                if (!empty($record['bank_transaction_id'])) {
+                    BankTransaction::delete((int)$record['bank_transaction_id']);
+                }
                 OwnerPayment::delete((int)$id);
                 AuditLog::log('delete', 'owner_payments', (int)$id, $record, null);
                 set_flash('success', 'Tulajdonosi fizetés törölve.');
@@ -159,6 +212,9 @@ class SalaryController
         } else {
             $record = SalaryPayment::find((int)$id);
             if ($record) {
+                if (!empty($record['bank_transaction_id'])) {
+                    BankTransaction::delete((int)$record['bank_transaction_id']);
+                }
                 SalaryPayment::delete((int)$id);
                 AuditLog::log('delete', 'salary_payments', (int)$id, $record, null);
                 set_flash('success', 'Dolgozói fizetés törölve.');

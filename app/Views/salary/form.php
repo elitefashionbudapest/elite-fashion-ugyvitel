@@ -3,6 +3,7 @@ use App\Core\Auth;
 use App\Models\{SalaryPayment, OwnerPayment};
 
 $employees = $data['employees'] ?? [];
+$banks = $data['banks'] ?? [];
 $type = $data['type'] ?? 'dolgozoi';
 $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary-container focus:border-primary bg-surface-container-lowest';
 
@@ -93,12 +94,29 @@ $months = [
                         <div class="grid grid-cols-2 gap-2">
                             <?php $sources = $type === 'tulajdonosi' ? OwnerPayment::SOURCES : SalaryPayment::SOURCES; ?>
                             <?php foreach ($sources as $key => $label): ?>
+                                <?php if ($key === 'bank') continue; ?>
                             <label class="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-surface-container-low transition-colors border border-surface-container">
                                 <input type="radio" name="source" value="<?= $key ?>" <?= old('source') === $key ? 'checked' : '' ?>
+                                       onchange="document.getElementById('bank-select').classList.add('hidden')"
                                        class="h-4 w-4 text-primary border-outline focus:ring-primary-container" required>
                                 <span class="text-sm font-medium text-on-surface"><?= e($label) ?></span>
                             </label>
                             <?php endforeach; ?>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-surface-container-low transition-colors border border-surface-container col-span-2">
+                                <input type="radio" name="source" value="bank" <?= old('source') === 'bank' ? 'checked' : '' ?>
+                                       onchange="document.getElementById('bank-select').classList.remove('hidden')"
+                                       class="h-4 w-4 text-primary border-outline focus:ring-primary-container" required>
+                                <i class="fa-solid fa-building-columns text-sm text-on-surface-variant"></i>
+                                <span class="text-sm font-medium text-on-surface">Bankszámláról</span>
+                            </label>
+                        </div>
+                        <div id="bank-select" class="mt-2 <?= old('source') === 'bank' ? '' : 'hidden' ?>">
+                            <select name="bank_id" class="<?= $inputCls ?>">
+                                <option value="">-- Válasszon bankszámlát --</option>
+                                <?php foreach ($banks as $b): ?>
+                                    <option value="<?= $b['id'] ?>" <?= old('bank_id') == $b['id'] ? 'selected' : '' ?>><?= e($b['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
 

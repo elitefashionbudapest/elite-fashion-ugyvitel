@@ -54,6 +54,7 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
                 ['Számla kifizetések', $pl['szamla'], 'fa-file-invoice'],
                 ['Bank jutalék', $pl['bank_jutalek'], 'fa-credit-card'],
                 ['Szolgáltatók', $pl['szolgaltatok'], 'fa-building'],
+                ['Tulajdonosi fizetés', $pl['tulajdonosi_fizetes'] ?? 0, 'fa-user-tie'],
             ];
             foreach ($costLines as [$label, $value, $icon]):
                 if ($value <= 0) continue;
@@ -68,6 +69,17 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
                 <span class="font-bold text-red-600"><?= format_money($pl['costs_total']) ?><?= changeBadge($plChange['costs_total'] ?? null, true) ?></span>
             </div>
         </div>
+
+        <!-- Egyéb bevételek -->
+        <?php if (($pl['tagi_kolcson'] ?? 0) > 0): ?>
+        <div class="bg-surface-container-lowest rounded-xl p-4">
+            <h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Egyéb bejövő</h4>
+            <div class="flex justify-between items-center py-1">
+                <span class="text-xs sm:text-sm text-gray-600"><i class="fa-solid fa-handshake text-xs text-gray-400 mr-1"></i>Tagi kölcsön</span>
+                <span class="font-medium text-emerald-600">+<?= format_money($pl['tagi_kolcson']) ?></span>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Eredmény -->
         <div class="<?= $pl['profit'] >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200' ?> rounded-xl p-4 border-2">

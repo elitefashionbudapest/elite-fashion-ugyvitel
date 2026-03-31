@@ -406,6 +406,56 @@ class BankTransactionController
         redirect('/bank-transactions');
     }
 
+    /**
+     * Tagi kölcsön rögzítése
+     */
+    public function createOwnerLoan(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/owner-loan-form',
+            'data' => [
+                'pageTitle' => 'Tagi kölcsön',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+            ]
+        ]);
+    }
+
+    public function storeOwnerLoan(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || $amount <= 0) {
+            save_old_input();
+            set_flash('error', 'Bank és összeg megadása kötelező.');
+            redirect('/bank-transactions/owner-loan/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'tagi_kolcson',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Tagi kölcsön rögzítve: ' . format_money($amount));
+        redirect('/bank-transactions');
+    }
+
     public function destroy(string $id): void
     {
         Middleware::owner();

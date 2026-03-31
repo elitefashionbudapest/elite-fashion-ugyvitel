@@ -215,6 +215,8 @@ $router->get('/bank-transactions/transfer/create', [App\Controllers\BankTransact
 $router->post('/bank-transactions/transfer', [App\Controllers\BankTransactionController::class, 'storeTransfer']);
 $router->get('/bank-transactions/commission/create', [App\Controllers\BankTransactionController::class, 'createCommission']);
 $router->post('/bank-transactions/commission', [App\Controllers\BankTransactionController::class, 'storeCommission']);
+$router->get('/bank-transactions/owner-loan/create', [App\Controllers\BankTransactionController::class, 'createOwnerLoan']);
+$router->post('/bank-transactions/owner-loan', [App\Controllers\BankTransactionController::class, 'storeOwnerLoan']);
 $router->get('/bank-transactions/{id}/edit', [App\Controllers\BankTransactionController::class, 'edit']);
 $router->post('/bank-transactions/{id}', [App\Controllers\BankTransactionController::class, 'update']);
 $router->post('/bank-transactions/{id}/link-invoice', [App\Controllers\BankTransactionController::class, 'linkInvoice']);

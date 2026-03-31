@@ -85,4 +85,11 @@ class SalaryPayment
         $db = Database::getInstance();
         return $db->prepare('DELETE FROM salary_payments WHERE id = :id')->execute(['id' => $id]);
     }
+
+    public static function linkBankTransaction(int $paymentId, int $bankTransactionId): void
+    {
+        $db = Database::getInstance();
+        $db->prepare('UPDATE salary_payments SET bank_transaction_id = :tx_id WHERE id = :id')
+           ->execute(['tx_id' => $bankTransactionId, 'id' => $paymentId]);
+    }
 }

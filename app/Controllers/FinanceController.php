@@ -370,21 +370,33 @@ class FinanceController
             $bankiKoltseg = (float)$stmt->fetchColumn();
             $bankJutalek += $bankiKoltseg;
 
+            // Tulajdonosi fizetések (bankból)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tulajdonosi_fizetes' AND transaction_date BETWEEN :df AND :dt");
+            $stmt->execute(['df' => $from, 'dt' => $to]);
+            $tulajdonosiFizetes = (float)$stmt->fetchColumn();
+
+            // Tagi kölcsön (bejövő pénz)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tagi_kolcson' AND transaction_date BETWEEN :df AND :dt");
+            $stmt->execute(['df' => $from, 'dt' => $to]);
+            $tagiKolcson = (float)$stmt->fetchColumn();
+
             $totalCosts = (float)$costs['munkaber'] + (float)$costs['meretre'] + (float)$costs['tankolas']
-                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok;
+                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok + $tulajdonosiFizetes;
 
             return [
-                'revenue_brutto' => $revenueBrutto,
-                'revenue_netto'  => $revenueNetto,
-                'munkaber'       => (float)$costs['munkaber'],
-                'meretre'        => (float)$costs['meretre'],
-                'tankolas'       => (float)$costs['tankolas'],
-                'egyeb'          => (float)$costs['egyeb'],
-                'szamla'         => (float)$costs['szamla'],
-                'bank_jutalek'   => $bankJutalek,
-                'szolgaltatok'   => $szolgaltatok,
-                'costs_total'    => $totalCosts,
-                'profit'         => $revenueNetto - $totalCosts,
+                'revenue_brutto'      => $revenueBrutto,
+                'revenue_netto'       => $revenueNetto,
+                'munkaber'            => (float)$costs['munkaber'],
+                'meretre'             => (float)$costs['meretre'],
+                'tankolas'            => (float)$costs['tankolas'],
+                'egyeb'               => (float)$costs['egyeb'],
+                'szamla'              => (float)$costs['szamla'],
+                'bank_jutalek'        => $bankJutalek,
+                'szolgaltatok'        => $szolgaltatok,
+                'tulajdonosi_fizetes' => $tulajdonosiFizetes,
+                'tagi_kolcson'        => $tagiKolcson,
+                'costs_total'         => $totalCosts,
+                'profit'              => $revenueNetto - $totalCosts,
             ];
         };
 
