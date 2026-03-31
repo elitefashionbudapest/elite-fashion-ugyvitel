@@ -23,6 +23,9 @@ $filters = $data['filters'] ?? [];
         <a href="<?= base_url('/bank-transactions/transfer/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
             <i class="fa-solid fa-arrow-right-arrow-left"></i> Átutalás
         </a>
+        <a href="<?= base_url('/bank-transactions/commission/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
+            <i class="fa-solid fa-percent"></i> <span class="hidden sm:inline">Banki jutalék</span> <span class="sm:hidden">Jutalék</span>
+        </a>
     </div>
 </div>
 
@@ -46,6 +49,7 @@ $filters = $data['filters'] ?? [];
                 <option value="szolgaltato_levon" <?= ($filters['type'] ?? '') === 'szolgaltato_levon' ? 'selected' : '' ?>>Szolgáltatói levonás</option>
                 <option value="hitel_torlesztes" <?= ($filters['type'] ?? '') === 'hitel_torlesztes' ? 'selected' : '' ?>>Hitel törlesztés</option>
                 <option value="szamla_kozti" <?= ($filters['type'] ?? '') === 'szamla_kozti' ? 'selected' : '' ?>>Számlák közötti</option>
+                <option value="banki_jutalek" <?= ($filters['type'] ?? '') === 'banki_jutalek' ? 'selected' : '' ?>>Banki jutalék</option>
             </select>
         </div>
         <div>
@@ -96,6 +100,10 @@ $filters = $data['filters'] ?? [];
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
                                 <i class="fa-solid fa-arrow-right-arrow-left mr-1"></i>Átutalás
                             </span>
+                        <?php elseif ($tx['type'] === 'banki_jutalek'): ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                <i class="fa-solid fa-percent mr-1"></i>Jutalék
+                            </span>
                         <?php else: ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
                                 <i class="fa-solid fa-building mr-1"></i>Szolgáltató
@@ -111,6 +119,8 @@ $filters = $data['filters'] ?? [];
                                 <?php endforeach; ?>
                             </div>
                             <span class="text-xs text-on-surface-variant"><?= e($tx['date_from']) ?> — <?= e($tx['date_to']) ?></span>
+                        <?php elseif ($tx['type'] === 'banki_jutalek'): ?>
+                            <span class="font-medium"><?= e($tx['notes'] ?? 'Banki jutalék') ?></span>
                         <?php elseif ($tx['type'] === 'hitel_torlesztes'): ?>
                             <span class="font-medium"><?= e($tx['loan_name'] ?? '') ?></span>
                         <?php elseif ($tx['type'] === 'szamla_kozti'): ?>

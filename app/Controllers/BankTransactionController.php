@@ -65,6 +65,7 @@ class BankTransactionController
 
         $bankId = (int)($_POST['bank_id'] ?? 0);
         $amount = (float)($_POST['amount'] ?? 0);
+        $commission = isset($_POST['commission']) && $_POST['commission'] !== '' ? (float)$_POST['commission'] : null;
         $dateFrom = $_POST['date_from'] ?? '';
         $dateTo = $_POST['date_to'] ?? '';
         $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
@@ -87,6 +88,7 @@ class BankTransactionController
             'bank_id'          => $bankId,
             'type'             => 'kartya_beerkezes',
             'amount'           => $amount,
+            'commission'       => $commission,
             'transaction_date' => $transactionDate,
             'date_from'        => $dateFrom,
             'date_to'          => $dateTo,
@@ -194,8 +196,10 @@ class BankTransactionController
         if (!$tx) redirect('/bank-transactions');
 
         $db = \App\Core\Database::getInstance();
+        $commission = isset($_POST['commission']) && $_POST['commission'] !== '' ? (float)$_POST['commission'] : $tx['commission'] ?? null;
+
         $stmt = $db->prepare(
-            'UPDATE bank_transactions SET bank_id = :bank_id, amount = :amount, source_amount = :source_amount,
+            'UPDATE bank_transactions SET bank_id = :bank_id, amount = :amount, commission = :commission, source_amount = :source_amount,
              transaction_date = :tdate, date_from = :df, date_to = :dt,
              provider_name = :prov, loan_bank_id = :loan, target_bank_id = :target, notes = :notes
              WHERE id = :id'
@@ -203,6 +207,7 @@ class BankTransactionController
         $stmt->execute([
             'bank_id'  => (int)($_POST['bank_id'] ?? $tx['bank_id']),
             'amount'   => (float)($_POST['amount'] ?? $tx['amount']),
+            'commission' => $commission,
             'source_amount' => !empty($_POST['source_amount']) ? (float)$_POST['source_amount'] : $tx['source_amount'],
             'tdate'    => $_POST['transaction_date'] ?? $tx['transaction_date'],
             'df'       => $_POST['date_from'] ?? $tx['date_from'],
@@ -348,6 +353,56 @@ class BankTransactionController
         $id = BankTransaction::create($data);
         AuditLog::log('create', 'bank_transactions', $id, null, $data);
         set_flash('success', 'Átutalás rögzítve.');
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Banki jutalék rögzítése
+     */
+    public function createCommission(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/commission-form',
+            'data' => [
+                'pageTitle' => 'Banki jutalék',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+            ]
+        ]);
+    }
+
+    public function storeCommission(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || $amount <= 0) {
+            save_old_input();
+            set_flash('error', 'Bank és összeg megadása kötelező.');
+            redirect('/bank-transactions/commission/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'banki_jutalek',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Banki jutalék rögzítve: ' . format_money($amount));
         redirect('/bank-transactions');
     }
 

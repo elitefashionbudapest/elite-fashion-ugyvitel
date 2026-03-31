@@ -12,6 +12,7 @@ $typeIcons = [
     'szolgaltato_levon' => ['icon' => 'fa-building', 'color' => 'text-orange-600', 'bg' => 'bg-orange-100'],
     'hitel_torlesztes' => ['icon' => 'fa-landmark', 'color' => 'text-amber-600', 'bg' => 'bg-amber-100'],
     'szamla_kozti' => ['icon' => 'fa-arrow-right-arrow-left', 'color' => 'text-indigo-600', 'bg' => 'bg-indigo-100'],
+    'banki_jutalek' => ['icon' => 'fa-percent', 'color' => 'text-red-600', 'bg' => 'bg-red-100'],
 ];
 $ti = $typeIcons[$tx['type']] ?? ['icon' => 'fa-circle', 'color' => 'text-gray-600', 'bg' => 'bg-gray-100'];
 ?>
@@ -77,6 +78,13 @@ $ti = $typeIcons[$tx['type']] ?? ['icon' => 'fa-circle', 'color' => 'text-gray-6
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Időszak meddig</label>
                     <input type="date" name="date_to" value="<?= e($tx['date_to']) ?>" class="<?= $inputCls ?>">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-red-600 uppercase tracking-widest mb-1.5">Banki jutalék</label>
+                <div class="relative">
+                    <input type="number" name="commission" step="0.01" min="0" value="<?= e($tx['commission'] ?? '') ?>" class="<?= $inputCls ?> font-bold" placeholder="0">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ft</span>
                 </div>
             </div>
             <?php endif; ?>

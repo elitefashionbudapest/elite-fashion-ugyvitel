@@ -11,6 +11,7 @@ class BankTransaction
         'szolgaltato_levon' => 'Szolgáltatói levonás',
         'hitel_torlesztes' => 'Hitel törlesztő részlet',
         'szamla_kozti'     => 'Számlák közötti átutalás',
+        'banki_jutalek'    => 'Banki jutalék',
     ];
 
     /**
@@ -61,8 +62,12 @@ class BankTransaction
         foreach ($results as &$row) {
             if ($row['type'] === 'kartya_beerkezes') {
                 $row['stores'] = self::getStores($row['id']);
-                $row['gross_amount'] = self::calculateGross($row['id']);
-                $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
+                if ($row['commission'] !== null) {
+                    $row['gross_amount'] = (float)$row['amount'] + (float)$row['commission'];
+                } else {
+                    $row['gross_amount'] = self::calculateGross($row['id']);
+                    $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
+                }
             }
         }
 
@@ -85,8 +90,12 @@ class BankTransaction
         if ($row['type'] === 'kartya_beerkezes') {
             $row['stores'] = self::getStores($row['id']);
             $row['store_ids'] = array_column($row['stores'], 'store_id');
-            $row['gross_amount'] = self::calculateGross($row['id']);
-            $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
+            if ($row['commission'] !== null) {
+                $row['gross_amount'] = (float)$row['amount'] + (float)$row['commission'];
+            } else {
+                $row['gross_amount'] = self::calculateGross($row['id']);
+                $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
+            }
         }
 
         return $row;
@@ -96,13 +105,14 @@ class BankTransaction
     {
         $db = Database::getInstance();
         $stmt = $db->prepare(
-            'INSERT INTO bank_transactions (bank_id, type, amount, source_amount, target_currency, transaction_date, date_from, date_to, provider_name, invoice_id, loan_bank_id, target_bank_id, notes, recorded_by)
-             VALUES (:bank_id, :type, :amount, :source_amount, :target_currency, :transaction_date, :date_from, :date_to, :provider_name, :invoice_id, :loan_bank_id, :target_bank_id, :notes, :recorded_by)'
+            'INSERT INTO bank_transactions (bank_id, type, amount, commission, source_amount, target_currency, transaction_date, date_from, date_to, provider_name, invoice_id, loan_bank_id, target_bank_id, notes, recorded_by)
+             VALUES (:bank_id, :type, :amount, :commission, :source_amount, :target_currency, :transaction_date, :date_from, :date_to, :provider_name, :invoice_id, :loan_bank_id, :target_bank_id, :notes, :recorded_by)'
         );
         $stmt->execute([
             'bank_id'          => $data['bank_id'],
             'type'             => $data['type'],
             'amount'           => $data['amount'],
+            'commission'       => $data['commission'] ?? null,
             'source_amount'    => $data['source_amount'] ?? null,
             'target_currency'  => $data['target_currency'] ?? null,
             'transaction_date' => $data['transaction_date'],
