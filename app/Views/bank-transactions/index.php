@@ -26,6 +26,9 @@ $filters = $data['filters'] ?? [];
         <a href="<?= base_url('/bank-transactions/commission/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
             <i class="fa-solid fa-percent"></i> <span class="hidden sm:inline">Banki jutalék</span> <span class="sm:hidden">Jutalék</span>
         </a>
+        <a href="<?= base_url('/bank-transactions/tax/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
+            <i class="fa-solid fa-file-invoice-dollar"></i> <span class="hidden sm:inline">Adó kifizetés</span> <span class="sm:hidden">Adó</span>
+        </a>
         <a href="<?= base_url('/bank-transactions/owner-loan/create') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
             <i class="fa-solid fa-handshake"></i> <span class="hidden sm:inline">Tagi kölcsön</span> <span class="sm:hidden">Kölcsön</span>
         </a>
@@ -54,6 +57,7 @@ $filters = $data['filters'] ?? [];
                 <option value="szamla_kozti" <?= ($filters['type'] ?? '') === 'szamla_kozti' ? 'selected' : '' ?>>Számlák közötti</option>
                 <option value="banki_jutalek" <?= ($filters['type'] ?? '') === 'banki_jutalek' ? 'selected' : '' ?>>Banki jutalék</option>
                 <option value="tulajdonosi_fizetes" <?= ($filters['type'] ?? '') === 'tulajdonosi_fizetes' ? 'selected' : '' ?>>Tulajdonosi fizetés</option>
+                <option value="ado_kifizetes" <?= ($filters['type'] ?? '') === 'ado_kifizetes' ? 'selected' : '' ?>>Adó kifizetés</option>
                 <option value="tagi_kolcson_be" <?= ($filters['type'] ?? '') === 'tagi_kolcson_be' ? 'selected' : '' ?>>Tagi kölcsön be</option>
                 <option value="tagi_kolcson_ki" <?= ($filters['type'] ?? '') === 'tagi_kolcson_ki' ? 'selected' : '' ?>>Tagi kölcsön ki</option>
             </select>
@@ -114,6 +118,10 @@ $filters = $data['filters'] ?? [];
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
                                 <i class="fa-solid fa-user-tie mr-1"></i>Tul. fizetés
                             </span>
+                        <?php elseif ($tx['type'] === 'ado_kifizetes'): ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i>Adó
+                            </span>
                         <?php elseif ($tx['type'] === 'tagi_kolcson_be'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
                                 <i class="fa-solid fa-handshake mr-1"></i>Kölcsön be
@@ -139,6 +147,8 @@ $filters = $data['filters'] ?? [];
                             <span class="text-xs text-on-surface-variant"><?= e($tx['date_from']) ?> — <?= e($tx['date_to']) ?></span>
                         <?php elseif ($tx['type'] === 'banki_jutalek'): ?>
                             <span class="font-medium"><?= e($tx['notes'] ?? 'Banki jutalék') ?></span>
+                        <?php elseif ($tx['type'] === 'ado_kifizetes'): ?>
+                            <span class="font-medium"><?= e($tx['notes'] ?? 'Adó kifizetés') ?></span>
                         <?php elseif ($tx['type'] === 'tulajdonosi_fizetes'): ?>
                             <span class="font-medium"><?= e($tx['notes'] ?? 'Tulajdonosi fizetés') ?></span>
                         <?php elseif ($tx['type'] === 'tagi_kolcson_be' || $tx['type'] === 'tagi_kolcson_ki'): ?>

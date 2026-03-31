@@ -13,6 +13,7 @@ class BankTransaction
         'szamla_kozti'        => 'Számlák közötti átutalás',
         'banki_jutalek'       => 'Banki jutalék',
         'tulajdonosi_fizetes' => 'Tulajdonosi fizetés',
+        'ado_kifizetes'       => 'Adó kifizetés',
         'tagi_kolcson_be'     => 'Tagi kölcsön befizetés',
         'tagi_kolcson_ki'     => 'Tagi kölcsön visszafizetés',
     ];

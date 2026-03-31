@@ -55,6 +55,7 @@ function changeBadge(?float $pct, bool $invertColor = false): string {
                 ['Bank jutalék', $pl['bank_jutalek'], 'fa-credit-card'],
                 ['Szolgáltatók', $pl['szolgaltatok'], 'fa-building'],
                 ['Tulajdonosi fizetés', $pl['tulajdonosi_fizetes'] ?? 0, 'fa-user-tie'],
+                ['Adó kifizetés', $pl['ado_kifizetes'] ?? 0, 'fa-file-invoice-dollar'],
                 ['Tagi kölcsön visszafizetés', $pl['tagi_kolcson_ki'] ?? 0, 'fa-handshake'],
             ];
             foreach ($costLines as [$label, $value, $icon]):

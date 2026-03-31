@@ -375,6 +375,11 @@ class FinanceController
             $stmt->execute(['df' => $from, 'dt' => $to]);
             $tulajdonosiFizetes = (float)$stmt->fetchColumn();
 
+            // Adó kifizetések
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'ado_kifizetes' AND transaction_date BETWEEN :df AND :dt");
+            $stmt->execute(['df' => $from, 'dt' => $to]);
+            $adoKifizetes = (float)$stmt->fetchColumn();
+
             // Tagi kölcsön befizetés (bejövő pénz)
             $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tagi_kolcson_be' AND transaction_date BETWEEN :df AND :dt");
             $stmt->execute(['df' => $from, 'dt' => $to]);
@@ -386,7 +391,7 @@ class FinanceController
             $tagiKolcsonKi = (float)$stmt->fetchColumn();
 
             $totalCosts = (float)$costs['munkaber'] + (float)$costs['meretre'] + (float)$costs['tankolas']
-                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok + $tulajdonosiFizetes + $tagiKolcsonKi;
+                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok + $tulajdonosiFizetes + $adoKifizetes + $tagiKolcsonKi;
 
             return [
                 'revenue_brutto'      => $revenueBrutto,
@@ -399,6 +404,7 @@ class FinanceController
                 'bank_jutalek'        => $bankJutalek,
                 'szolgaltatok'        => $szolgaltatok,
                 'tulajdonosi_fizetes' => $tulajdonosiFizetes,
+                'ado_kifizetes'      => $adoKifizetes,
                 'tagi_kolcson_be'     => $tagiKolcsonBe,
                 'tagi_kolcson_ki'     => $tagiKolcsonKi,
                 'costs_total'         => $totalCosts,

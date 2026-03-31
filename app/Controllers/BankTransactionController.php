@@ -458,6 +458,53 @@ class BankTransactionController
         redirect('/bank-transactions');
     }
 
+    /**
+     * Adó kifizetés rögzítése
+     */
+    public function createTax(): void
+    {
+        Middleware::owner();
+        view('layouts/app', [
+            'content' => 'bank-transactions/tax-form',
+            'data' => [
+                'pageTitle' => 'Adó kifizetés',
+                'activeTab' => 'bank_transactions',
+                'banks'     => Bank::all(),
+            ]
+        ]);
+    }
+
+    public function storeTax(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
+        $notes = trim($_POST['notes'] ?? '') ?: null;
+
+        if (!$bankId || $amount <= 0) {
+            save_old_input();
+            set_flash('error', 'Bank és összeg megadása kötelező.');
+            redirect('/bank-transactions/tax/create');
+        }
+
+        $data = [
+            'bank_id'          => $bankId,
+            'type'             => 'ado_kifizetes',
+            'amount'           => $amount,
+            'transaction_date' => $transactionDate,
+            'notes'            => $notes,
+            'recorded_by'      => Auth::id(),
+        ];
+
+        $id = BankTransaction::create($data);
+        AuditLog::log('create', 'bank_transactions', $id, null, $data);
+        set_flash('success', 'Adó kifizetés rögzítve: ' . format_money($amount));
+        redirect('/bank-transactions');
+    }
+
     public function destroy(string $id): void
     {
         Middleware::owner();

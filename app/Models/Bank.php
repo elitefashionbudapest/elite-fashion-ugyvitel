@@ -142,6 +142,11 @@ class Bank
             $stmt->execute(['bank_id' => $bankId]);
             $balance -= (float)$stmt->fetchColumn();
 
+            // - Adó kifizetések
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE bank_id = :bank_id AND type = 'ado_kifizetes'");
+            $stmt->execute(['bank_id' => $bankId]);
+            $balance -= (float)$stmt->fetchColumn();
+
             // + Tagi kölcsön befizetés
             $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE bank_id = :bank_id AND type = 'tagi_kolcson_be'");
             $stmt->execute(['bank_id' => $bankId]);

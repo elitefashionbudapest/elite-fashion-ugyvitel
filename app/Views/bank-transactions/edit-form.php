@@ -14,6 +14,7 @@ $typeIcons = [
     'szamla_kozti' => ['icon' => 'fa-arrow-right-arrow-left', 'color' => 'text-indigo-600', 'bg' => 'bg-indigo-100'],
     'banki_jutalek' => ['icon' => 'fa-percent', 'color' => 'text-red-600', 'bg' => 'bg-red-100'],
     'tulajdonosi_fizetes' => ['icon' => 'fa-user-tie', 'color' => 'text-purple-600', 'bg' => 'bg-purple-100'],
+    'ado_kifizetes' => ['icon' => 'fa-file-invoice-dollar', 'color' => 'text-yellow-600', 'bg' => 'bg-yellow-100'],
     'tagi_kolcson_be' => ['icon' => 'fa-handshake', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-100'],
     'tagi_kolcson_ki' => ['icon' => 'fa-handshake', 'color' => 'text-rose-600', 'bg' => 'bg-rose-100'],
 ];
