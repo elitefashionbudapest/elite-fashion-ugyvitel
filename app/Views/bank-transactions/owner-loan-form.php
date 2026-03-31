@@ -56,7 +56,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
             <div>
                 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Összeg</label>
                 <div class="relative">
-                    <input type="number" name="amount" step="0.01" min="0" value="<?= e(old('amount')) ?>"
+                    <input type="text" inputmode="decimal" data-calc name="amount" step="0.01" min="0" value="<?= e(old('amount')) ?>"
                            class="w-full px-4 py-3 border border-outline-variant rounded-xl text-lg font-heading font-bold text-center focus:ring-2 focus:ring-primary-container focus:border-primary bg-surface-container-lowest"
                            placeholder="0" required>
                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ft</span>

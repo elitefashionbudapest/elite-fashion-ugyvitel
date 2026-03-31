@@ -56,7 +56,7 @@ $ti = $typeIcons[$tx['type']] ?? ['icon' => 'fa-circle', 'color' => 'text-gray-6
                         <?= $tx['type'] === 'szamla_kozti' ? 'Érkezett összeg' : 'Összeg' ?>
                     </label>
                     <div class="relative">
-                        <input type="number" name="amount" step="0.01" min="0" value="<?= e($tx['amount']) ?>" class="<?= $inputCls ?> font-bold" required>
+                        <input type="text" inputmode="decimal" data-calc name="amount" step="0.01" min="0" value="<?= e($tx['amount']) ?>" class="<?= $inputCls ?> font-bold" required>
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ft</span>
                     </div>
                 </div>
@@ -65,7 +65,7 @@ $ti = $typeIcons[$tx['type']] ?? ['icon' => 'fa-circle', 'color' => 'text-gray-6
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Küldött összeg</label>
                     <div class="relative">
-                        <input type="number" name="source_amount" step="0.01" min="0" value="<?= e($tx['source_amount']) ?>" class="<?= $inputCls ?> font-bold">
+                        <input type="text" inputmode="decimal" data-calc name="source_amount" step="0.01" min="0" value="<?= e($tx['source_amount']) ?>" class="<?= $inputCls ?> font-bold">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">Ft</span>
                     </div>
                 </div>

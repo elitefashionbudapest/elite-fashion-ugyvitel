@@ -56,7 +56,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Küldött összeg</label>
                     <div class="relative">
-                        <input type="number" name="source_amount" id="source_amount" step="0.01" min="0" value="<?= e(old('source_amount')) ?>"
+                        <input type="text" inputmode="decimal" data-calc name="source_amount" id="source_amount" step="0.01" min="0" value="<?= e(old('source_amount')) ?>"
                                class="<?= $inputCls ?> font-bold" placeholder="0" required>
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant" id="source_currency_label">Ft</span>
                     </div>
@@ -64,7 +64,7 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
                 <div>
                     <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Érkezett összeg</label>
                     <div class="relative">
-                        <input type="number" name="amount" id="target_amount" step="0.01" min="0" value="<?= e(old('amount')) ?>"
+                        <input type="text" inputmode="decimal" data-calc name="amount" id="target_amount" step="0.01" min="0" value="<?= e(old('amount')) ?>"
                                class="<?= $inputCls ?> font-bold" placeholder="0" required>
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant" id="target_currency_label">Ft</span>
                     </div>

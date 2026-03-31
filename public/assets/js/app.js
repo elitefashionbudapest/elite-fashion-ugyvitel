@@ -81,3 +81,24 @@ async function fetchWithCsrf(url, options = {}) {
 
     return response.json();
 }
+
+// ==========================================
+// Összeg kalkulátor (pl. 15000+23000+8500 = 46500)
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[data-calc]').forEach(function(input) {
+        input.addEventListener('blur', function() {
+            const val = this.value.trim();
+            if (val.includes('+')) {
+                const parts = val.split('+').map(function(p) {
+                    return parseFloat(p.replace(/\s/g, '').replace(',', '.')) || 0;
+                });
+                const sum = parts.reduce(function(a, b) { return a + b; }, 0);
+                this.value = sum % 1 === 0 ? sum : sum.toFixed(2);
+                // Triggerelünk input/change eventeket hogy a többi logika is fusson
+                this.dispatchEvent(new Event('input', { bubbles: true }));
+                this.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+});

@@ -122,7 +122,7 @@ $months = [
 
                     <div>
                         <label class="block text-sm font-medium text-on-surface mb-1.5">Összeg</label>
-                        <input type="number" name="amount" step="1" min="1" value="<?= e(old('amount')) ?>"
+                        <input type="text" inputmode="decimal" data-calc name="amount" step="1" min="1" value="<?= e(old('amount')) ?>"
                                class="<?= $inputCls ?>" placeholder="0" required>
                     </div>
                 </div>

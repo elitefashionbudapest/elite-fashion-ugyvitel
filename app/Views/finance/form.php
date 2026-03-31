@@ -112,7 +112,7 @@ $purposeGroups = [
                     <div class="bg-surface-container-low/50 rounded-xl p-5 border border-surface-container">
                         <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2" id="amount-label">Összeg</label>
                         <div class="relative">
-                            <input type="number" name="amount" id="amount" step="1" min="0"
+                            <input type="text" inputmode="decimal" data-calc name="amount" id="amount" step="1" min="0"
                                    value="<?= e($record ? (int)$record['amount'] : old('amount')) ?>"
                                    class="w-full px-4 py-4 border border-outline-variant rounded-xl text-2xl font-heading font-bold text-center focus:ring-2 focus:ring-primary-container focus:border-primary bg-white"
                                    placeholder="0" required>
