@@ -375,13 +375,18 @@ class FinanceController
             $stmt->execute(['df' => $from, 'dt' => $to]);
             $tulajdonosiFizetes = (float)$stmt->fetchColumn();
 
-            // Tagi kölcsön (bejövő pénz)
-            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tagi_kolcson' AND transaction_date BETWEEN :df AND :dt");
+            // Tagi kölcsön befizetés (bejövő pénz)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tagi_kolcson_be' AND transaction_date BETWEEN :df AND :dt");
             $stmt->execute(['df' => $from, 'dt' => $to]);
-            $tagiKolcson = (float)$stmt->fetchColumn();
+            $tagiKolcsonBe = (float)$stmt->fetchColumn();
+
+            // Tagi kölcsön visszafizetés (kimenő pénz)
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM bank_transactions WHERE type = 'tagi_kolcson_ki' AND transaction_date BETWEEN :df AND :dt");
+            $stmt->execute(['df' => $from, 'dt' => $to]);
+            $tagiKolcsonKi = (float)$stmt->fetchColumn();
 
             $totalCosts = (float)$costs['munkaber'] + (float)$costs['meretre'] + (float)$costs['tankolas']
-                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok + $tulajdonosiFizetes;
+                        + (float)$costs['egyeb'] + (float)$costs['szamla'] + $bankJutalek + $szolgaltatok + $tulajdonosiFizetes + $tagiKolcsonKi;
 
             return [
                 'revenue_brutto'      => $revenueBrutto,
@@ -394,7 +399,8 @@ class FinanceController
                 'bank_jutalek'        => $bankJutalek,
                 'szolgaltatok'        => $szolgaltatok,
                 'tulajdonosi_fizetes' => $tulajdonosiFizetes,
-                'tagi_kolcson'        => $tagiKolcson,
+                'tagi_kolcson_be'     => $tagiKolcsonBe,
+                'tagi_kolcson_ki'     => $tagiKolcsonKi,
                 'costs_total'         => $totalCosts,
                 'profit'              => $revenueNetto - $totalCosts,
             ];

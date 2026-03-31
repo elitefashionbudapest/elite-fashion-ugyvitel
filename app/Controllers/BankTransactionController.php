@@ -432,6 +432,7 @@ class BankTransactionController
 
         $bankId = (int)($_POST['bank_id'] ?? 0);
         $amount = (float)($_POST['amount'] ?? 0);
+        $direction = $_POST['direction'] ?? 'in';
         $transactionDate = $_POST['transaction_date'] ?? date('Y-m-d');
         $notes = trim($_POST['notes'] ?? '') ?: null;
 
@@ -441,9 +442,11 @@ class BankTransactionController
             redirect('/bank-transactions/owner-loan/create');
         }
 
+        $type = $direction === 'out' ? 'tagi_kolcson_ki' : 'tagi_kolcson_be';
+
         $data = [
             'bank_id'          => $bankId,
-            'type'             => 'tagi_kolcson',
+            'type'             => $type,
             'amount'           => $amount,
             'transaction_date' => $transactionDate,
             'notes'            => $notes,
@@ -452,7 +455,8 @@ class BankTransactionController
 
         $id = BankTransaction::create($data);
         AuditLog::log('create', 'bank_transactions', $id, null, $data);
-        set_flash('success', 'Tagi kölcsön rögzítve: ' . format_money($amount));
+        $label = $direction === 'out' ? 'Tagi kölcsön visszafizetés' : 'Tagi kölcsön befizetés';
+        set_flash('success', $label . ' rögzítve: ' . format_money($amount));
         redirect('/bank-transactions');
     }
 

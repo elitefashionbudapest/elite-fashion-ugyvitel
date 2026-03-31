@@ -54,7 +54,8 @@ $filters = $data['filters'] ?? [];
                 <option value="szamla_kozti" <?= ($filters['type'] ?? '') === 'szamla_kozti' ? 'selected' : '' ?>>Számlák közötti</option>
                 <option value="banki_jutalek" <?= ($filters['type'] ?? '') === 'banki_jutalek' ? 'selected' : '' ?>>Banki jutalék</option>
                 <option value="tulajdonosi_fizetes" <?= ($filters['type'] ?? '') === 'tulajdonosi_fizetes' ? 'selected' : '' ?>>Tulajdonosi fizetés</option>
-                <option value="tagi_kolcson" <?= ($filters['type'] ?? '') === 'tagi_kolcson' ? 'selected' : '' ?>>Tagi kölcsön</option>
+                <option value="tagi_kolcson_be" <?= ($filters['type'] ?? '') === 'tagi_kolcson_be' ? 'selected' : '' ?>>Tagi kölcsön be</option>
+                <option value="tagi_kolcson_ki" <?= ($filters['type'] ?? '') === 'tagi_kolcson_ki' ? 'selected' : '' ?>>Tagi kölcsön ki</option>
             </select>
         </div>
         <div>
@@ -113,9 +114,13 @@ $filters = $data['filters'] ?? [];
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
                                 <i class="fa-solid fa-user-tie mr-1"></i>Tul. fizetés
                             </span>
-                        <?php elseif ($tx['type'] === 'tagi_kolcson'): ?>
+                        <?php elseif ($tx['type'] === 'tagi_kolcson_be'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                                <i class="fa-solid fa-handshake mr-1"></i>Tagi kölcsön
+                                <i class="fa-solid fa-handshake mr-1"></i>Kölcsön be
+                            </span>
+                        <?php elseif ($tx['type'] === 'tagi_kolcson_ki'): ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                                <i class="fa-solid fa-handshake mr-1"></i>Kölcsön ki
                             </span>
                         <?php else: ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
@@ -136,7 +141,7 @@ $filters = $data['filters'] ?? [];
                             <span class="font-medium"><?= e($tx['notes'] ?? 'Banki jutalék') ?></span>
                         <?php elseif ($tx['type'] === 'tulajdonosi_fizetes'): ?>
                             <span class="font-medium"><?= e($tx['notes'] ?? 'Tulajdonosi fizetés') ?></span>
-                        <?php elseif ($tx['type'] === 'tagi_kolcson'): ?>
+                        <?php elseif ($tx['type'] === 'tagi_kolcson_be' || $tx['type'] === 'tagi_kolcson_ki'): ?>
                             <span class="font-medium"><?= e($tx['notes'] ?? 'Tagi kölcsön') ?></span>
                         <?php elseif ($tx['type'] === 'hitel_torlesztes'): ?>
                             <span class="font-medium"><?= e($tx['loan_name'] ?? '') ?></span>
@@ -156,7 +161,7 @@ $filters = $data['filters'] ?? [];
                             —
                         <?php endif; ?>
                     </td>
-                    <?php $isIncoming = in_array($tx['type'], ['kartya_beerkezes', 'tagi_kolcson']); ?>
+                    <?php $isIncoming = in_array($tx['type'], ['kartya_beerkezes', 'tagi_kolcson_be']); ?>
                     <td class="text-right font-medium <?= $isIncoming ? 'text-emerald-600' : 'text-red-600' ?>">
                         <?= $isIncoming ? '+' : '-' ?><?= format_money($tx['amount']) ?>
                     </td>
