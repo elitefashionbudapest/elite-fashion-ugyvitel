@@ -27,7 +27,7 @@ foreach ($invoices as $inv) {
             <i class="fa-solid fa-plus"></i> Új számla
         </a>
         <?php if (Auth::isOwner()): ?>
-        <form method="POST" action="<?= base_url('/invoices/fetch-emails') ?>" class="inline">
+        <form method="POST" action="<?= base_url('/invoices/fetch-emails') ?>" class="inline" id="gmail-form" onsubmit="showAiLoader('Gmail számlák letöltése és AI elemzés...')">
             <?= csrf_field() ?>
             <button type="submit" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 text-sm border border-outline-variant hover:bg-surface-container transition-colors">
                 <i class="fa-solid fa-envelope-open-text"></i> Gmail számlák
@@ -207,3 +207,22 @@ foreach ($invoices as $inv) {
     </div>
     <?php endif; ?>
 </div>
+
+<!-- AI feldolgozás overlay -->
+<div id="ai-loader" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
+        <div class="relative w-16 h-16 mx-auto mb-4">
+            <div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <div class="absolute inset-3 rounded-full border-4 border-blue-400 border-b-transparent animate-spin" style="animation-direction:reverse;animation-duration:1.5s"></div>
+        </div>
+        <h3 class="font-heading font-bold text-on-surface text-lg mb-1">AI feldolgozás</h3>
+        <p class="text-sm text-on-surface-variant" id="ai-loader-msg">Kérem várjon...</p>
+    </div>
+</div>
+<script>
+function showAiLoader(msg) {
+    document.getElementById('ai-loader-msg').textContent = msg || 'AI feldolgozás folyamatban...';
+    document.getElementById('ai-loader').classList.remove('hidden');
+}
+</script>
