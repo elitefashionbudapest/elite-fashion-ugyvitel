@@ -22,9 +22,19 @@ foreach ($invoices as $inv) {
         <h1 class="text-3xl font-heading font-extrabold text-on-surface tracking-tight mb-1">Bejövő számlák</h1>
         <p class="text-on-surface-variant text-sm">Beszállítói számlák nyilvántartása és követése.</p>
     </div>
-    <a href="<?= base_url('/invoices/create') ?>" class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-sm">
-        <i class="fa-solid fa-plus"></i> Új számla
-    </a>
+    <div class="flex flex-wrap gap-2">
+        <a href="<?= base_url('/invoices/create') ?>" class="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold rounded-full flex items-center gap-2 shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-sm">
+            <i class="fa-solid fa-plus"></i> Új számla
+        </a>
+        <?php if (Auth::isOwner()): ?>
+        <form method="POST" action="<?= base_url('/invoices/fetch-emails') ?>" class="inline">
+            <?= csrf_field() ?>
+            <button type="submit" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 text-sm border border-outline-variant hover:bg-surface-container transition-colors">
+                <i class="fa-solid fa-envelope-open-text"></i> Gmail számlák letöltése
+            </button>
+        </form>
+        <?php endif; ?>
+    </div>
 </div>
 
 <!-- Összesítő kártyák -->

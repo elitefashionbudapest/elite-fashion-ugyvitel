@@ -193,4 +193,37 @@ class InvoiceController
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(Supplier::search($q), JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * Gmail számlák manuális letöltése
+     */
+    public function fetchEmails(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        try {
+            $processor = new \App\Services\InvoiceEmailProcessor();
+            $results = $processor->process();
+
+            $successCount = 0;
+            $errorCount = 0;
+            foreach ($results as $r) {
+                if (($r['status'] ?? '') === 'success') $successCount++;
+                if (($r['status'] ?? '') === 'error') $errorCount++;
+            }
+
+            if ($successCount > 0) {
+                set_flash('success', $successCount . ' számla sikeresen importálva a Gmailből.');
+            } elseif ($errorCount > 0) {
+                set_flash('error', 'Hiba történt az email feldolgozás során.');
+            } else {
+                set_flash('info', 'Nincs új számla a Gmailben.');
+            }
+        } catch (\Throwable $e) {
+            set_flash('error', 'Gmail hiba: ' . $e->getMessage());
+        }
+
+        redirect('/invoices');
+    }
 }

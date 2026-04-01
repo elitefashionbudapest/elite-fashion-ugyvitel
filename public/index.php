@@ -240,6 +240,7 @@ $router->post('/invoices', [App\Controllers\InvoiceController::class, 'store']);
 $router->post('/invoices/{id}/paid', [App\Controllers\InvoiceController::class, 'markPaid']);
 $router->post('/invoices/{id}/unpaid', [App\Controllers\InvoiceController::class, 'markUnpaid']);
 $router->post('/invoices/{id}/delete', [App\Controllers\InvoiceController::class, 'destroy']);
+$router->post('/invoices/fetch-emails', [App\Controllers\InvoiceController::class, 'fetchEmails']);
 $router->get('/invoices/suppliers', [App\Controllers\InvoiceController::class, 'searchSuppliers']);
 
 // Ünnepnapok
