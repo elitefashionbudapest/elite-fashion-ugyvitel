@@ -345,22 +345,8 @@ class InvoiceController
             }
         }
 
-        // PDF szöveg kinyerése (pdftotext ha elérhető, különben bináris keresés)
-        $textContent = '';
-        $pdftotext = '/usr/bin/pdftotext';
-        if (file_exists($pdftotext)) {
-            $tmpTxt = tempnam(sys_get_temp_dir(), 'pdf');
-            exec(escapeshellcmd($pdftotext) . ' ' . escapeshellarg($filePath) . ' ' . escapeshellarg($tmpTxt) . ' 2>/dev/null');
-            if (file_exists($tmpTxt)) {
-                $textContent = file_get_contents($tmpTxt);
-                unlink($tmpTxt);
-            }
-        }
-
-        // Fallback: bináris PDF-ből olvasható szöveg
-        if (empty($textContent)) {
-            $textContent = file_get_contents($filePath);
-        }
+        // PDF szöveg kinyerése
+        $textContent = $this->extractPdfText($filePath);
 
         if (!$textContent) {
             $result['supplier'] = $result['supplier'] ?? $name;
@@ -482,5 +468,74 @@ class InvoiceController
         }
 
         redirect('/invoices');
+    }
+
+    /**
+     * PDF-ből szöveg kinyerése
+     * 1) pdftotext (ha elérhető a szerveren)
+     * 2) PDF stream-ek dekompresszálása
+     */
+    private function extractPdfText(string $filePath): string
+    {
+        // 1) pdftotext (poppler-utils)
+        $pdftotext = null;
+        foreach (['/usr/bin/pdftotext', '/usr/local/bin/pdftotext'] as $path) {
+            if (file_exists($path)) { $pdftotext = $path; break; }
+        }
+        if ($pdftotext) {
+            $tmpTxt = tempnam(sys_get_temp_dir(), 'pdf');
+            exec(escapeshellcmd($pdftotext) . ' ' . escapeshellarg($filePath) . ' ' . escapeshellarg($tmpTxt) . ' 2>/dev/null');
+            if (file_exists($tmpTxt) && filesize($tmpTxt) > 10) {
+                $text = file_get_contents($tmpTxt);
+                unlink($tmpTxt);
+                return $text;
+            }
+            if (file_exists($tmpTxt)) unlink($tmpTxt);
+        }
+
+        // 2) PHP: PDF stream-ekből szöveg kinyerése
+        $raw = file_get_contents($filePath);
+        if (!$raw) return '';
+
+        $text = '';
+
+        // Deflate tömörített streamek kibontása
+        if (preg_match_all('/stream\s*\n(.*?)\nendstream/s', $raw, $matches)) {
+            foreach ($matches[1] as $stream) {
+                $decoded = @gzuncompress($stream);
+                if (!$decoded) $decoded = @gzinflate($stream);
+                if (!$decoded) continue;
+
+                // Szöveg operátorok kinyerése: (szöveg) Tj, [(...)] TJ
+                if (preg_match_all('/\(([^)]+)\)\s*Tj/s', $decoded, $tm)) {
+                    $text .= implode(' ', $tm[1]) . ' ';
+                }
+                if (preg_match_all('/\[([^\]]*)\]\s*TJ/s', $decoded, $tm)) {
+                    foreach ($tm[1] as $arr) {
+                        if (preg_match_all('/\(([^)]*)\)/', $arr, $parts)) {
+                            $text .= implode('', $parts[1]) . ' ';
+                        }
+                    }
+                }
+                // BT...ET blokkok
+                if (preg_match_all('/BT\s*(.*?)\s*ET/s', $decoded, $blocks)) {
+                    foreach ($blocks[1] as $block) {
+                        if (preg_match_all('/\(([^)]+)\)/', $block, $parts)) {
+                            $text .= implode('', $parts[1]) . ' ';
+                        }
+                    }
+                }
+            }
+        }
+
+        // Ha nem sikerült stream-ekből, fallback: bináris-ból olvasható szövegek
+        if (strlen($text) < 20) {
+            // Csak ASCII-olvasható részeket szűrjük ki
+            if (preg_match_all('/[A-Za-z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ.,\s@#:\/\-]{5,}/', $raw, $readable)) {
+                $text = implode(' ', $readable[0]);
+            }
+        }
+
+        return $text;
     }
 }
