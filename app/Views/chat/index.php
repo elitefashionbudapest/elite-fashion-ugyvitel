@@ -187,12 +187,20 @@ $allUsers      = $data['users'] ?? [];
 (function() {
     const isMobile = window.innerWidth < 768;
     if (!isMobile) {
-        // Desktopon a desktop konténereket használjuk
+        // Desktopon: mobil ID-kat átnevezzük, hogy ne ütközzenek
+        var mMsg = document.getElementById('chat-messages');
+        var mInput = document.getElementById('chat-input');
+        var mApp = document.getElementById('chat-app');
+        if (mMsg) mMsg.id = 'chat-messages-mobile';
+        if (mInput) mInput.id = 'chat-input-mobile';
+        if (mApp) mApp.id = 'chat-app-mobile';
+        // Desktop ID-kat beállítjuk
         var dMsg = document.getElementById('chat-messages-desktop');
         var dInput = document.getElementById('chat-input-desktop');
-        // Mobilon már chat-messages/chat-input az ID, desktopon cseréljük
+        var dApp = document.getElementById('chat-app-desktop');
         if (dMsg) dMsg.id = 'chat-messages';
         if (dInput) dInput.id = 'chat-input';
+        if (dApp) dApp.id = 'chat-app';
     }
 })();
 </script>
