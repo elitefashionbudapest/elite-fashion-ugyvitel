@@ -109,14 +109,18 @@ $typeIcons = [
                                 <option value="<?= $key ?>" <?= ($row['suggested_type'] ?? '') === $key ? 'selected' : '' ?>><?= e($label) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <div id="stores-<?= $i ?>" class="flex flex-wrap gap-1 mt-1 <?= ($row['suggested_type'] ?? '') === 'kartya_beerkezes' ? '' : 'hidden' ?>">
+                        <div id="stores-<?= $i ?>" class="mt-1 <?= ($row['suggested_type'] ?? '') === 'kartya_beerkezes' ? '' : 'hidden' ?>" data-date="<?= e($row['booking_date']) ?>">
+                            <div class="flex flex-wrap gap-1">
                             <?php foreach ($stores as $s): ?>
                             <label class="inline-flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded text-[10px] border border-surface-container hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary-container/20">
                                 <input type="checkbox" name="store_ids[<?= $i ?>][]" value="<?= $s['id'] ?>"
-                                       class="h-3 w-3 text-primary border-outline rounded">
+                                       class="h-3 w-3 text-primary border-outline rounded"
+                                       onchange="fetchGross(<?= $i ?>)">
                                 <span><?= e($s['name']) ?></span>
                             </label>
                             <?php endforeach; ?>
+                            </div>
+                            <div id="gross-info-<?= $i ?>" class="text-[10px] mt-1"></div>
                         </div>
                     </td>
                 </tr>
@@ -165,6 +169,46 @@ function toggleStores(select) {
         storesDiv.classList.remove('hidden');
     } else {
         storesDiv.classList.add('hidden');
+    }
+}
+
+async function fetchGross(rowIdx) {
+    const storesDiv = document.getElementById('stores-' + rowIdx);
+    const infoDiv = document.getElementById('gross-info-' + rowIdx);
+    const date = storesDiv.dataset.date;
+    const checked = storesDiv.querySelectorAll('input[type=checkbox]:checked');
+
+    if (checked.length === 0 || !date) {
+        infoDiv.innerHTML = '';
+        return;
+    }
+
+    const params = new URLSearchParams();
+    checked.forEach(cb => params.append('store_ids[]', cb.value));
+    params.set('date_from', date);
+    params.set('date_to', date);
+
+    try {
+        const resp = await fetch('<?= base_url('/bank-transactions/api/gross') ?>?' + params);
+        const data = await resp.json();
+        const gross = data.gross || 0;
+
+        // Az adott sor nettó összege
+        const amountCell = storesDiv.closest('tr').querySelector('td:nth-child(4)');
+        const netText = amountCell.querySelector('.font-bold').textContent.replace(/[^\d]/g, '');
+        const net = parseInt(netText) || 0;
+        const commission = gross - net;
+
+        let html = '<span class="text-on-surface-variant">Könyvelés bruttó: <b>' + new Intl.NumberFormat('hu-HU').format(gross) + ' Ft</b></span>';
+        if (gross > 0 && commission > 0) {
+            const pct = ((commission / gross) * 100).toFixed(2);
+            html += ' <span class="text-red-500">| Jutalék: <b>' + new Intl.NumberFormat('hu-HU').format(commission) + ' Ft</b> (' + pct + '%)</span>';
+        } else if (gross === 0) {
+            html = '<span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>Nincs könyvelési adat erre a napra</span>';
+        }
+        infoDiv.innerHTML = html;
+    } catch (e) {
+        infoDiv.innerHTML = '<span class="text-red-500">Hiba a lekérdezés során</span>';
     }
 }
 </script>
