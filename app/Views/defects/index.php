@@ -72,6 +72,7 @@ $filters = $data['filters'] ?? [];
                     <div>
                         <p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Utolsó mentett vonalkód</p>
                         <p id="last-scanned-code" class="font-mono font-bold text-green-800 text-lg"></p>
+                        <p id="last-scanned-product" class="text-xs text-green-700 font-medium"></p>
                     </div>
                 </div>
             </div>
@@ -123,6 +124,8 @@ $filters = $data['filters'] ?? [];
                 <thead class="sticky top-0 z-10">
                     <tr class="bg-surface-container-low">
                         <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Vonalkód</th>
+                        <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Termék</th>
+                        <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-right">Bruttó ár</th>
                         <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Bolt</th>
                         <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Dátum / Idő</th>
                         <?php if (Auth::isOwner()): ?>
@@ -132,18 +135,20 @@ $filters = $data['filters'] ?? [];
                 </thead>
                 <tbody id="defect-tbody" class="divide-y divide-surface-container">
                     <?php if (empty($items)): ?>
-                        <tr id="empty-row"><td colspan="<?= Auth::isOwner() ? 4 : 3 ?>" class="px-8 py-12 text-center text-on-surface-variant">
+                        <tr id="empty-row"><td colspan="<?= Auth::isOwner() ? 6 : 5 ?>" class="px-8 py-12 text-center text-on-surface-variant">
                             <i class="fa-solid fa-barcode text-4xl mb-2 block text-outline-variant"></i>
                             Nincsenek selejt tételek.
                         </td></tr>
                     <?php else: ?>
                         <?php foreach ($items as $item): ?>
                         <tr class="hover:bg-surface-container-low/50 transition-colors">
-                            <td class="px-6 py-4 font-mono font-bold text-on-surface"><?= e($item['barcode']) ?></td>
-                            <td class="px-6 py-4 text-sm text-on-surface-variant"><?= e($item['store_name']) ?></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant"><?= date('Y.m.d H:i', strtotime($item['scanned_at'])) ?></td>
+                            <td class="px-6 py-3 font-mono font-bold text-on-surface text-sm"><?= e($item['barcode']) ?></td>
+                            <td class="px-6 py-3 text-sm text-on-surface"><?= $item['product_name'] ? e($item['product_name']) : '<span class="text-on-surface-variant italic">—</span>' ?></td>
+                            <td class="px-6 py-3 text-sm font-semibold text-on-surface text-right"><?= $item['product_price'] ? number_format((float)$item['product_price'], 0, ',', ' ') . ' Ft' : '<span class="text-on-surface-variant">—</span>' ?></td>
+                            <td class="px-6 py-3 text-sm text-on-surface-variant"><?= e($item['store_name']) ?></td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-on-surface-variant"><?= date('Y.m.d H:i', strtotime($item['scanned_at'])) ?></td>
                             <?php if (Auth::isOwner()): ?>
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-6 py-3 text-right">
                                 <form method="POST" action="<?= base_url("/defects/{$item['id']}/delete") ?>" class="inline" onsubmit="return confirm('Biztosan törli?')">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="p-2 hover:bg-error-container/10 rounded-full transition-colors text-on-surface-variant hover:text-error">
@@ -214,18 +219,28 @@ $filters = $data['filters'] ?? [];
                 // Sikeres mentés
                 barcodeInput.value = '';
                 lastScannedCode.textContent = barcode;
+                const productInfo = document.getElementById('last-scanned-product');
+                if (pName) {
+                    productInfo.textContent = pName + (pPrice ? ' — ' + Number(pPrice).toLocaleString('hu-HU') + ' Ft' : '');
+                } else {
+                    productInfo.textContent = 'Ismeretlen termék';
+                }
                 lastScanned.classList.remove('hidden');
                 errorDiv.classList.add('hidden');
 
                 // Sor hozzáadása a táblázathoz
                 if (emptyRow) emptyRow.remove();
+                const pName = data.item?.product_name;
+                const pPrice = data.item?.product_price;
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-surface-container-low/50 transition-colors bg-green-50';
                 row.innerHTML =
-                    '<td class="px-6 py-4 font-mono font-bold text-on-surface">' + escapeHtml(barcode) + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-on-surface-variant">' + escapeHtml(data.item?.store_name || '') + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-on-surface-variant">' + new Date().toLocaleString('hu-HU') + '</td>' +
-                    (isOwner ? '<td class="px-6 py-4 text-right text-sm text-gray-400">Friss</td>' : '');
+                    '<td class="px-6 py-3 font-mono font-bold text-on-surface text-sm">' + escapeHtml(barcode) + '</td>' +
+                    '<td class="px-6 py-3 text-sm text-on-surface">' + (pName ? escapeHtml(pName) : '<span class="text-on-surface-variant italic">—</span>') + '</td>' +
+                    '<td class="px-6 py-3 text-sm font-semibold text-on-surface text-right">' + (pPrice ? Number(pPrice).toLocaleString('hu-HU') + ' Ft' : '<span class="text-on-surface-variant">—</span>') + '</td>' +
+                    '<td class="px-6 py-3 text-sm text-on-surface-variant">' + escapeHtml(data.item?.store_name || '') + '</td>' +
+                    '<td class="px-6 py-3 text-sm text-on-surface-variant">' + new Date().toLocaleString('hu-HU') + '</td>' +
+                    (isOwner ? '<td class="px-6 py-3 text-right text-sm text-gray-400">Friss</td>' : '');
                 tbody.insertBefore(row, tbody.firstChild);
 
                 // Zöld háttér eltüntetése

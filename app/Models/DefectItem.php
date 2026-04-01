@@ -46,13 +46,15 @@ class DefectItem
     {
         $db = Database::getInstance();
         $stmt = $db->prepare(
-            'INSERT INTO defect_items (store_id, barcode, scanned_by, scanned_at)
-             VALUES (:store_id, :barcode, :scanned_by, NOW())'
+            'INSERT INTO defect_items (store_id, barcode, product_name, product_price, scanned_by, scanned_at)
+             VALUES (:store_id, :barcode, :product_name, :product_price, :scanned_by, NOW())'
         );
         $stmt->execute([
-            'store_id'   => $data['store_id'],
-            'barcode'    => $data['barcode'],
-            'scanned_by' => $data['scanned_by'],
+            'store_id'      => $data['store_id'],
+            'barcode'       => $data['barcode'],
+            'product_name'  => $data['product_name'] ?? null,
+            'product_price' => $data['product_price'] ?? null,
+            'scanned_by'    => $data['scanned_by'],
         ]);
         return (int)$db->lastInsertId();
     }

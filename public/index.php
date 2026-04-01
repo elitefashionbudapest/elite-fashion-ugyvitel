@@ -175,6 +175,10 @@ $router->get('/schedule/api/status', [App\Controllers\ScheduleController::class,
 $router->post('/schedule/api/approve', [App\Controllers\ScheduleController::class, 'apiApprove']);
 $router->post('/schedule/api/request-modify', [App\Controllers\ScheduleController::class, 'apiRequestModify']);
 
+// Termékek
+$router->get('/products', [App\Controllers\ProductController::class, 'index']);
+$router->post('/products/upload', [App\Controllers\ProductController::class, 'upload']);
+
 // Selejt
 $router->get('/defects', [App\Controllers\DefectController::class, 'index']);
 $router->post('/defects/scan', [App\Controllers\DefectController::class, 'scan']);

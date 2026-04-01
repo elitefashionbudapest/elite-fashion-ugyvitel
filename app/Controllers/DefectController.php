@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\{Auth, Middleware, AuditLog, Database};
-use App\Models\{DefectItem, Store};
+use App\Models\{DefectItem, Product, Store};
 
 class DefectController
 {
@@ -71,10 +71,15 @@ class DefectController
             return;
         }
 
+        // Termék keresése vonalkód alapján
+        $product = Product::findByBarcode($barcode);
+
         $data = [
-            'store_id'   => $storeId,
-            'barcode'    => $barcode,
-            'scanned_by' => Auth::id(),
+            'store_id'      => $storeId,
+            'barcode'       => $barcode,
+            'product_name'  => $product['name'] ?? null,
+            'product_price' => $product['gross_price'] ?? null,
+            'scanned_by'    => Auth::id(),
         ];
 
         $id = DefectItem::create($data);
@@ -85,10 +90,12 @@ class DefectController
         echo json_encode([
             'success' => true,
             'item'    => [
-                'id'         => $item['id'],
-                'barcode'    => $item['barcode'],
-                'store_name' => $item['store_name'],
-                'scanned_at' => $item['scanned_at'],
+                'id'            => $item['id'],
+                'barcode'       => $item['barcode'],
+                'product_name'  => $item['product_name'],
+                'product_price' => $item['product_price'],
+                'store_name'    => $item['store_name'],
+                'scanned_at'    => $item['scanned_at'],
             ],
         ]);
     }
@@ -204,11 +211,13 @@ class DefectController
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Fejlec sor
-        fputcsv($output, ['Vonalkod', 'Bolt', 'Szkennelete', 'Datum/Ido'], ';');
+        fputcsv($output, ['Vonalkod', 'Termek nev', 'Brutto ar', 'Bolt', 'Szkennelete', 'Datum/Ido'], ';');
 
         foreach ($items as $item) {
             fputcsv($output, [
                 $item['barcode'],
+                $item['product_name'] ?? '',
+                $item['product_price'] ?? '',
                 $item['store_name'],
                 $item['scanned_by_name'],
                 $item['scanned_at'],
