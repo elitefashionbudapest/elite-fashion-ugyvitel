@@ -13,23 +13,35 @@ $allUsers      = $data['users'] ?? [];
      data-user-name="<?= e($currentUser['name']) ?>"
      data-base-url="<?= base_url('') ?>">
 
-    <!-- Személyválasztó -->
-    <div class="bg-white rounded-t-2xl px-3 py-2 border-b border-gray-100">
-        <select id="mobile-chat-select" onchange="mobileChatSwitch(this.value)"
-                class="w-full px-3 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary">
-            <option value="public">Közös chat (mindenki látja)</option>
-            <?php foreach ($conversations as $conv): ?>
-                <option value="<?= $conv['user_id'] ?>">
-                    <?= e($conv['user_name']) ?>
-                    <?= $conv['unread_count'] > 0 ? ' (' . $conv['unread_count'] . ' új)' : '' ?>
-                </option>
-            <?php endforeach; ?>
-            <?php if (empty($conversations)): ?>
-                <?php foreach ($allUsers as $user): ?>
-                    <option value="<?= $user['id'] ?>"><?= e($user['name']) ?></option>
-                <?php endforeach; ?>
+    <!-- Személyválasztó ikonok -->
+    <div class="bg-white rounded-t-2xl px-2 py-2 border-b border-gray-100 flex gap-1.5 overflow-x-auto">
+        <button onclick="mobileChatSwitch('public')" id="m-conv-public"
+                class="mobile-conv-btn active flex-shrink-0 flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-colors bg-primary/10 min-w-[60px]">
+            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
+                <i class="fa-solid fa-comments text-white text-sm"></i>
+            </div>
+            <span class="text-[10px] font-bold text-gray-700 truncate max-w-[56px]">Közös</span>
+        </button>
+        <?php
+        $mobileUsers = !empty($conversations) ? $conversations : array_map(fn($u) => ['user_id' => $u['id'], 'user_name' => $u['name'], 'unread_count' => 0], $allUsers);
+        foreach ($mobileUsers as $conv): ?>
+        <button onclick="mobileChatSwitch(<?= $conv['user_id'] ?>)" id="m-conv-<?= $conv['user_id'] ?>"
+                class="mobile-conv-btn flex-shrink-0 flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-colors hover:bg-gray-100 min-w-[60px] relative">
+            <?php
+            $nameParts = explode(' ', $conv['user_name']);
+            $monogram = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? mb_substr($nameParts[1], 0, 1) : ''));
+            $colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500'];
+            $colorIdx = $conv['user_id'] % count($colors);
+            ?>
+            <div class="w-9 h-9 rounded-full <?= $colors[$colorIdx] ?> flex items-center justify-center">
+                <span class="text-white text-xs font-bold"><?= $monogram ?></span>
+            </div>
+            <?php if (($conv['unread_count'] ?? 0) > 0): ?>
+            <span class="absolute top-0 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center"><?= $conv['unread_count'] > 9 ? '9+' : $conv['unread_count'] ?></span>
             <?php endif; ?>
-        </select>
+            <span class="text-[10px] font-medium text-gray-600 truncate max-w-[56px]"><?= e(explode(' ', $conv['user_name'])[0]) ?></span>
+        </button>
+        <?php endforeach; ?>
     </div>
 
     <!-- Üzenetek -->
@@ -188,6 +200,16 @@ $allUsers      = $data['users'] ?? [];
 })();
 
 function mobileChatSwitch(val) {
+    // Aktív gomb jelölés
+    document.querySelectorAll('.mobile-conv-btn').forEach(function(btn) {
+        btn.classList.remove('active', 'bg-primary/10');
+    });
+    var activeId = val === 'public' ? 'm-conv-public' : 'm-conv-' + val;
+    var activeBtn = document.getElementById(activeId);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-primary/10');
+    }
+
     if (val === 'public') {
         Chat.switchConversation(null);
     } else {
