@@ -242,8 +242,17 @@ class InvoiceController
             $tmpSaved = $uploadDir . '/' . $filename;
             if (!move_uploaded_file($tmpFile, $tmpSaved)) continue;
 
-            // Adatok kinyerése AI-val
-            $invoiceData = $this->analyzeInvoiceWithAI($tmpSaved, $originalName);
+            // Adatok kinyerése AI-val (ha hiba, fallback fájlnévre)
+            try {
+                $invoiceData = $this->analyzeInvoiceWithAI($tmpSaved, $originalName);
+            } catch (\Throwable $e) {
+                $invoiceData = [
+                    'supplier' => pathinfo($originalName, PATHINFO_FILENAME),
+                    'invoice_number' => pathinfo($originalName, PATHINFO_FILENAME),
+                    'amount' => 0, 'net_amount' => 0, 'currency' => 'HUF',
+                    'date' => date('Y-m-d'), 'failed' => false,
+                ];
+            }
 
             // Sikertelen számla kihagyása
             if (!empty($invoiceData['failed'])) {
@@ -319,7 +328,9 @@ class InvoiceController
 
         $prompt = "Elemezd ezt a számlát/invoice-t. Válaszolj KIZÁRÓLAG JSON formátumban:\n\n";
         $prompt .= '{"supplier_name":"a kiállító/eladó cég neve","invoice_number":"számla szám","net_amount":0,"gross_amount":0,"currency":"HUF","invoice_date":"YYYY-MM-DD","payment_method":"kartya","is_failed":false}' . "\n\n";
-        $prompt .= "is_failed: true ha a számla sikertelen/unsuccessful/failed/declined fizetést jelez\n";
+        $prompt .= "FONTOS: is_failed CSAK AKKOR true, ha a számla egyértelműen jelzi hogy a fizetés sikertelen volt (unsuccessful, failed, declined, payment failed). Ha a számlán 'Kifizetve' vagy összeg szerepel, az NEM sikertelen!\n";
+        $prompt .= "Az 'Az ok nem található' vagy hasonló szöveg NEM jelent sikertelen fizetést.\n";
+        $prompt .= "supplier_name: a kiállító cég neve (pl. 'Meta Platforms Ireland Limited', nem a vevő)\n";
         $prompt .= "currency: HUF, EUR vagy USD\n";
         $prompt .= "payment_method: keszpenz, atutalas, kartya, utanvet\n";
         $prompt .= "Ha nem számla, válaszolj: {\"is_invoice\":false}\n";
