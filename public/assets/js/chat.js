@@ -196,7 +196,7 @@ const Chat = (function () {
                     '<div class="max-w-[70%]">' +
                     '<div class="bg-sidebar text-white rounded-2xl rounded-br-md px-4 py-2.5 relative">' +
                     '<p class="text-sm whitespace-pre-wrap break-words pr-5">' + escapeHtml(msg.message) + '</p>' +
-                    '<button class="chat-delete-btn absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-white/40 hover:text-red-300 hover:bg-white/10 transition-colors md:opacity-0 md:group-hover:opacity-100" data-msg-id="' + msg.id + '" title="Üzenet visszavonása">' +
+                    '<button class="chat-delete-btn absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-white hover:text-red-400 transition-colors" data-msg-id="' + msg.id + '" title="Üzenet visszavonása">' +
                     '<i class="fa-solid fa-trash-can text-[11px]"></i></button>' +
                     '</div>' +
                     '<p class="text-[10px] text-gray-400 mt-1 text-right">' + escapeHtml(msgTime) + '</p>' +
