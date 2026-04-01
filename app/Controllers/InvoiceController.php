@@ -345,9 +345,9 @@ class InvoiceController
         if (!$fileData) return $default;
 
         $prompt = "Elemezd ezt a számlát/invoice-t. Válaszolj KIZÁRÓLAG JSON formátumban:\n\n";
-        $prompt .= '{"supplier_name":"a kiállító/eladó cég neve","invoice_number":"számla szám","net_amount":0,"gross_amount":0,"currency":"HUF","invoice_date":"YYYY-MM-DD","payment_method":"kartya","is_failed":false}' . "\n\n";
-        $prompt .= "FONTOS: is_failed CSAK AKKOR true, ha a számla egyértelműen jelzi hogy a fizetés sikertelen volt (unsuccessful, failed, declined, payment failed). Ha a számlán 'Kifizetve' vagy összeg szerepel, az NEM sikertelen!\n";
-        $prompt .= "Az 'Az ok nem található' vagy hasonló szöveg NEM jelent sikertelen fizetést.\n";
+        $prompt .= '{"supplier_name":"a kiállító/eladó cég neve","invoice_number":"számla sorszám","net_amount":0,"gross_amount":0,"currency":"HUF","invoice_date":"YYYY-MM-DD","payment_method":"kartya","is_failed":false}' . "\n\n";
+        $prompt .= "FONTOS invoice_number: A SZÁMLA SORSZÁMOT keresd, NEM a fiók azonosítót! Pl. Facebook/Meta számláknál az 'FBADS-xxx-xxx. sz. számla' a helyes sorszám, NEM a 'Számlaszám: 207540269' (az a fiók azonosító).\n";
+        $prompt .= "FONTOS is_failed: CSAK AKKOR true, ha a fizetés egyértelműen sikertelen (unsuccessful, failed, declined). 'Kifizetve' = NEM sikertelen! 'Az ok nem található' = NEM sikertelen!\n";
         $prompt .= "supplier_name: a kiállító cég neve (pl. 'Meta Platforms Ireland Limited', nem a vevő)\n";
         $prompt .= "currency: HUF, EUR vagy USD\n";
         $prompt .= "payment_method: keszpenz, atutalas, kartya, utanvet\n";
