@@ -204,7 +204,7 @@ $allUsers      = $data['users'] ?? [];
     }
 })();
 </script>
-<script src="<?= base_url('/assets/js/chat.js') ?>"></script>
+<script src="<?= base_url('/assets/js/chat.js') ?>?v=<?= filemtime(__DIR__ . '/../../public/assets/js/chat.js') ?>"></script>
 <script>
 
 function mobileChatSwitch(val) {
