@@ -219,24 +219,11 @@ class InvoiceController
         Middleware::owner();
         Middleware::verifyCsrf();
 
-        $supplierName = $_POST['supplier_name'] ?? '';
-        if ($supplierName === '__new__') {
-            $supplierName = trim($_POST['supplier_name_new'] ?? '');
-        }
-        if (empty($supplierName)) {
-            set_flash('error', 'Beszállító megadása kötelező.');
-            redirect('/invoices/bulk-upload');
-        }
-
-        $paymentMethod = $_POST['payment_method'] ?? 'kartya';
-        $currency = $_POST['currency'] ?? 'HUF';
-
         if (empty($_FILES['invoices']) || !is_array($_FILES['invoices']['name'])) {
             set_flash('error', 'Kérem válasszon legalább egy fájlt.');
             redirect('/invoices/bulk-upload');
         }
 
-        $supplierId = Supplier::findOrCreate($supplierName);
         $uploadDir = __DIR__ . '/../../public/uploads/invoices';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
@@ -249,13 +236,27 @@ class InvoiceController
             $tmpFile = $_FILES['invoices']['tmp_name'][$i];
             $originalName = $_FILES['invoices']['name'][$i];
 
-            // Számla szám és összeg kinyerése a PDF-ből
+            // Adatok kinyerése a PDF-ből (beszállító, összeg, dátum, stb.)
             $invoiceData = $this->extractPdfData($tmpFile, $originalName);
 
+            // Beszállító (findOrCreate: ha már létezik, nem hozza létre újra)
+            $supplierName = $invoiceData['supplier'] ?? pathinfo($originalName, PATHINFO_FILENAME);
+            $supplierId = Supplier::findOrCreate($supplierName);
+
+            // Duplikátum ellenőrzés (számla szám + beszállító)
+            $invoiceNum = $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME);
+            $db = \App\Core\Database::getInstance();
+            $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE supplier_id = :sid AND invoice_number = :num');
+            $stmt->execute(['sid' => $supplierId, 'num' => $invoiceNum]);
+            if ((int)$stmt->fetchColumn() > 0) continue; // már létezik, skip
+
             // Fájl mentése
-            $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $monthDir = date('Y-m', strtotime($invoiceData['date'] ?? date('Y-m-d')));
+            $saveDir = $uploadDir . '/' . $monthDir;
+            if (!is_dir($saveDir)) mkdir($saveDir, 0755, true);
             $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
-            move_uploaded_file($tmpFile, $uploadDir . '/' . $filename);
+            move_uploaded_file($tmpFile, $saveDir . '/' . $filename);
 
             $data = [
                 'store_id'       => null,
@@ -263,40 +264,41 @@ class InvoiceController
                 'invoice_number' => $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME),
                 'net_amount'     => $invoiceData['net_amount'] ?? 0,
                 'amount'         => $invoiceData['amount'] ?? 0,
-                'currency'       => $currency,
+                'currency'       => $invoiceData['currency'] ?? 'HUF',
                 'invoice_date'   => $invoiceData['date'] ?? date('Y-m-d'),
                 'due_date'       => null,
-                'payment_method' => $paymentMethod,
+                'payment_method' => 'kartya',
                 'notes'          => 'Tömeges feltöltés: ' . $originalName,
                 'recorded_by'    => Auth::id(),
             ];
 
             $id = Invoice::create($data);
-            Invoice::updateImage($id, 'uploads/invoices/' . $filename);
+            Invoice::updateImage($id, 'uploads/invoices/' . $monthDir . '/' . $filename);
             AuditLog::log('create', 'invoices', $id, null, $data);
             $count++;
         }
 
-        set_flash('success', $count . ' számla sikeresen feltöltve. Kérem ellenőrizze az összegeket és kösse össze a tranzakciókkal.');
+        set_flash('success', $count . ' számla sikeresen feltöltve. Ellenőrizze az összegeket és kösse össze a tranzakciókkal.');
         redirect('/invoices');
     }
 
     /**
-     * PDF-ből adatok kinyerése (fájlnév és tartalom alapján)
+     * PDF-ből adatok kinyerése (beszállító, összeg, dátum, számla szám)
      */
     private function extractPdfData(string $filePath, string $originalName): array
     {
         $result = [
+            'supplier'       => null,
             'invoice_number' => null,
             'amount'         => 0,
             'net_amount'     => 0,
+            'currency'       => 'HUF',
             'date'           => date('Y-m-d'),
         ];
 
-        // Fájlnévből próbáljuk kinyerni
         $name = pathinfo($originalName, PATHINFO_FILENAME);
 
-        // Facebook számla fájlnév minta: "Invoice_12345678" vagy dátumot tartalmazhat
+        // Fájlnévből adatok
         if (preg_match('/invoice[_\s-]*(\d+)/i', $name, $m)) {
             $result['invoice_number'] = $m[1];
         }
@@ -304,23 +306,82 @@ class InvoiceController
             $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
         }
 
-        // PDF szöveg kinyerése (egyszerű módszer)
+        // PDF szöveg kinyerése
         $content = file_get_contents($filePath);
-        if ($content) {
-            // Összeg keresése
-            if (preg_match('/(?:Total|Összesen|Amount|Végösszeg)[:\s]*([0-9,.]+)\s*(HUF|EUR|USD|Ft)?/i', $content, $m)) {
-                $result['amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
-            }
-            // Számla szám
-            if (!$result['invoice_number'] && preg_match('/(?:Invoice|Számla)[#:\s]*([A-Z0-9-]+)/i', $content, $m)) {
-                $result['invoice_number'] = $m[1];
-            }
-            // Nettó összeg
-            if (preg_match('/(?:Subtotal|Nettó|Net)[:\s]*([0-9,.]+)/i', $content, $m)) {
-                $result['net_amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
+        if (!$content) {
+            $result['supplier'] = $result['supplier'] ?? $name;
+            $result['invoice_number'] = $result['invoice_number'] ?? $name;
+            return $result;
+        }
+
+        // Beszállító felismerés ismert nevek alapján
+        $knownSuppliers = [
+            'Facebook'             => ['facebook', 'meta platforms', 'meta ireland'],
+            'Google Ads'           => ['google ads', 'google ireland', 'google llc', 'google payment'],
+            'TikTok'               => ['tiktok', 'bytedance', 'musical.ly'],
+            'Microsoft Advertising'=> ['microsoft', 'bing ads'],
+            'Telenor'              => ['telenor', 'yettel'],
+            'Yettel'               => ['yettel'],
+            'Vodafone'             => ['vodafone'],
+            'Telekom'              => ['telekom', 'magyar telekom', 't-mobile'],
+            'ELMŰ'                 => ['elmü', 'elmu', 'e.on', 'eon'],
+            'FŐVÁROSI GÁZMŰVEK'    => ['gázmű', 'gazmu', 'főgáz', 'fogaz'],
+            'DIGI'                 => ['digi'],
+            'GLS'                  => ['gls'],
+            'DPD'                  => ['dpd'],
+            'FoxPost'              => ['foxpost'],
+            'Shopify'              => ['shopify'],
+            'Stripe'               => ['stripe'],
+            'PayPal'               => ['paypal'],
+            'Amazon'               => ['amazon'],
+            'Mysoft Kft.'          => ['mysoft'],
+        ];
+
+        $contentLower = mb_strtolower($content);
+        foreach ($knownSuppliers as $supplierName => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($contentLower, $keyword)) {
+                    $result['supplier'] = $supplierName;
+                    break 2;
+                }
             }
         }
 
+        // Összeg keresése
+        if (preg_match('/(?:Total|Összesen|Amount Due|Végösszeg|Fizetendő)[:\s]*([0-9.,\s]+)\s*(HUF|EUR|USD|Ft|\$|€)?/i', $content, $m)) {
+            $result['amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
+            if (!empty($m[2])) {
+                $cur = strtoupper(trim($m[2]));
+                if ($cur === 'FT') $cur = 'HUF';
+                if ($cur === '€') $cur = 'EUR';
+                if ($cur === '$') $cur = 'USD';
+                $result['currency'] = $cur;
+            }
+        }
+
+        // Számla szám
+        if (!$result['invoice_number']) {
+            if (preg_match('/(?:Invoice|Számla|Receipt)\s*(?:#|No\.?|szám)[:\s]*([A-Za-z0-9_-]+)/i', $content, $m)) {
+                $result['invoice_number'] = trim($m[1]);
+            }
+        }
+
+        // Nettó összeg
+        if (preg_match('/(?:Subtotal|Nettó|Net Amount)[:\s]*([0-9.,\s]+)/i', $content, $m)) {
+            $result['net_amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
+        }
+
+        // Dátum a tartalomból ha fájlnévben nem volt
+        if ($result['date'] === date('Y-m-d')) {
+            if (preg_match('/(?:Invoice Date|Számla kelte|Date)[:\s]*(\d{4})[.\/-](\d{2})[.\/-](\d{2})/i', $content, $m)) {
+                $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
+            }
+        }
+
+        // Fallback értékek
+        if (!$result['supplier']) {
+            $result['supplier'] = $name;
+        }
         if (!$result['invoice_number']) {
             $result['invoice_number'] = $name;
         }

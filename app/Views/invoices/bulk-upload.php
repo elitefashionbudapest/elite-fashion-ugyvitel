@@ -1,6 +1,5 @@
 <?php
 $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary-container focus:border-primary bg-surface-container-lowest';
-$suppliers = $data['suppliers'] ?? [];
 ?>
 
 <div class="max-w-2xl">
@@ -11,43 +10,12 @@ $suppliers = $data['suppliers'] ?? [];
             </div>
             <div>
                 <h3 class="font-heading font-bold text-on-surface text-xl">Számlák tömeges feltöltése</h3>
-                <p class="text-xs text-on-surface-variant">Több számla PDF feltöltése egyszerre (pl. Facebook, Google Ads számlák).</p>
+                <p class="text-xs text-on-surface-variant">Több számla PDF feltöltése egyszerre. A beszállítót, összeget és dátumot automatikusan felismeri.</p>
             </div>
         </div>
 
         <form method="POST" action="<?= base_url('/invoices/bulk-upload') ?>" enctype="multipart/form-data" class="space-y-5">
             <?= csrf_field() ?>
-
-            <div>
-                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Beszállító</label>
-                <select name="supplier_name" class="<?= $inputCls ?>" required id="supplier-select">
-                    <option value="">-- Válasszon vagy írjon be újat --</option>
-                    <?php foreach ($suppliers as $s): ?>
-                        <option value="<?= e($s['name']) ?>"><?= e($s['name']) ?></option>
-                    <?php endforeach; ?>
-                    <option value="__new__">+ Új beszállító...</option>
-                </select>
-                <input type="text" name="supplier_name_new" id="supplier-new" class="<?= $inputCls ?> mt-2 hidden" placeholder="Új beszállító neve (pl. Facebook Ireland Ltd.)">
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Fizetési mód</label>
-                    <select name="payment_method" class="<?= $inputCls ?>" required>
-                        <option value="kartya" selected>Bankkártya</option>
-                        <option value="atutalas">Átutalás</option>
-                        <option value="keszpenz">Készpénz</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Pénznem</label>
-                    <select name="currency" class="<?= $inputCls ?>" required>
-                        <option value="HUF">HUF (Ft)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="USD">USD ($)</option>
-                    </select>
-                </div>
-            </div>
 
             <div>
                 <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Számla fájlok (PDF)</label>
@@ -56,7 +24,7 @@ $suppliers = $data['suppliers'] ?? [];
                        id="file-input">
                 <p class="text-xs text-on-surface-variant mt-1">
                     <i class="fa-solid fa-circle-info mr-0.5"></i>
-                    Több fájl kijelölhető egyszerre (Ctrl+kattintás).
+                    Több fájl kijelölhető egyszerre (Ctrl+kattintás). A beszállítót a számla tartalmából ismeri fel.
                 </p>
                 <div id="file-count" class="text-xs font-bold text-primary mt-1 hidden"></div>
             </div>
@@ -72,18 +40,6 @@ $suppliers = $data['suppliers'] ?? [];
 </div>
 
 <script>
-document.getElementById('supplier-select').addEventListener('change', function() {
-    const newInput = document.getElementById('supplier-new');
-    if (this.value === '__new__') {
-        newInput.classList.remove('hidden');
-        newInput.required = true;
-        newInput.focus();
-    } else {
-        newInput.classList.add('hidden');
-        newInput.required = false;
-    }
-});
-
 document.getElementById('file-input').addEventListener('change', function() {
     const count = this.files.length;
     const el = document.getElementById('file-count');
