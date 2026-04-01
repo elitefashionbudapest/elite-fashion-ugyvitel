@@ -228,21 +228,28 @@ class InvoiceController
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $count = 0;
+        $skipped = [];
         $fileCount = count($_FILES['invoices']['name']);
 
         for ($i = 0; $i < $fileCount; $i++) {
-            if ($_FILES['invoices']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            if ($_FILES['invoices']['error'][$i] !== UPLOAD_ERR_OK) {
+                $skipped[] = ($_FILES['invoices']['name'][$i] ?? '?') . ' (feltöltési hiba)';
+                continue;
+            }
 
             $tmpFile = $_FILES['invoices']['tmp_name'][$i];
             $originalName = $_FILES['invoices']['name'][$i];
 
-            // Fájl ELŐSZÖR mentése (mert move_uploaded_file csak egyszer működik)
+            // Fájl ELŐSZÖR mentése
             $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
             $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
             $tmpSaved = $uploadDir . '/' . $filename;
-            if (!move_uploaded_file($tmpFile, $tmpSaved)) continue;
+            if (!move_uploaded_file($tmpFile, $tmpSaved)) {
+                $skipped[] = $originalName . ' (mentés sikertelen)';
+                continue;
+            }
 
-            // Adatok kinyerése AI-val (ha hiba, fallback fájlnévre)
+            // Adatok kinyerése AI-val
             try {
                 $invoiceData = $this->analyzeInvoiceWithAI($tmpSaved, $originalName);
             } catch (\Throwable $e) {
@@ -252,25 +259,28 @@ class InvoiceController
                     'amount' => 0, 'net_amount' => 0, 'currency' => 'HUF',
                     'date' => date('Y-m-d'), 'failed' => false,
                 ];
+                $skipped[] = $originalName . ' (AI hiba: ' . $e->getMessage() . ')';
             }
 
             // Sikertelen számla kihagyása
             if (!empty($invoiceData['failed'])) {
                 unlink($tmpSaved);
+                $skipped[] = $originalName . ' (sikertelen fizetés)';
                 continue;
             }
 
-            // Beszállító (findOrCreate: ha már létezik, nem hozza létre újra)
+            // Beszállító
             $supplierName = $invoiceData['supplier'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $supplierId = Supplier::findOrCreate($supplierName);
 
-            // Duplikátum ellenőrzés (számla szám + beszállító)
+            // Duplikátum ellenőrzés
             $invoiceNum = $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $db = \App\Core\Database::getInstance();
             $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE supplier_id = :sid AND invoice_number = :num');
             $stmt->execute(['sid' => $supplierId, 'num' => $invoiceNum]);
             if ((int)$stmt->fetchColumn() > 0) {
                 unlink($tmpSaved);
+                $skipped[] = $originalName . ' (duplikátum: ' . $supplierName . ' #' . $invoiceNum . ')';
                 continue;
             }
 
@@ -300,7 +310,15 @@ class InvoiceController
             $count++;
         }
 
-        set_flash('success', $count . ' számla sikeresen feltöltve. Ellenőrizze az összegeket és kösse össze a tranzakciókkal.');
+        if ($count > 0) {
+            set_flash('success', $count . ' számla sikeresen feltöltve.');
+        }
+        if (!empty($skipped)) {
+            set_flash('error', 'Kihagyva (' . count($skipped) . '): ' . implode(' | ', $skipped));
+        }
+        if ($count === 0 && empty($skipped)) {
+            set_flash('info', 'Nem történt változás.');
+        }
         redirect('/invoices');
     }
 
