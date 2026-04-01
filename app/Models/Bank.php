@@ -107,8 +107,12 @@ class Bank
             $stmt->execute(['bank_id' => $bankId]);
             $balance -= (float)$stmt->fetchColumn();
 
-            // - Számlák kifizetése ebből a bankból
-            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM invoices WHERE paid_from_bank_id = :bank_id AND is_paid = 1");
+            // - Számlák kifizetése ebből a bankból (kivéve ami már bank tranzakcióhoz van kötve)
+            $stmt = $db->prepare(
+                "SELECT COALESCE(SUM(i.amount), 0) FROM invoices i
+                 WHERE i.paid_from_bank_id = :bank_id AND i.is_paid = 1
+                 AND NOT EXISTS (SELECT 1 FROM bank_transactions bt WHERE bt.invoice_id = i.id)"
+            );
             $stmt->execute(['bank_id' => $bankId]);
             $balance -= (float)$stmt->fetchColumn();
 
