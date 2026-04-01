@@ -348,9 +348,11 @@ function renderChatMessage(m, userId, baseUrl) {
         : (isMine ? 'bg-sidebar text-accent' : 'bg-gray-100 text-gray-800');
     const padding = m.image_path && !hasText ? 'p-0.5' : 'px-3 py-1.5';
 
-    let html = '<div class="flex ' + align + ' gap-1.5">';
+    let html = '<div class="flex ' + align + ' gap-1.5 group">';
     if (!isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
-    html += '<div class="max-w-[75%] ' + padding + ' rounded-xl ' + bg + '">' + content + '</div>';
+    html += '<div class="max-w-[75%] ' + padding + ' rounded-xl ' + bg + ' relative">' + content;
+    if (isMine) html += '<button class="dashboard-chat-delete absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full text-white hover:text-red-400 transition-colors" data-msg-id="' + m.id + '" title="Visszavonás"><i class="fa-solid fa-trash-can text-[9px]"></i></button>';
+    html += '</div>';
     if (isMine) html += '<div class="w-6 h-6 rounded-full ' + avatarBg + ' flex items-center justify-center text-[8px] font-bold flex-shrink-0">' + initials + '</div>';
     html += '</div>';
     return html;
@@ -426,6 +428,22 @@ function escapeHtml(s) { const d = document.createElement('div'); d.textContent 
 
 // Periodikus frissítés
 setInterval(() => { if (mobileChatOpen) loadMobileChat(); }, 500);
+
+// Kuka gomb kezelés (delegálás)
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.dashboard-chat-delete');
+    if (!btn) return;
+    e.preventDefault();
+    var msgId = parseInt(btn.dataset.msgId);
+    if (!msgId) return;
+    fetchWithCsrf((document.getElementById('dashboard-chat')?.dataset?.baseUrl || document.getElementById('mobile-chat-wrapper')?.dataset?.baseUrl || '') + '/chat/delete', {
+        method: 'POST',
+        body: JSON.stringify({ message_id: msgId })
+    }).then(function() {
+        mobileLastMsgId = 0;
+        if (typeof resetDashboardChatLid === 'function') resetDashboardChatLid();
+    }).catch(function() {});
+});
 </script>
 
 <!-- Chart.js -->
@@ -556,12 +574,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if(hasImg) msgContent += '<img src="'+base+m.image_path+'" class="max-w-[200px] rounded-lg cursor-pointer mb-1" onclick="openChatImage(this.src)" loading="lazy">';
         if(hasText) msgContent += esc(m.message);
         const bubbleBg = hasImg && !hasText ? 'p-0.5' : 'px-3.5 py-2';
-        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2"><div class="max-w-[75%]"><div class="'+(hasImg&&!hasText?'':'bg-sidebar text-accent')+' '+bubbleBg+' rounded-2xl rounded-br-md text-sm">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
+        if(m.sender_id==uid)h+='<div class="flex justify-end gap-2 group"><div class="max-w-[75%]"><div class="'+(hasImg&&!hasText?'':'bg-sidebar text-accent')+' '+bubbleBg+' rounded-2xl rounded-br-md text-sm relative">'+msgContent+'<button class="dashboard-chat-delete absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full text-white hover:text-red-400 transition-colors" data-msg-id="'+m.id+'" title="Visszavonás"><i class="fa-solid fa-trash-can text-[9px]"></i></button></div><p class="text-[9px] text-gray-400 mt-0.5 text-right">'+t+'</p></div><div class="w-7 h-7 rounded-full bg-sidebar text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div></div>';
         else h+='<div class="flex justify-start gap-2"><div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">'+mono+'</div><div class="max-w-[75%]"><p class="text-[9px] font-bold text-gray-400 mb-0.5">'+esc(name)+'</p><div class="'+(hasImg&&!hasText?'':'bg-surface-container-high/80')+' '+bubbleBg+' rounded-2xl rounded-bl-md text-sm text-on-surface">'+msgContent+'</div><p class="text-[9px] text-gray-400 mt-0.5">'+t+'</p></div></div>';});
         md.innerHTML=h;md.scrollTop=md.scrollHeight;}catch(e){}}
     window.sendDashboardChat=async function(e){e.preventDefault();const i=document.getElementById('chat-input'),m=i.value.trim();const imgFile=chatImageFile.desktop;if(!m&&!imgFile)return false;i.value='';
     const fd=new FormData();fd.append('_csrf',getCsrfToken());fd.append('message',m);if(imgFile)fd.append('chat_image',imgFile);
     try{await fetch(base+'/chat/send',{method:'POST',headers:{'X-CSRF-TOKEN':getCsrfToken()},body:fd});clearChatImage('desktop');lid=0;await load();}catch(e){}return false;};
     load();setInterval(load,500);
+    window.resetDashboardChatLid = function(){ lid=0; };
 })();
 </script>
