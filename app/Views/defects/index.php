@@ -1,9 +1,10 @@
 <?php
 use App\Core\Auth;
 
-$items   = $data['items'] ?? [];
-$stores  = $data['stores'] ?? [];
-$filters = $data['filters'] ?? [];
+$items      = $data['items'] ?? [];
+$stores     = $data['stores'] ?? [];
+$filters    = $data['filters'] ?? [];
+$todayCount = $data['todayCount'] ?? 0;
 ?>
 
 <div class="flex flex-wrap flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -88,7 +89,7 @@ $filters = $data['filters'] ?? [];
             <!-- Összesítő -->
             <div class="mt-4 bg-surface-container rounded-xl p-4 text-center">
                 <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Mai selejtek</p>
-                <p id="item-count" class="text-3xl font-heading font-extrabold text-on-surface"><?= count($items) ?></p>
+                <p id="item-count" class="text-3xl font-heading font-extrabold text-on-surface"><?= $todayCount ?></p>
                 <p class="text-xs text-on-surface-variant">tétel</p>
             </div>
 

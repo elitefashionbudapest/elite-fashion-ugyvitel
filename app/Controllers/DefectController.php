@@ -26,14 +26,22 @@ class DefectController
 
         $stores = Auth::isOwner() ? Store::all() : [];
 
+        // Mai selejtek száma külön (a számláló mindig a mai napot mutatja)
+        $todayCount = count(DefectItem::all(
+            $storeId ? (int)$storeId : null,
+            date('Y-m-d'),
+            date('Y-m-d')
+        ));
+
         view('layouts/app', [
             'content' => 'defects/index',
             'data' => [
-                'pageTitle' => 'Selejt kezeles',
-                'activeTab' => 'selejt',
-                'items'     => $items,
-                'stores'    => $stores,
-                'filters'   => [
+                'pageTitle'  => 'Selejt kezeles',
+                'activeTab'  => 'selejt',
+                'items'      => $items,
+                'todayCount' => $todayCount,
+                'stores'     => $stores,
+                'filters'    => [
                     'store_id'  => $storeId,
                     'date_from' => $dateFrom,
                     'date_to'   => $dateTo,
