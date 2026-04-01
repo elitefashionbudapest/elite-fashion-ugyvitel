@@ -56,6 +56,11 @@ class ProductController
         // BOM eltávolítása ha van
         $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
 
+        // Kódolás konvertálás UTF-8-ra (Excel/Windows gyakran Windows-1250-et használ)
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1250');
+        }
+
         $lines = explode("\n", $content);
         if (count($lines) < 2) {
             set_flash('error', 'A CSV fájl üres vagy nem tartalmaz adatokat.');
