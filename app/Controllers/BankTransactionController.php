@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\{Auth, Middleware, AuditLog};
 use App\Models\{BankTransaction, Bank, Store, Invoice};
+use App\Services\CsvImportService;
 
 class BankTransactionController
 {
@@ -502,6 +503,161 @@ class BankTransactionController
         $id = BankTransaction::create($data);
         AuditLog::log('create', 'bank_transactions', $id, null, $data);
         set_flash('success', 'Adó kifizetés rögzítve: ' . format_money($amount));
+        redirect('/bank-transactions');
+    }
+
+    /**
+     * Banki kivonat importálás - feltöltő form vagy előnézet
+     */
+    public function importForm(): void
+    {
+        Middleware::owner();
+
+        // Ha van session-ben feldolgozott CSV, előnézetet mutatunk
+        if (!empty($_SESSION['csv_import']) && isset($_GET['preview'])) {
+            $import = $_SESSION['csv_import'];
+            $bank = Bank::find($import['bank_id']);
+
+            view('layouts/app', [
+                'content' => 'bank-transactions/import-preview',
+                'data' => [
+                    'pageTitle' => 'Kivonat előnézet',
+                    'activeTab' => 'bank_transactions',
+                    'rows'      => $import['rows'],
+                    'bank_id'   => $import['bank_id'],
+                    'bank_name' => $bank['name'] ?? '',
+                ]
+            ]);
+            return;
+        }
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/import-form',
+            'data' => [
+                'pageTitle' => 'Kivonat importálás',
+                'activeTab' => 'bank_transactions',
+                'banks'     => Bank::all(),
+            ]
+        ]);
+    }
+
+    /**
+     * CSV feltöltés és feldolgozás
+     */
+    public function importUpload(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        if (!$bankId) {
+            set_flash('error', 'Válasszon bankszámlát.');
+            redirect('/bank-transactions/import');
+        }
+
+        if (empty($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            set_flash('error', 'Kérem töltsön fel egy CSV fájlt.');
+            redirect('/bank-transactions/import');
+        }
+
+        $file = $_FILES['csv_file'];
+        if ($file['size'] > 5 * 1024 * 1024) {
+            set_flash('error', 'A fájl túl nagy (max 5MB).');
+            redirect('/bank-transactions/import');
+        }
+
+        $content = file_get_contents($file['tmp_name']);
+        $rows = CsvImportService::parseCsv($content);
+
+        if (empty($rows)) {
+            set_flash('error', 'A CSV fájl üres vagy nem sikerült feldolgozni.');
+            redirect('/bank-transactions/import');
+        }
+
+        // Típus tipp és duplikátum ellenőrzés
+        $db = \App\Core\Database::getInstance();
+        foreach ($rows as &$row) {
+            $row['suggested_type'] = CsvImportService::suggestType($row);
+
+            // Duplikátum keresés (ugyanaz a bank + dátum + összeg)
+            $stmt = $db->prepare(
+                'SELECT COUNT(*) FROM bank_transactions
+                 WHERE bank_id = :bank_id AND transaction_date = :d AND amount = :a'
+            );
+            $stmt->execute([
+                'bank_id' => $bankId,
+                'd'       => $row['booking_date'],
+                'a'       => $row['amount'],
+            ]);
+            $row['duplicate'] = (int)$stmt->fetchColumn() > 0;
+        }
+
+        $_SESSION['csv_import'] = [
+            'bank_id' => $bankId,
+            'rows'    => $rows,
+        ];
+
+        redirect('/bank-transactions/import?preview=1');
+    }
+
+    /**
+     * Kijelölt sorok importálása
+     */
+    public function importStore(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        if (empty($_SESSION['csv_import'])) {
+            set_flash('error', 'Nincs feldolgozott kivonat.');
+            redirect('/bank-transactions/import');
+        }
+
+        $import = $_SESSION['csv_import'];
+        $bankId = $import['bank_id'];
+        $rows = $import['rows'];
+        $selected = $_POST['selected'] ?? [];
+        $types = $_POST['types'] ?? [];
+
+        if (empty($selected)) {
+            set_flash('error', 'Jelöljön ki legalább egy sort.');
+            redirect('/bank-transactions/import?preview=1');
+        }
+
+        $count = 0;
+        foreach ($selected as $index) {
+            $index = (int)$index;
+            if (!isset($rows[$index])) continue;
+
+            $row = $rows[$index];
+            $type = $types[$index] ?? '';
+
+            if (empty($type) || !isset(BankTransaction::TYPES[$type])) continue;
+
+            // Notes összeállítása
+            $notes = [];
+            if ($row['partner_name']) $notes[] = $row['partner_name'];
+            if ($row['description']) $notes[] = $row['description'];
+            if ($row['reference']) $notes[] = $row['reference'];
+            $notesStr = implode(' — ', $notes) ?: null;
+
+            $data = [
+                'bank_id'          => $bankId,
+                'type'             => $type,
+                'amount'           => $row['amount'],
+                'transaction_date' => $row['booking_date'],
+                'provider_name'    => ($type === 'szolgaltato_levon') ? ($row['partner_name'] ?: null) : null,
+                'notes'            => $notesStr,
+                'recorded_by'      => Auth::id(),
+            ];
+
+            $id = BankTransaction::create($data);
+            AuditLog::log('create', 'bank_transactions', $id, null, array_merge($data, ['source' => 'csv_import']));
+            $count++;
+        }
+
+        unset($_SESSION['csv_import']);
+        set_flash('success', $count . ' tranzakció sikeresen importálva.');
         redirect('/bank-transactions');
     }
 
