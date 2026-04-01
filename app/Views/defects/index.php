@@ -252,9 +252,13 @@ $filters = $data['filters'] ?? [];
         return div.innerHTML;
     }
 
-    // Automatikus fókusz a vonalkód mezőre
+    // Automatikus fókusz a vonalkód mezőre (de ne a szűrő formból)
     barcodeInput.focus();
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function(e) {
+        // Ne vegye el a fókuszt a szűrő elemekről (select, input[type=date], button)
+        const tag = e.target.tagName;
+        const isFilterArea = e.target.closest('form[method="GET"]') || tag === 'SELECT' || tag === 'OPTION';
+        if (isFilterArea) return;
         setTimeout(() => barcodeInput.focus(), 100);
     });
 })();
