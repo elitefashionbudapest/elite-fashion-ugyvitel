@@ -4,7 +4,8 @@ use App\Core\Auth;
 $items      = $data['items'] ?? [];
 $stores     = $data['stores'] ?? [];
 $filters    = $data['filters'] ?? [];
-$todayCount = $data['todayCount'] ?? 0;
+$todayCount          = $data['todayCount'] ?? 0;
+$todayEstimatedValue = $data['todayEstimatedValue'] ?? 0;
 ?>
 
 <div class="flex flex-wrap flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -91,6 +92,10 @@ $todayCount = $data['todayCount'] ?? 0;
                 <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Mai selejtek</p>
                 <p id="item-count" class="text-3xl font-heading font-extrabold text-on-surface"><?= $todayCount ?></p>
                 <p class="text-xs text-on-surface-variant">tétel</p>
+                <div class="mt-2 pt-2 border-t border-surface-container-low">
+                    <p id="estimated-value" class="text-lg font-heading font-bold text-on-surface"><?= number_format($todayEstimatedValue, 0, ',', ' ') ?> Ft</p>
+                    <p class="text-[10px] text-on-surface-variant italic">becsült érték a számlázóban lévő termékek alapján</p>
+                </div>
             </div>
 
             <!-- Napi selejt összérték rögzítés -->
@@ -180,6 +185,7 @@ $todayCount = $data['todayCount'] ?? 0;
     const errorDiv = document.getElementById('scanner-error');
     const errorText = document.getElementById('scanner-error-text');
     const itemCount = document.getElementById('item-count');
+    const estimatedValue = document.getElementById('estimated-value');
     const tbody = document.getElementById('defect-tbody');
     const emptyRow = document.getElementById('empty-row');
     const isOwner = document.getElementById('is-owner').value === '1';
@@ -249,6 +255,12 @@ $todayCount = $data['todayCount'] ?? 0;
 
                 // Számláló frissítés
                 itemCount.textContent = parseInt(itemCount.textContent) + 1;
+
+                // Becsült érték frissítése
+                if (estimatedValue && pPrice) {
+                    var currentVal = parseInt(estimatedValue.textContent.replace(/\s/g, '')) || 0;
+                    estimatedValue.textContent = (currentVal + Number(pPrice)).toLocaleString('hu-HU') + ' Ft';
+                }
 
                 // Fókusz vissza
                 barcodeInput.focus();
