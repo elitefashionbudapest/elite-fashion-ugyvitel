@@ -168,4 +168,16 @@ class ChatController
         echo json_encode(['success' => true]);
         exit;
     }
+
+    /**
+     * Olvasatlan üzenetek száma (AJAX polling minden oldalon)
+     */
+    public function unreadCount(): void
+    {
+        Middleware::auth();
+        $count = ChatMessage::getUnreadCount(Auth::id());
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['count' => $count]);
+        exit;
+    }
 }

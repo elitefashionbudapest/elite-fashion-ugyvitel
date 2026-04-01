@@ -139,14 +139,44 @@
         }
     }
 
-    // Chat hang értesítés (böngészőben)
-    let lastKnownMsgCount = 0;
-    function checkNewMessages() {
-        if (document.hidden) return; // Csak ha aktív a tab
-        // A chat polling már kezeli — itt hang + notification
+    // === Chat értesítés rendszer ===
+    let chatAudioCtx = null;
+    let lastUnreadCount = 0;
+    const CHAT_POLL_MS = 5000;
+    const currentUserId = <?= \App\Core\Auth::id() ?? 0 ?>;
+
+    function playChatSound() {
+        try {
+            if (!chatAudioCtx) {
+                chatAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const now = chatAudioCtx.currentTime;
+            const gain = chatAudioCtx.createGain();
+            gain.connect(chatAudioCtx.destination);
+
+            // Két hangú csengés (magasabb, feltűnőbb)
+            [880, 1100].forEach((freq, i) => {
+                const osc = chatAudioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + i * 0.15);
+                osc.connect(gain);
+                gain.gain.setValueAtTime(0.4, now + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.3);
+                osc.start(now + i * 0.15);
+                osc.stop(now + i * 0.15 + 0.3);
+            });
+            // Harmadik hang kicsit később
+            const osc3 = chatAudioCtx.createOscillator();
+            osc3.type = 'sine';
+            osc3.frequency.setValueAtTime(1320, now + 0.4);
+            osc3.connect(gain);
+            gain.gain.setValueAtTime(0.3, now + 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            osc3.start(now + 0.4);
+            osc3.stop(now + 0.8);
+        } catch(e) {}
     }
 
-    // Browser notification új üzenetről (ha háttérben van az app)
     function showChatNotification(senderName, message) {
         if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
             new Notification('Elite Fashion — ' + senderName, {
@@ -158,11 +188,60 @@
         }
     }
 
-    // Értesítés engedélyt kérünk bejelentkezés után
+    // Chat olvasatlan üzenetek lekérdezése (minden oldalon)
+    function pollChatUnread() {
+        if (!currentUserId) return;
+        fetch('<?= base_url('/chat/unread-count') ?>')
+            .then(r => r.json())
+            .then(data => {
+                const count = data.count || 0;
+                const badge = document.getElementById('chat-fab-badge');
+                const fab = document.getElementById('chat-fab');
+
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.remove('hidden');
+                    fab.classList.add('animate-bounce-slow');
+
+                    // Új üzenet érkezett
+                    if (count > lastUnreadCount && lastUnreadCount >= 0) {
+                        playChatSound();
+                        showChatNotification('Új üzenet', count + ' olvasatlan üzenet');
+                    }
+                } else {
+                    badge.classList.add('hidden');
+                    fab.classList.remove('animate-bounce-slow');
+                }
+                lastUnreadCount = count;
+            })
+            .catch(() => {});
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(requestNotificationPermission, 3000);
+        // Csak nem-chat oldalakon pollolunk (a chat oldalon a chat.js kezeli)
+        if (!window.location.pathname.includes('/chat')) {
+            pollChatUnread();
+            setInterval(pollChatUnread, CHAT_POLL_MS);
+        }
     });
     </script>
+
+    <style>
+    @keyframes bounce-slow {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .animate-bounce-slow { animation: bounce-slow 1.5s infinite; }
+    </style>
+
+    <!-- Lebegő chat gomb (minden oldalon) -->
+    <?php if (!\str_contains($_SERVER['REQUEST_URI'] ?? '', '/chat')): ?>
+    <a href="<?= base_url('/chat') ?>" id="chat-fab" class="fixed bottom-5 right-5 z-50 w-14 h-14 bg-gradient-to-br from-primary to-blue-600 text-white rounded-full shadow-xl hover:shadow-2xl flex items-center justify-center transition-all hover:scale-110">
+        <i class="fa-solid fa-comments text-xl"></i>
+        <span id="chat-fab-badge" class="hidden absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg">0</span>
+    </a>
+    <?php endif; ?>
 
     <!-- PWA Install gomb (sidebar alján) -->
     <div id="pwa-install-btn" class="hidden fixed bottom-4 left-4 z-50 lg:bottom-auto lg:top-auto">

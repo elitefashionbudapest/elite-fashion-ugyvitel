@@ -188,6 +188,7 @@ $router->get('/chat', [App\Controllers\ChatController::class, 'index']);
 $router->get('/chat/messages', [App\Controllers\ChatController::class, 'getMessages']);
 $router->post('/chat/send', [App\Controllers\ChatController::class, 'send']);
 $router->post('/chat/mark-read', [App\Controllers\ChatController::class, 'markRead']);
+$router->get('/chat/unread-count', [App\Controllers\ChatController::class, 'unreadCount']);
 
 // Értesítések
 $router->get('/notifications', [App\Controllers\NotificationController::class, 'index']);
