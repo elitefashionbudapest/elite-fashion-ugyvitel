@@ -236,30 +236,40 @@ class InvoiceController
             $tmpFile = $_FILES['invoices']['tmp_name'][$i];
             $originalName = $_FILES['invoices']['name'][$i];
 
-            // Adatok kinyerése a PDF-ből (beszállító, összeg, dátum, stb.)
-            $invoiceData = $this->extractPdfData($tmpFile, $originalName);
+            // Fájl ELŐSZÖR mentése (mert move_uploaded_file csak egyszer működik)
+            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
+            $tmpSaved = $uploadDir . '/' . $filename;
+            if (!move_uploaded_file($tmpFile, $tmpSaved)) continue;
+
+            // Adatok kinyerése a mentett PDF-ből
+            $invoiceData = $this->extractPdfData($tmpSaved, $originalName);
+
+            // Sikertelen számla kihagyása
+            if (!empty($invoiceData['failed'])) {
+                unlink($tmpSaved);
+                continue;
+            }
 
             // Beszállító (findOrCreate: ha már létezik, nem hozza létre újra)
             $supplierName = $invoiceData['supplier'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $supplierId = Supplier::findOrCreate($supplierName);
-
-            // Sikertelen számla kihagyása
-            if (!empty($invoiceData['failed'])) continue;
 
             // Duplikátum ellenőrzés (számla szám + beszállító)
             $invoiceNum = $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $db = \App\Core\Database::getInstance();
             $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE supplier_id = :sid AND invoice_number = :num');
             $stmt->execute(['sid' => $supplierId, 'num' => $invoiceNum]);
-            if ((int)$stmt->fetchColumn() > 0) continue; // már létezik, skip
+            if ((int)$stmt->fetchColumn() > 0) {
+                unlink($tmpSaved);
+                continue;
+            }
 
-            // Fájl mentése
-            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            // Végleges helyre mozgatás (havi mappa)
             $monthDir = date('Y-m', strtotime($invoiceData['date'] ?? date('Y-m-d')));
             $saveDir = $uploadDir . '/' . $monthDir;
             if (!is_dir($saveDir)) mkdir($saveDir, 0755, true);
-            $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
-            move_uploaded_file($tmpFile, $saveDir . '/' . $filename);
+            rename($tmpSaved, $saveDir . '/' . $filename);
 
             $data = [
                 'store_id'       => null,
@@ -300,6 +310,7 @@ class InvoiceController
         ];
 
         $name = pathinfo($originalName, PATHINFO_FILENAME);
+        $nameLower = mb_strtolower($name);
 
         // Fájlnévből adatok
         if (preg_match('/invoice[_\s-]*(\d+)/i', $name, $m)) {
@@ -309,43 +320,83 @@ class InvoiceController
             $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
         }
 
-        // PDF szöveg kinyerése
-        $content = file_get_contents($filePath);
-        if (!$content) {
+        // 1) Beszállító felismerés FÁJLNÉVBŐL (legmegbízhatóbb)
+        $filenameSuppliers = [
+            'Facebook'             => ['facebook', 'meta'],
+            'Google Ads'           => ['google'],
+            'TikTok'               => ['tiktok'],
+            'Telenor'              => ['telenor', 'yettel'],
+            'Vodafone'             => ['vodafone'],
+            'Telekom'              => ['telekom'],
+            'DPD'                  => ['dpd'],
+            'GLS'                  => ['gls'],
+            'FoxPost'              => ['foxpost'],
+            'PayPal'               => ['paypal'],
+            'Shopify'              => ['shopify'],
+            'Mysoft Kft.'          => ['mysoft'],
+        ];
+
+        foreach ($filenameSuppliers as $supplierName => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($nameLower, $keyword)) {
+                    $result['supplier'] = $supplierName;
+                    break 2;
+                }
+            }
+        }
+
+        // PDF szöveg kinyerése (pdftotext ha elérhető, különben bináris keresés)
+        $textContent = '';
+        $pdftotext = '/usr/bin/pdftotext';
+        if (file_exists($pdftotext)) {
+            $tmpTxt = tempnam(sys_get_temp_dir(), 'pdf');
+            exec(escapeshellcmd($pdftotext) . ' ' . escapeshellarg($filePath) . ' ' . escapeshellarg($tmpTxt) . ' 2>/dev/null');
+            if (file_exists($tmpTxt)) {
+                $textContent = file_get_contents($tmpTxt);
+                unlink($tmpTxt);
+            }
+        }
+
+        // Fallback: bináris PDF-ből olvasható szöveg
+        if (empty($textContent)) {
+            $textContent = file_get_contents($filePath);
+        }
+
+        if (!$textContent) {
             $result['supplier'] = $result['supplier'] ?? $name;
             $result['invoice_number'] = $result['invoice_number'] ?? $name;
             return $result;
         }
 
-        // Beszállító felismerés ismert nevek alapján
-        $knownSuppliers = [
-            'Facebook'             => ['facebook', 'meta platforms', 'meta ireland'],
-            'Google Ads'           => ['google ads', 'google ireland', 'google llc', 'google payment'],
-            'TikTok'               => ['tiktok', 'bytedance', 'musical.ly'],
-            'Microsoft Advertising'=> ['microsoft', 'bing ads'],
-            'Telenor'              => ['telenor', 'yettel'],
-            'Yettel'               => ['yettel'],
-            'Vodafone'             => ['vodafone'],
-            'Telekom'              => ['telekom', 'magyar telekom', 't-mobile'],
-            'ELMŰ'                 => ['elmü', 'elmu', 'e.on', 'eon'],
-            'FŐVÁROSI GÁZMŰVEK'    => ['gázmű', 'gazmu', 'főgáz', 'fogaz'],
-            'DIGI'                 => ['digi'],
-            'GLS'                  => ['gls'],
-            'DPD'                  => ['dpd'],
-            'FoxPost'              => ['foxpost'],
-            'Shopify'              => ['shopify'],
-            'Stripe'               => ['stripe'],
-            'PayPal'               => ['paypal'],
-            'Amazon'               => ['amazon'],
-            'Mysoft Kft.'          => ['mysoft'],
-        ];
+        // 2) Ha fájlnévből nem találtuk meg, PDF tartalomból (csak hosszabb, specifikus nevek)
+        if (!$result['supplier']) {
+            $contentSuppliers = [
+                'Facebook'             => ['facebook ireland', 'facebook payments', 'meta platforms', 'meta ireland'],
+                'Google Ads'           => ['google ads', 'google ireland', 'google llc', 'google payment', 'google cloud'],
+                'TikTok'               => ['tiktok', 'bytedance'],
+                'Microsoft Advertising'=> ['microsoft advertising', 'microsoft ireland', 'bing ads'],
+                'Telenor'              => ['telenor magyarország', 'yettel magyarország'],
+                'Yettel'               => ['yettel magyarország'],
+                'Vodafone'             => ['vodafone magyarország'],
+                'Telekom'              => ['magyar telekom'],
+                'ELMŰ'                 => ['elmű-émász', 'e.on energiakereskedelmi'],
+                'FoxPost'              => ['foxpost'],
+                'Shopify'              => ['shopify'],
+                'Stripe'               => ['stripe payments', 'stripe technology'],
+                'PayPal'               => ['paypal europe'],
+                'Amazon'               => ['amazon eu', 'amazon europe'],
+                'Mysoft Kft.'          => ['mysoft kft'],
+                'DPD'                  => ['dpd hungária', 'dpd hungary'],
+                'GLS'                  => ['gls general logistics'],
+            ];
 
-        $contentLower = mb_strtolower($content);
-        foreach ($knownSuppliers as $supplierName => $keywords) {
-            foreach ($keywords as $keyword) {
-                if (str_contains($contentLower, $keyword)) {
-                    $result['supplier'] = $supplierName;
-                    break 2;
+            $contentLower = mb_strtolower($textContent);
+            foreach ($contentSuppliers as $supplierName => $keywords) {
+                foreach ($keywords as $keyword) {
+                    if (str_contains($contentLower, $keyword)) {
+                        $result['supplier'] = $supplierName;
+                        break 2;
+                    }
                 }
             }
         }
