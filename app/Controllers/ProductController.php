@@ -56,9 +56,9 @@ class ProductController
         // BOM eltávolítása ha van
         $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
 
-        // Kódolás konvertálás UTF-8-ra (Excel/Windows gyakran Windows-1250-et használ)
+        // Kódolás konvertálás UTF-8-ra (Excel/Windows gyakran ISO-8859-2-t használ)
         if (!mb_check_encoding($content, 'UTF-8')) {
-            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1250');
+            $content = iconv('ISO-8859-2', 'UTF-8//TRANSLIT', $content);
         }
 
         $lines = explode("\n", $content);
