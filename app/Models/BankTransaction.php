@@ -14,6 +14,7 @@ class BankTransaction
         'banki_jutalek'       => 'Banki jutalék',
         'tulajdonosi_fizetes' => 'Tulajdonosi fizetés',
         'ado_kifizetes'       => 'Adó kifizetés',
+        'befizetes_boltbol'   => 'Befizetés boltból (ellenőrzés)',
         'tagi_kolcson_be'     => 'Tagi kölcsön befizetés',
         'tagi_kolcson_ki'     => 'Tagi kölcsön visszafizetés',
     ];

@@ -109,7 +109,8 @@ $typeIcons = [
                                 <option value="<?= $key ?>" <?= ($row['suggested_type'] ?? '') === $key ? 'selected' : '' ?>><?= e($label) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <div id="stores-<?= $i ?>" class="mt-1 <?= ($row['suggested_type'] ?? '') === 'kartya_beerkezes' ? '' : 'hidden' ?>" data-date="<?= e($row['booking_date']) ?>">
+                        <?php $showStores = in_array($row['suggested_type'] ?? '', ['kartya_beerkezes', 'befizetes_boltbol']); ?>
+                        <div id="stores-<?= $i ?>" class="mt-1 <?= $showStores ? '' : 'hidden' ?>" data-date="<?= e($row['booking_date']) ?>">
                             <div class="flex flex-wrap gap-1">
                             <?php foreach ($stores as $s): ?>
                             <label class="inline-flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded text-[10px] border border-surface-container hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary-container/20">
@@ -165,7 +166,8 @@ rowChecks.forEach(cb => {
 function toggleStores(select) {
     const row = select.dataset.row;
     const storesDiv = document.getElementById('stores-' + row);
-    if (select.value === 'kartya_beerkezes') {
+    const needsStores = ['kartya_beerkezes', 'befizetes_boltbol'];
+    if (needsStores.includes(select.value)) {
         storesDiv.classList.remove('hidden');
     } else {
         storesDiv.classList.add('hidden');
@@ -177,36 +179,58 @@ async function fetchGross(rowIdx) {
     const infoDiv = document.getElementById('gross-info-' + rowIdx);
     const date = storesDiv.dataset.date;
     const checked = storesDiv.querySelectorAll('input[type=checkbox]:checked');
+    const typeSelect = storesDiv.closest('td').querySelector('.type-select');
+    const type = typeSelect ? typeSelect.value : '';
 
     if (checked.length === 0 || !date) {
         infoDiv.innerHTML = '';
         return;
     }
 
+    const purpose = (type === 'befizetes_boltbol') ? 'bank_kifizetes' : 'napi_bankkartya';
+
     const params = new URLSearchParams();
     checked.forEach(cb => params.append('store_ids[]', cb.value));
     params.set('date_from', date);
     params.set('date_to', date);
+    params.set('purpose', purpose);
 
     try {
         const resp = await fetch('<?= base_url('/bank-transactions/api/gross') ?>?' + params);
         const data = await resp.json();
-        const gross = data.gross || 0;
+        const expected = data.gross || 0;
 
-        // Az adott sor nettó összege
+        // Az adott sor összege
         const amountCell = storesDiv.closest('tr').querySelector('td:nth-child(4)');
         const netText = amountCell.querySelector('.font-bold').textContent.replace(/[^\d]/g, '');
-        const net = parseInt(netText) || 0;
-        const commission = gross - net;
+        const actual = parseInt(netText) || 0;
 
-        let html = '<span class="text-on-surface-variant">Könyvelés bruttó: <b>' + new Intl.NumberFormat('hu-HU').format(gross) + ' Ft</b></span>';
-        if (gross > 0 && commission > 0) {
-            const pct = ((commission / gross) * 100).toFixed(2);
-            html += ' <span class="text-red-500">| Jutalék: <b>' + new Intl.NumberFormat('hu-HU').format(commission) + ' Ft</b> (' + pct + '%)</span>';
-        } else if (gross === 0) {
-            html = '<span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>Nincs könyvelési adat erre a napra</span>';
+        if (type === 'befizetes_boltbol') {
+            // Befizetés: könyvelés szerinti összeg vs bank kivonat
+            const diff = actual - expected;
+            let html = '<span class="text-on-surface-variant">Boltok befizetése: <b>' + new Intl.NumberFormat('hu-HU').format(expected) + ' Ft</b></span>';
+            if (expected > 0) {
+                if (diff === 0) {
+                    html += ' <span class="text-emerald-500">| <i class="fa-solid fa-check"></i> Egyezik</span>';
+                } else {
+                    html += ' <span class="text-red-500">| Eltérés: <b>' + (diff > 0 ? '+' : '') + new Intl.NumberFormat('hu-HU').format(diff) + ' Ft</b></span>';
+                }
+            } else if (expected === 0) {
+                html = '<span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>Nincs befizetés rögzítve erre a napra</span>';
+            }
+            infoDiv.innerHTML = html;
+        } else {
+            // Kártyás: bruttó és jutalék
+            const commission = expected - actual;
+            let html = '<span class="text-on-surface-variant">Könyvelés bruttó: <b>' + new Intl.NumberFormat('hu-HU').format(expected) + ' Ft</b></span>';
+            if (expected > 0 && commission > 0) {
+                const pct = ((commission / expected) * 100).toFixed(2);
+                html += ' <span class="text-red-500">| Jutalék: <b>' + new Intl.NumberFormat('hu-HU').format(commission) + ' Ft</b> (' + pct + '%)</span>';
+            } else if (expected === 0) {
+                html = '<span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>Nincs könyvelési adat erre a napra</span>';
+            }
+            infoDiv.innerHTML = html;
         }
-        infoDiv.innerHTML = html;
     } catch (e) {
         infoDiv.innerHTML = '<span class="text-red-500">Hiba a lekérdezés során</span>';
     }

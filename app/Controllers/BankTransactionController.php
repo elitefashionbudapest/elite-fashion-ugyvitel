@@ -634,6 +634,8 @@ class BankTransactionController
             $type = $types[$index] ?? '';
 
             if (empty($type) || !isset(BankTransaction::TYPES[$type])) continue;
+            // Befizetés boltból csak ellenőrzésre - már a financial_records-ban van
+            if ($type === 'befizetes_boltbol') continue;
 
             // Notes összeállítása
             $notes = [];
@@ -701,6 +703,10 @@ class BankTransactionController
             return;
         }
 
+        $purpose = $_GET['purpose'] ?? 'napi_bankkartya';
+        $allowedPurposes = ['napi_bankkartya', 'bank_kifizetes'];
+        if (!in_array($purpose, $allowedPurposes)) $purpose = 'napi_bankkartya';
+
         $db = \App\Core\Database::getInstance();
         $placeholders = implode(',', array_fill(0, count($storeIds), '?'));
         $params = array_map('intval', $storeIds);
@@ -710,10 +716,14 @@ class BankTransactionController
         $stmt = $db->prepare(
             "SELECT COALESCE(SUM(amount), 0) FROM financial_records
              WHERE store_id IN ({$placeholders})
-             AND purpose = 'napi_bankkartya'
+             AND purpose = ?
              AND record_date >= ? AND record_date <= ?"
         );
-        $stmt->execute($params);
+        $params_with_purpose = array_map('intval', $storeIds);
+        $params_with_purpose[] = $purpose;
+        $params_with_purpose[] = $dateFrom;
+        $params_with_purpose[] = $dateTo;
+        $stmt->execute($params_with_purpose);
         $gross = (float)$stmt->fetchColumn();
 
         header('Content-Type: application/json; charset=utf-8');
