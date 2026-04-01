@@ -45,13 +45,13 @@ $allUsers      = $data['users'] ?? [];
     </div>
 
     <!-- Üzenetek -->
-    <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-white" id="chat-messages-mobile"></div>
+    <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-white" id="chat-messages"></div>
 
     <!-- Küldés -->
     <div class="px-3 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
         <form onsubmit="Chat.handleSend(event)" class="flex items-center gap-2">
             <input type="text"
-                   id="chat-input-mobile"
+                   id="chat-input"
                    placeholder="Írjon üzenetet..."
                    autocomplete="off"
                    maxlength="2000"
@@ -158,19 +158,19 @@ $allUsers      = $data['users'] ?? [];
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chat-messages"></div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chat-messages-desktop"></div>
 
         <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
             <form onsubmit="Chat.handleSend(event)" class="flex items-center gap-2">
                 <input type="text"
-                       id="chat-input"
+                       id="chat-input-desktop"
                        placeholder="Írjon üzenetet..."
                        autocomplete="off"
                        maxlength="2000"
                        class="flex-1 rounded-xl border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary placeholder:text-gray-400">
                 <label class="cursor-pointer p-2.5 text-gray-400 hover:text-primary transition-colors flex-shrink-0">
                     <i class="fa-solid fa-camera text-lg"></i>
-                    <input type="file" accept="image/*" capture="environment" class="hidden" id="chat-image-input" onchange="Chat.handleImageUpload(this)">
+                    <input type="file" accept="image/*" capture="environment" class="hidden" id="chat-image-input-desktop" onchange="Chat.handleImageUpload(this)">
                 </label>
                 <button type="submit"
                         id="chat-send-btn"
@@ -182,22 +182,22 @@ $allUsers      = $data['users'] ?? [];
     </div>
 </div>
 
-<script src="<?= base_url('/assets/js/chat.js') ?>"></script>
 <script>
-// Mobil: a chat-app ID-t a Chat.js használja. Mobilon a chat-messages-mobile-t is frissítsük.
+// ID-k beállítása MIELŐTT a chat.js betöltődik
 (function() {
     const isMobile = window.innerWidth < 768;
-
-    if (isMobile) {
-        // Mobilon a chat-messages-mobile a fő üzenet konténer
-        // A Chat.js a #chat-messages-t keresi, de mobilon az nem létezik az #chat-app-desktop-ben (hidden).
-        // Átirányítjuk: a mobil konténert chat-messages ID-ra másoljuk
-        const mobileMsg = document.getElementById('chat-messages-mobile');
-        const mobileInput = document.getElementById('chat-input-mobile');
-        if (mobileMsg) mobileMsg.id = 'chat-messages';
-        if (mobileInput) mobileInput.id = 'chat-input';
+    if (!isMobile) {
+        // Desktopon a desktop konténereket használjuk
+        var dMsg = document.getElementById('chat-messages-desktop');
+        var dInput = document.getElementById('chat-input-desktop');
+        // Mobilon már chat-messages/chat-input az ID, desktopon cseréljük
+        if (dMsg) dMsg.id = 'chat-messages';
+        if (dInput) dInput.id = 'chat-input';
     }
 })();
+</script>
+<script src="<?= base_url('/assets/js/chat.js') ?>"></script>
+<script>
 
 function mobileChatSwitch(val) {
     // Aktív gomb jelölés
