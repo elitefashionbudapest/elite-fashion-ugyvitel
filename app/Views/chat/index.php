@@ -182,29 +182,7 @@ $allUsers      = $data['users'] ?? [];
     </div>
 </div>
 
-<script>
-// ID-k beállítása MIELŐTT a chat.js betöltődik
-(function() {
-    const isMobile = window.innerWidth < 768;
-    if (!isMobile) {
-        // Desktopon: mobil ID-kat átnevezzük, hogy ne ütközzenek
-        var mMsg = document.getElementById('chat-messages');
-        var mInput = document.getElementById('chat-input');
-        var mApp = document.getElementById('chat-app');
-        if (mMsg) mMsg.id = 'chat-messages-mobile';
-        if (mInput) mInput.id = 'chat-input-mobile';
-        if (mApp) mApp.id = 'chat-app-mobile';
-        // Desktop ID-kat beállítjuk
-        var dMsg = document.getElementById('chat-messages-desktop');
-        var dInput = document.getElementById('chat-input-desktop');
-        var dApp = document.getElementById('chat-app-desktop');
-        if (dMsg) dMsg.id = 'chat-messages';
-        if (dInput) dInput.id = 'chat-input';
-        if (dApp) dApp.id = 'chat-app';
-    }
-})();
-</script>
-<script src="<?= base_url('/assets/js/chat.js') ?>?v=<?= filemtime(__DIR__ . '/../../public/assets/js/chat.js') ?>"></script>
+<script src="<?= base_url('/assets/js/chat.js') ?>?v=<?= time() ?>"></script>
 <script>
 
 function mobileChatSwitch(val) {

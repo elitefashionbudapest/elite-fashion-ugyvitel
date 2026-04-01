@@ -13,19 +13,23 @@ const Chat = (function () {
     let lastMessageId = null;
     let forceScrollBottom = false;
 
-    // DOM elemek
-    const app = document.getElementById('chat-app');
-    const messagesContainer = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const headerTitle = document.getElementById('chat-header-title');
-    const headerSubtitle = document.getElementById('chat-header-subtitle');
-    const headerIcon = document.getElementById('chat-header-icon');
+    // DOM elemek - mobilon vagy desktopon a láthatót keressük
+    var isMobile = window.innerWidth < 768;
+    var app = isMobile ? document.getElementById('chat-app') : document.getElementById('chat-app-desktop');
+    if (!app) app = document.getElementById('chat-app'); // fallback
+    var messagesContainer = isMobile ? document.getElementById('chat-messages') : document.getElementById('chat-messages-desktop');
+    if (!messagesContainer) messagesContainer = document.getElementById('chat-messages');
+    var chatInput = isMobile ? document.getElementById('chat-input') : document.getElementById('chat-input-desktop');
+    if (!chatInput) chatInput = document.getElementById('chat-input');
+    var headerTitle = document.getElementById('chat-header-title');
+    var headerSubtitle = document.getElementById('chat-header-subtitle');
+    var headerIcon = document.getElementById('chat-header-icon');
 
     // Konfiguracio
-    const currentUserId = app ? parseInt(app.dataset.userId) : 0;
-    const currentUserName = app ? app.dataset.userName : '';
-    const baseUrl = app ? app.dataset.baseUrl : '';
-    const POLL_INTERVAL_MS = 500;
+    var currentUserId = app ? parseInt(app.dataset.userId) : 0;
+    var currentUserName = app ? app.dataset.userName : '';
+    var baseUrl = app ? app.dataset.baseUrl : '';
+    var POLL_INTERVAL_MS = 500;
 
     /**
      * Inicializalas
