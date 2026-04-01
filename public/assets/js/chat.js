@@ -12,6 +12,7 @@ const Chat = (function () {
     let isLoading = false;
     let lastMessageId = null;
     let forceScrollBottom = false;
+    let contextMenuOpen = false;
 
     // DOM elemek
     const app = document.getElementById('chat-app');
@@ -47,16 +48,23 @@ const Chat = (function () {
             });
         }
 
-        // Mobilon hosszú nyomás = context menu
-        var longPressTimer = null;
+        // Jobb klikk delegálás az üzenet konténeren
         if (messagesContainer) {
+            messagesContainer.addEventListener('contextmenu', function(e) {
+                var msgEl = e.target.closest('.chat-own-msg');
+                if (!msgEl) return;
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, parseInt(msgEl.dataset.msgId));
+            });
+
+            // Mobilon hosszú nyomás = context menu
+            var longPressTimer = null;
             messagesContainer.addEventListener('touchstart', function(e) {
                 var msgEl = e.target.closest('.chat-own-msg');
                 if (!msgEl) return;
                 longPressTimer = setTimeout(function() {
-                    var touch = e.touches[0];
-                    var fakeEvent = { preventDefault: function(){}, clientX: touch.clientX, clientY: touch.clientY };
-                    showContextMenu(fakeEvent, parseInt(msgEl.dataset.msgId));
+                    var touch = e.changedTouches[0];
+                    showContextMenu(touch.clientX, touch.clientY, parseInt(msgEl.dataset.msgId));
                 }, 500);
             });
             messagesContainer.addEventListener('touchend', function() {
@@ -66,6 +74,13 @@ const Chat = (function () {
                 clearTimeout(longPressTimer);
             });
         }
+
+        // Bármilyen kattintásra bezárjuk a context menut
+        document.addEventListener('click', function(e) {
+            if (contextMenuOpen && !e.target.closest('#chat-context-menu')) {
+                hideContextMenu();
+            }
+        });
     }
 
     /**
@@ -124,7 +139,7 @@ const Chat = (function () {
      * Uzenetek betoltese
      */
     function loadMessages(append) {
-        if (isLoading) return;
+        if (isLoading || contextMenuOpen) return;
         isLoading = true;
 
         var url = baseUrl + '/chat/messages?type=' + (currentConversation ? 'private' : 'public');
@@ -196,10 +211,10 @@ const Chat = (function () {
             }
 
             if (isMine) {
-                // Sajat uzenet - jobb oldalon, jobb klikkel visszavonás
+                // Sajat uzenet - jobb oldalon
                 html += '<div class="flex justify-end">' +
                     '<div class="max-w-[70%]">' +
-                    '<div class="bg-sidebar text-white rounded-2xl rounded-br-md px-4 py-2.5 cursor-pointer chat-own-msg" data-msg-id="' + msg.id + '" oncontextmenu="Chat.showContextMenu(event, ' + msg.id + ')">' +
+                    '<div class="bg-sidebar text-white rounded-2xl rounded-br-md px-4 py-2.5 cursor-pointer chat-own-msg" data-msg-id="' + msg.id + '">' +
                     '<p class="text-sm whitespace-pre-wrap break-words">' + escapeHtml(msg.message) + '</p>' +
                     '</div>' +
                     '<p class="text-[10px] text-gray-400 mt-1 text-right">' + escapeHtml(msgTime) + '</p>' +
@@ -261,20 +276,26 @@ const Chat = (function () {
     }
 
     /**
-     * Jobb klikk context menu megjelenítés
+     * Context menu megjelenítés
      */
-    function showContextMenu(event, messageId) {
-        event.preventDefault();
+    function showContextMenu(x, y, messageId) {
         hideContextMenu();
+        contextMenuOpen = true;
 
         var menu = document.createElement('div');
         menu.id = 'chat-context-menu';
-        menu.className = 'fixed z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[160px]';
-        menu.style.left = event.clientX + 'px';
-        menu.style.top = event.clientY + 'px';
-        menu.innerHTML =
-            '<button onclick="Chat.deleteMessage(' + messageId + ')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">' +
-            '<i class="fa-solid fa-rotate-left"></i> Üzenet visszavonása</button>';
+        menu.className = 'fixed z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[180px]';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+
+        var btn = document.createElement('button');
+        btn.className = 'w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors';
+        btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Üzenet visszavonása';
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteMessage(messageId);
+        });
+        menu.appendChild(btn);
 
         document.body.appendChild(menu);
 
@@ -282,16 +303,12 @@ const Chat = (function () {
         var rect = menu.getBoundingClientRect();
         if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
         if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
-
-        // Kattintásra bezáródik
-        setTimeout(function() {
-            document.addEventListener('click', hideContextMenu, { once: true });
-        }, 0);
     }
 
     function hideContextMenu() {
         var existing = document.getElementById('chat-context-menu');
         if (existing) existing.remove();
+        contextMenuOpen = false;
     }
 
     /**
