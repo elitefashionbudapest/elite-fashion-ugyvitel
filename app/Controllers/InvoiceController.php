@@ -243,6 +243,9 @@ class InvoiceController
             $supplierName = $invoiceData['supplier'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $supplierId = Supplier::findOrCreate($supplierName);
 
+            // Sikertelen számla kihagyása
+            if (!empty($invoiceData['failed'])) continue;
+
             // Duplikátum ellenőrzés (számla szám + beszállító)
             $invoiceNum = $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $db = \App\Core\Database::getInstance();
@@ -376,6 +379,11 @@ class InvoiceController
             if (preg_match('/(?:Invoice Date|Számla kelte|Date)[:\s]*(\d{4})[.\/-](\d{2})[.\/-](\d{2})/i', $content, $m)) {
                 $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
             }
+        }
+
+        // Sikertelen számla kiszűrése
+        if (preg_match('/(?:unsuccessful|failed|sikertelen|declined|elutasítva|not paid|payment failed)/i', $content)) {
+            $result['failed'] = true;
         }
 
         // Fallback értékek
