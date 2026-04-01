@@ -176,13 +176,17 @@ const Chat = (function () {
             }
 
             if (isMine) {
-                // Sajat uzenet - jobb oldalon
-                html += '<div class="flex justify-end">' +
+                // Sajat uzenet - jobb oldalon, visszavonás gombbal
+                html += '<div class="flex justify-end group">' +
                     '<div class="max-w-[70%]">' +
-                    '<div class="bg-sidebar text-white rounded-2xl rounded-br-md px-4 py-2.5">' +
+                    '<div class="bg-sidebar text-white rounded-2xl rounded-br-md px-4 py-2.5 relative">' +
                     '<p class="text-sm whitespace-pre-wrap break-words">' + escapeHtml(msg.message) + '</p>' +
                     '</div>' +
-                    '<p class="text-[10px] text-gray-400 mt-1 text-right">' + escapeHtml(msgTime) + '</p>' +
+                    '<div class="flex items-center justify-end gap-2 mt-1">' +
+                    '<button onclick="Chat.deleteMessage(' + msg.id + ')" class="text-[10px] text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" title="Üzenet visszavonása">' +
+                    '<i class="fa-solid fa-rotate-left mr-0.5"></i>Visszavonás</button>' +
+                    '<span class="text-[10px] text-gray-400">' + escapeHtml(msgTime) + '</span>' +
+                    '</div>' +
                     '</div></div>';
             } else {
                 // Mas uzenete - bal oldalon
@@ -237,6 +241,27 @@ const Chat = (function () {
                 console.error('Kuldes hiba:', err);
                 // Visszatesszuk az uzenetet az input mezobe
                 chatInput.value = message;
+            });
+    }
+
+    /**
+     * Uzenet visszavonasa (torlese)
+     */
+    function deleteMessage(messageId) {
+        if (!confirm('Biztosan visszavonod ezt az üzenetet?')) return;
+
+        fetchWithCsrf(baseUrl + '/chat/delete', {
+            method: 'POST',
+            body: JSON.stringify({ message_id: messageId })
+        })
+            .then(function (data) {
+                if (data.success) {
+                    lastMessageId = null;
+                    loadMessages();
+                }
+            })
+            .catch(function (err) {
+                console.error('Visszavonas hiba:', err);
             });
     }
 
@@ -349,6 +374,7 @@ const Chat = (function () {
     // Publikus API
     return {
         switchConversation: switchConversation,
-        handleSend: handleSend
+        handleSend: handleSend,
+        deleteMessage: deleteMessage
     };
 })();

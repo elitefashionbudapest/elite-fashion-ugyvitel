@@ -179,6 +179,19 @@ class ChatMessage
     }
 
     /**
+     * Uzenet torlese (csak a sajat uzeneteket)
+     */
+    public static function deleteOwn(int $messageId, int $senderId): bool
+    {
+        $db = Database::getInstance();
+        $stmt = $db->prepare(
+            'DELETE FROM chat_messages WHERE id = :id AND sender_id = :sender_id'
+        );
+        $stmt->execute(['id' => $messageId, 'sender_id' => $senderId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
      * Osszes olvasatlan uzenet szama egy felhasznalonak
      */
     public static function getUnreadCount(int $userId): int

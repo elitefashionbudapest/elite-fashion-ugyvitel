@@ -149,6 +149,31 @@ class ChatController
     }
 
     /**
+     * Uzenet visszavonasa (torlese) - csak sajat uzenet
+     */
+    public function deleteMessage(): void
+    {
+        Middleware::auth();
+        Middleware::verifyCsrf();
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $messageId = isset($input['message_id']) ? (int)$input['message_id'] : 0;
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!$messageId) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => 'Hiányzó üzenet azonosító.']);
+            exit;
+        }
+
+        $deleted = ChatMessage::deleteOwn($messageId, Auth::id());
+
+        echo json_encode(['success' => $deleted]);
+        exit;
+    }
+
+    /**
      * Uzenetek olvasottra allitasa (JSON)
      * POST: sender_id
      */
