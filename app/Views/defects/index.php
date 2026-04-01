@@ -103,7 +103,7 @@ $filters = $data['filters'] ?? [];
                     <input type="hidden" name="store_id" id="daily-value-store" value="">
                     <?php endif; ?>
                     <div class="flex-1">
-                        <input type="number" name="total_value" step="1" min="0" id="daily-value-input"
+                        <input type="text" inputmode="numeric" data-calc name="total_value" id="daily-value-input"
                                class="w-full px-3 py-2.5 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 bg-white font-bold"
                                placeholder="Összérték (Ft)" required>
                     </div>
