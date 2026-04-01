@@ -526,6 +526,7 @@ class BankTransactionController
                     'rows'      => $import['rows'],
                     'bank_id'   => $import['bank_id'],
                     'bank_name' => $bank['name'] ?? '',
+                    'stores'    => Store::all(),
                 ]
             ]);
             return;
@@ -617,6 +618,7 @@ class BankTransactionController
         $rows = $import['rows'];
         $selected = $_POST['selected'] ?? [];
         $types = $_POST['types'] ?? [];
+        $storeIds = $_POST['store_ids'] ?? [];
 
         if (empty($selected)) {
             set_flash('error', 'Jelöljön ki legalább egy sort.');
@@ -645,12 +647,20 @@ class BankTransactionController
                 'type'             => $type,
                 'amount'           => $row['amount'],
                 'transaction_date' => $row['booking_date'],
+                'date_from'        => ($type === 'kartya_beerkezes') ? $row['booking_date'] : null,
+                'date_to'          => ($type === 'kartya_beerkezes') ? $row['booking_date'] : null,
                 'provider_name'    => ($type === 'szolgaltato_levon') ? ($row['partner_name'] ?: null) : null,
                 'notes'            => $notesStr,
                 'recorded_by'      => Auth::id(),
             ];
 
             $id = BankTransaction::create($data);
+
+            // Kártyás beérkezésnél boltok hozzárendelése
+            if ($type === 'kartya_beerkezes' && !empty($storeIds[$index])) {
+                BankTransaction::assignStores($id, $storeIds[$index]);
+            }
+
             AuditLog::log('create', 'bank_transactions', $id, null, array_merge($data, ['source' => 'csv_import']));
             $count++;
         }

@@ -3,6 +3,7 @@ use App\Models\BankTransaction;
 $rows = $data['rows'] ?? [];
 $bankId = $data['bank_id'] ?? 0;
 $bankName = $data['bank_name'] ?? '';
+$stores = $data['stores'] ?? [];
 $typeLabels = BankTransaction::TYPES;
 
 $typeIcons = [
@@ -80,8 +81,14 @@ $typeIcons = [
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">KI</span>
                         <?php endif; ?>
                     </td>
-                    <td class="text-right font-bold text-sm <?= $row['direction'] === 'J' ? 'text-emerald-600' : 'text-red-600' ?>">
-                        <?= $row['direction'] === 'J' ? '+' : '-' ?><?= number_format($row['amount'], 0, ',', ' ') ?> Ft
+                    <td class="text-right text-sm">
+                        <div class="font-bold <?= $row['direction'] === 'J' ? 'text-emerald-600' : 'text-red-600' ?>">
+                            <?= $row['direction'] === 'J' ? '+' : '-' ?><?= number_format($row['amount'], 0, ',', ' ') ?> Ft
+                        </div>
+                        <?php if (!empty($row['brutto'])): ?>
+                            <div class="text-[10px] text-on-surface-variant">Bruttó: <?= number_format($row['brutto'], 0, ',', ' ') ?> Ft</div>
+                            <div class="text-[10px] text-red-400">Jutalék: <?= number_format($row['jutalek'] ?? 0, 2, ',', ' ') ?> Ft</div>
+                        <?php endif; ?>
                     </td>
                     <td class="text-sm max-w-[200px]">
                         <?php if ($row['partner_name']): ?>
@@ -96,12 +103,21 @@ $typeIcons = [
                     </td>
                     <td class="text-xs text-on-surface-variant"><?= e($row['csv_type']) ?></td>
                     <td>
-                        <select name="types[<?= $i ?>]" class="px-2 py-1 border border-outline-variant rounded-lg text-xs bg-surface-container-lowest focus:ring-1 focus:ring-primary">
+                        <select name="types[<?= $i ?>]" class="type-select px-2 py-1 border border-outline-variant rounded-lg text-xs bg-surface-container-lowest focus:ring-1 focus:ring-primary" data-row="<?= $i ?>" onchange="toggleStores(this)">
                             <option value="">-- válassz --</option>
                             <?php foreach ($typeLabels as $key => $label): ?>
                                 <option value="<?= $key ?>" <?= ($row['suggested_type'] ?? '') === $key ? 'selected' : '' ?>><?= e($label) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <div id="stores-<?= $i ?>" class="flex flex-wrap gap-1 mt-1 <?= ($row['suggested_type'] ?? '') === 'kartya_beerkezes' ? '' : 'hidden' ?>">
+                            <?php foreach ($stores as $s): ?>
+                            <label class="inline-flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded text-[10px] border border-surface-container hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary-container/20">
+                                <input type="checkbox" name="store_ids[<?= $i ?>][]" value="<?= $s['id'] ?>"
+                                       class="h-3 w-3 text-primary border-outline rounded">
+                                <span><?= e($s['name']) ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -141,4 +157,14 @@ selectAll.addEventListener('change', function() {
 rowChecks.forEach(cb => {
     cb.addEventListener('change', updateCount);
 });
+
+function toggleStores(select) {
+    const row = select.dataset.row;
+    const storesDiv = document.getElementById('stores-' + row);
+    if (select.value === 'kartya_beerkezes') {
+        storesDiv.classList.remove('hidden');
+    } else {
+        storesDiv.classList.add('hidden');
+    }
+}
 </script>

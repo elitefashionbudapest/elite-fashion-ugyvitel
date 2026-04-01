@@ -116,6 +116,19 @@ class CsvImportService
                 }
             }
 
+            // Bruttó és jutalék kinyerése a közleményből
+            $brutto = null;
+            $jutalek = null;
+            foreach ($commentLines as $cl) {
+                $cl = trim($cl);
+                if (preg_match('/^Bruttó\s+([\d.,]+)/u', $cl, $m)) {
+                    $brutto = (float)str_replace(['.', ','], ['', '.'], $m[1]);
+                }
+                if (preg_match('/^Jutalék\s+([\d.,]+)/u', $cl, $m)) {
+                    $jutalek = (float)str_replace(['.', ','], ['', '.'], $m[1]);
+                }
+            }
+
             $rows[] = [
                 'direction'    => $direction,
                 'amount'       => $amount,
@@ -125,6 +138,8 @@ class CsvImportService
                 'description'  => str_replace("\n", ' | ', $comment),
                 'reference'    => '',
                 'csv_type'     => $txType,
+                'brutto'       => $brutto,
+                'jutalek'      => $jutalek,
             ];
         }
 
