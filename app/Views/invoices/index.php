@@ -30,9 +30,12 @@ foreach ($invoices as $inv) {
         <form method="POST" action="<?= base_url('/invoices/fetch-emails') ?>" class="inline">
             <?= csrf_field() ?>
             <button type="submit" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 text-sm border border-outline-variant hover:bg-surface-container transition-colors">
-                <i class="fa-solid fa-envelope-open-text"></i> Gmail számlák letöltése
+                <i class="fa-solid fa-envelope-open-text"></i> Gmail számlák
             </button>
         </form>
+        <a href="<?= base_url('/invoices/bulk-upload') ?>" class="px-5 py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-2 text-sm border border-outline-variant hover:bg-surface-container transition-colors">
+            <i class="fa-solid fa-file-arrow-up"></i> Tömeges feltöltés
+        </a>
         <?php endif; ?>
     </div>
 </div>

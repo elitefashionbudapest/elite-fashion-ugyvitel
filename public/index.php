@@ -241,6 +241,8 @@ $router->post('/invoices/{id}/paid', [App\Controllers\InvoiceController::class, 
 $router->post('/invoices/{id}/unpaid', [App\Controllers\InvoiceController::class, 'markUnpaid']);
 $router->post('/invoices/{id}/delete', [App\Controllers\InvoiceController::class, 'destroy']);
 $router->post('/invoices/fetch-emails', [App\Controllers\InvoiceController::class, 'fetchEmails']);
+$router->get('/invoices/bulk-upload', [App\Controllers\InvoiceController::class, 'bulkUploadForm']);
+$router->post('/invoices/bulk-upload', [App\Controllers\InvoiceController::class, 'bulkUploadStore']);
 $router->get('/invoices/suppliers', [App\Controllers\InvoiceController::class, 'searchSuppliers']);
 
 // Ünnepnapok

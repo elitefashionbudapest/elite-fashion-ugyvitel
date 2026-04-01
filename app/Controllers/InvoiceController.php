@@ -195,6 +195,143 @@ class InvoiceController
     }
 
     /**
+     * Tömeges számla feltöltés form
+     */
+    public function bulkUploadForm(): void
+    {
+        Middleware::owner();
+
+        view('layouts/app', [
+            'content' => 'invoices/bulk-upload',
+            'data' => [
+                'pageTitle' => 'Tömeges számla feltöltés',
+                'activeTab' => 'szamlak',
+                'suppliers' => Supplier::all(),
+            ]
+        ]);
+    }
+
+    /**
+     * Tömeges számla feltöltés feldolgozás
+     */
+    public function bulkUploadStore(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $supplierName = $_POST['supplier_name'] ?? '';
+        if ($supplierName === '__new__') {
+            $supplierName = trim($_POST['supplier_name_new'] ?? '');
+        }
+        if (empty($supplierName)) {
+            set_flash('error', 'Beszállító megadása kötelező.');
+            redirect('/invoices/bulk-upload');
+        }
+
+        $paymentMethod = $_POST['payment_method'] ?? 'kartya';
+        $currency = $_POST['currency'] ?? 'HUF';
+
+        if (empty($_FILES['invoices']) || !is_array($_FILES['invoices']['name'])) {
+            set_flash('error', 'Kérem válasszon legalább egy fájlt.');
+            redirect('/invoices/bulk-upload');
+        }
+
+        $supplierId = Supplier::findOrCreate($supplierName);
+        $uploadDir = __DIR__ . '/../../public/uploads/invoices';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $count = 0;
+        $fileCount = count($_FILES['invoices']['name']);
+
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ($_FILES['invoices']['error'][$i] !== UPLOAD_ERR_OK) continue;
+
+            $tmpFile = $_FILES['invoices']['tmp_name'][$i];
+            $originalName = $_FILES['invoices']['name'][$i];
+
+            // Számla szám és összeg kinyerése a PDF-ből
+            $invoiceData = $this->extractPdfData($tmpFile, $originalName);
+
+            // Fájl mentése
+            $ext = pathinfo($originalName, PATHINFO_EXTENSION);
+            $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
+            move_uploaded_file($tmpFile, $uploadDir . '/' . $filename);
+
+            $data = [
+                'store_id'       => null,
+                'supplier_id'    => $supplierId,
+                'invoice_number' => $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME),
+                'net_amount'     => $invoiceData['net_amount'] ?? 0,
+                'amount'         => $invoiceData['amount'] ?? 0,
+                'currency'       => $currency,
+                'invoice_date'   => $invoiceData['date'] ?? date('Y-m-d'),
+                'due_date'       => null,
+                'payment_method' => $paymentMethod,
+                'notes'          => 'Tömeges feltöltés: ' . $originalName,
+                'recorded_by'    => Auth::id(),
+            ];
+
+            $id = Invoice::create($data);
+            Invoice::updateImage($id, 'uploads/invoices/' . $filename);
+            AuditLog::log('create', 'invoices', $id, null, $data);
+            $count++;
+        }
+
+        set_flash('success', $count . ' számla sikeresen feltöltve. Kérem ellenőrizze az összegeket és kösse össze a tranzakciókkal.');
+        redirect('/invoices');
+    }
+
+    /**
+     * PDF-ből adatok kinyerése (fájlnév és tartalom alapján)
+     */
+    private function extractPdfData(string $filePath, string $originalName): array
+    {
+        $result = [
+            'invoice_number' => null,
+            'amount'         => 0,
+            'net_amount'     => 0,
+            'date'           => date('Y-m-d'),
+        ];
+
+        // Fájlnévből próbáljuk kinyerni
+        $name = pathinfo($originalName, PATHINFO_FILENAME);
+
+        // Facebook számla fájlnév minta: "Invoice_12345678" vagy dátumot tartalmazhat
+        if (preg_match('/invoice[_\s-]*(\d+)/i', $name, $m)) {
+            $result['invoice_number'] = $m[1];
+        }
+        if (preg_match('/(\d{4})[._-](\d{2})[._-](\d{2})/', $name, $m)) {
+            $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
+        }
+
+        // PDF szöveg kinyerése (egyszerű módszer)
+        $content = file_get_contents($filePath);
+        if ($content) {
+            // Összeg keresése
+            if (preg_match('/(?:Total|Összesen|Amount|Végösszeg)[:\s]*([0-9,.]+)\s*(HUF|EUR|USD|Ft)?/i', $content, $m)) {
+                $result['amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
+            }
+            // Számla szám
+            if (!$result['invoice_number'] && preg_match('/(?:Invoice|Számla)[#:\s]*([A-Z0-9-]+)/i', $content, $m)) {
+                $result['invoice_number'] = $m[1];
+            }
+            // Nettó összeg
+            if (preg_match('/(?:Subtotal|Nettó|Net)[:\s]*([0-9,.]+)/i', $content, $m)) {
+                $result['net_amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
+            }
+        }
+
+        if (!$result['invoice_number']) {
+            $result['invoice_number'] = $name;
+        }
+        if ($result['net_amount'] == 0) {
+            $result['net_amount'] = $result['amount'];
+        }
+
+        return $result;
+    }
+
+    /**
      * Gmail számlák manuális letöltése
      */
     public function fetchEmails(): void
