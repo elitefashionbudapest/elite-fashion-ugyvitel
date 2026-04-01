@@ -201,18 +201,35 @@ class InvoiceController
     {
         Middleware::owner();
 
+        // Előnézet mód
+        if (!empty($_SESSION['bulk_invoices']) && isset($_GET['preview'])) {
+            $skipped = $_SESSION['bulk_skipped'] ?? [];
+            view('layouts/app', [
+                'content' => 'invoices/bulk-preview',
+                'data' => [
+                    'pageTitle' => 'Számlák előnézet',
+                    'activeTab' => 'szamlak',
+                    'invoices'  => $_SESSION['bulk_invoices'],
+                    'skipped'   => $skipped,
+                ]
+            ]);
+            return;
+        }
+
         view('layouts/app', [
             'content' => 'invoices/bulk-upload',
             'data' => [
                 'pageTitle' => 'Tömeges számla feltöltés',
                 'activeTab' => 'szamlak',
-                'suppliers' => Supplier::all(),
             ]
         ]);
     }
 
     /**
      * Tömeges számla feltöltés feldolgozás
+     */
+    /**
+     * Tömeges feltöltés: fájlok mentése + AI feldolgozás → előnézet session-be
      */
     public function bulkUploadStore(): void
     {
@@ -227,7 +244,7 @@ class InvoiceController
         $uploadDir = __DIR__ . '/../../public/uploads/invoices';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-        $count = 0;
+        $parsed = [];
         $skipped = [];
         $fileCount = count($_FILES['invoices']['name']);
 
@@ -240,7 +257,6 @@ class InvoiceController
             $tmpFile = $_FILES['invoices']['tmp_name'][$i];
             $originalName = $_FILES['invoices']['name'][$i];
 
-            // Fájl ELŐSZÖR mentése
             $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
             $filename = date('Ymd') . '_' . uniqid() . '.' . $ext;
             $tmpSaved = $uploadDir . '/' . $filename;
@@ -249,7 +265,6 @@ class InvoiceController
                 continue;
             }
 
-            // Adatok kinyerése AI-val
             try {
                 $invoiceData = $this->analyzeInvoiceWithAI($tmpSaved, $originalName);
             } catch (\Throwable $e) {
@@ -259,64 +274,125 @@ class InvoiceController
                     'amount' => 0, 'net_amount' => 0, 'currency' => 'HUF',
                     'date' => date('Y-m-d'), 'failed' => false,
                 ];
-                $skipped[] = $originalName . ' (AI hiba: ' . $e->getMessage() . ')';
             }
 
-            // Sikertelen számla kihagyása
             if (!empty($invoiceData['failed'])) {
                 unlink($tmpSaved);
                 $skipped[] = $originalName . ' (sikertelen fizetés)';
                 continue;
             }
 
-            // Beszállító
-            $supplierName = $invoiceData['supplier'] ?? pathinfo($originalName, PATHINFO_FILENAME);
+            // Duplikátum jelölés
+            $supplierName = $invoiceData['supplier'] ?? $originalName;
+            $invoiceNum = $invoiceData['invoice_number'] ?? $originalName;
             $supplierId = Supplier::findOrCreate($supplierName);
-
-            // Duplikátum ellenőrzés
-            $invoiceNum = $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME);
             $db = \App\Core\Database::getInstance();
             $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE supplier_id = :sid AND invoice_number = :num');
             $stmt->execute(['sid' => $supplierId, 'num' => $invoiceNum]);
-            if ((int)$stmt->fetchColumn() > 0) {
-                unlink($tmpSaved);
-                $skipped[] = $originalName . ' (duplikátum: ' . $supplierName . ' #' . $invoiceNum . ')';
-                continue;
-            }
+            $isDuplicate = (int)$stmt->fetchColumn() > 0;
 
-            // Végleges helyre mozgatás (havi mappa)
-            $monthDir = date('Y-m', strtotime($invoiceData['date'] ?? date('Y-m-d')));
+            $parsed[] = [
+                'supplier'       => $supplierName,
+                'invoice_number' => $invoiceNum,
+                'amount'         => $invoiceData['amount'] ?? 0,
+                'net_amount'     => $invoiceData['net_amount'] ?? 0,
+                'currency'       => $invoiceData['currency'] ?? 'HUF',
+                'date'           => $invoiceData['date'] ?? date('Y-m-d'),
+                'payment_method' => $invoiceData['payment_method'] ?? 'kartya',
+                'filename'       => $filename,
+                'original_name'  => $originalName,
+                'duplicate'      => $isDuplicate,
+            ];
+        }
+
+        if (empty($parsed)) {
+            if (!empty($skipped)) {
+                set_flash('error', 'Minden fájl kihagyva: ' . implode(' | ', $skipped));
+            } else {
+                set_flash('info', 'Nem található feldolgozható számla.');
+            }
+            redirect('/invoices/bulk-upload');
+        }
+
+        $_SESSION['bulk_invoices'] = $parsed;
+        if (!empty($skipped)) {
+            $_SESSION['bulk_skipped'] = $skipped;
+        }
+        redirect('/invoices/bulk-upload?preview=1');
+    }
+
+    /**
+     * Kijelölt számlák mentése az előnézetből
+     */
+    public function bulkUploadConfirm(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        if (empty($_SESSION['bulk_invoices'])) {
+            set_flash('error', 'Nincs feldolgozott számla.');
+            redirect('/invoices/bulk-upload');
+        }
+
+        $parsed = $_SESSION['bulk_invoices'];
+        $selected = $_POST['selected'] ?? [];
+        $uploadDir = __DIR__ . '/../../public/uploads/invoices';
+
+        if (empty($selected)) {
+            set_flash('error', 'Jelöljön ki legalább egy számlát.');
+            redirect('/invoices/bulk-upload?preview=1');
+        }
+
+        $count = 0;
+        foreach ($selected as $index) {
+            $index = (int)$index;
+            if (!isset($parsed[$index])) continue;
+
+            $row = $parsed[$index];
+            $supplierId = Supplier::findOrCreate($row['supplier']);
+
+            // Fájl végleges helyre
+            $monthDir = date('Y-m', strtotime($row['date']));
             $saveDir = $uploadDir . '/' . $monthDir;
             if (!is_dir($saveDir)) mkdir($saveDir, 0755, true);
-            rename($tmpSaved, $saveDir . '/' . $filename);
+            $srcFile = $uploadDir . '/' . $row['filename'];
+            if (file_exists($srcFile)) {
+                rename($srcFile, $saveDir . '/' . $row['filename']);
+            }
 
             $data = [
                 'store_id'       => null,
                 'supplier_id'    => $supplierId,
-                'invoice_number' => $invoiceData['invoice_number'] ?? pathinfo($originalName, PATHINFO_FILENAME),
-                'net_amount'     => $invoiceData['net_amount'] ?? 0,
-                'amount'         => $invoiceData['amount'] ?? 0,
-                'currency'       => $invoiceData['currency'] ?? 'HUF',
-                'invoice_date'   => $invoiceData['date'] ?? date('Y-m-d'),
+                'invoice_number' => $row['invoice_number'],
+                'net_amount'     => $row['net_amount'],
+                'amount'         => $row['amount'],
+                'currency'       => $row['currency'],
+                'invoice_date'   => $row['date'],
                 'due_date'       => null,
-                'payment_method' => $invoiceData['payment_method'] ?? 'kartya',
-                'notes'          => 'Tömeges feltöltés: ' . $originalName,
+                'payment_method' => $row['payment_method'],
+                'notes'          => 'Tömeges feltöltés: ' . $row['original_name'],
                 'recorded_by'    => Auth::id(),
             ];
 
             $id = Invoice::create($data);
-            Invoice::updateImage($id, 'uploads/invoices/' . $monthDir . '/' . $filename);
+            Invoice::updateImage($id, 'uploads/invoices/' . $monthDir . '/' . $row['filename']);
             AuditLog::log('create', 'invoices', $id, null, $data);
             $count++;
         }
 
+        // Nem kijelölt fájlok törlése
+        foreach ($parsed as $idx => $row) {
+            if (!in_array((string)$idx, $selected)) {
+                $f = $uploadDir . '/' . $row['filename'];
+                if (file_exists($f)) unlink($f);
+            }
+        }
+
+        unset($_SESSION['bulk_invoices'], $_SESSION['bulk_skipped']);
+
         if ($count > 0) {
-            set_flash('success', $count . ' számla sikeresen feltöltve.');
-        }
-        if (!empty($skipped)) {
-            set_flash('error', 'Kihagyva (' . count($skipped) . '): ' . implode(' | ', $skipped));
-        }
-        if ($count === 0 && empty($skipped)) {
+            set_flash('success', $count . ' számla sikeresen felvéve.');
+        } else {
             set_flash('info', 'Nem történt változás.');
         }
         redirect('/invoices');
