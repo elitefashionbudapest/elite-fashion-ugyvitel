@@ -111,8 +111,8 @@ $typeIcons = [
                         </select>
                         <?php $showStores = in_array($row['suggested_type'] ?? '', ['kartya_beerkezes', 'befizetes_boltbol']); ?>
                         <div id="stores-<?= $i ?>" class="mt-1 <?= $showStores ? '' : 'hidden' ?>" data-date="<?= e($row['booking_date']) ?>">
-                            <div id="lookup-date-wrap-<?= $i ?>" class="mb-1 <?= ($row['suggested_type'] ?? '') === 'befizetes_boltbol' ? '' : 'hidden' ?>">
-                                <label class="text-[10px] text-on-surface-variant">Befizetés napja:</label>
+                            <div id="lookup-date-wrap-<?= $i ?>" class="mb-1 <?= in_array($row['suggested_type'] ?? '', ['befizetes_boltbol', 'kartya_beerkezes']) ? '' : 'hidden' ?>">
+                                <label class="text-[10px] text-on-surface-variant">Forgalom napja:</label>
                                 <input type="date" id="lookup-date-<?= $i ?>" value="<?= e(date('Y-m-d', strtotime($row['booking_date'] . ' -1 day'))) ?>"
                                        class="px-1.5 py-0.5 border border-outline-variant rounded text-[11px] ml-1"
                                        onchange="fetchGross(<?= $i ?>)">
@@ -179,7 +179,7 @@ function toggleStores(select) {
     } else {
         storesDiv.classList.add('hidden');
     }
-    if (select.value === 'befizetes_boltbol') {
+    if (needsStores.includes(select.value)) {
         dateWrap.classList.remove('hidden');
     } else {
         dateWrap.classList.add('hidden');
@@ -202,12 +202,10 @@ async function fetchGross(rowIdx) {
 
     const purpose = (type === 'befizetes_boltbol') ? 'bank_kifizetes' : 'napi_bankkartya';
 
-    // Befizetésnél a lookup dátumot használjuk (lehet más nap mint a banki könyvelés)
+    // A lookup dátumot használjuk (lehet más nap mint a banki könyvelés)
     let lookupDate = date;
-    if (type === 'befizetes_boltbol') {
-        const dateInput = document.getElementById('lookup-date-' + rowIdx);
-        if (dateInput && dateInput.value) lookupDate = dateInput.value;
-    }
+    const dateInput = document.getElementById('lookup-date-' + rowIdx);
+    if (dateInput && dateInput.value) lookupDate = dateInput.value;
 
     const params = new URLSearchParams();
     checked.forEach(cb => params.append('store_ids[]', cb.value));
