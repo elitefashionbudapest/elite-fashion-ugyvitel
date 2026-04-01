@@ -13,8 +13,7 @@ if ($isOwner && !TabPermission::hasAnyPermissions($currentUser['id'])) {
     $visibleTabs = TabPermission::getVisibleTabs($currentUser['id']);
 }
 
-// Chat nem kell külön menüpontban (dashboard-on van)
-$visibleTabs = array_filter($visibleTabs, fn($t) => $t !== 'chat');
+// Chat menüpont megtartása
 
 $activeTab = $data['activeTab'] ?? '';
 ?>
@@ -42,6 +41,7 @@ $activeTab = $data['activeTab'] ?? '';
                     'selejt'     => '/defects',
                     'kimutat'        => '/finance/summary',
                     'konyvelo_docs'  => '/accounting',
+                    'chat'           => '/chat',
                     default          => '#',
                 };
             ?>
