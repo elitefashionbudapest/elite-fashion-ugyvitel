@@ -556,7 +556,7 @@ class BankTransactionController
         }
 
         if (empty($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
-            set_flash('error', 'Kérem töltsön fel egy CSV fájlt.');
+            set_flash('error', 'Kérem töltsön fel egy fájlt.');
             redirect('/bank-transactions/import');
         }
 
@@ -566,11 +566,10 @@ class BankTransactionController
             redirect('/bank-transactions/import');
         }
 
-        $content = file_get_contents($file['tmp_name']);
-        $rows = CsvImportService::parseCsv($content);
+        $rows = CsvImportService::parseFile($file['tmp_name'], $file['name']);
 
         if (empty($rows)) {
-            set_flash('error', 'A CSV fájl üres vagy nem sikerült feldolgozni.');
+            set_flash('error', 'A fájl üres vagy nem sikerült feldolgozni. Támogatott: OTP CSV, CIB Excel (.xls/.xlsx).');
             redirect('/bank-transactions/import');
         }
 

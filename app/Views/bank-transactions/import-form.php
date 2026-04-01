@@ -29,12 +29,12 @@ $inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm f
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">CSV fájl</label>
-                <input type="file" name="csv_file" accept=".csv,.txt" required
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Banki kivonat fájl</label>
+                <input type="file" name="csv_file" accept=".csv,.txt,.xls,.xlsx" required
                        class="w-full px-4 py-3 border-2 border-dashed border-outline-variant rounded-xl text-sm bg-surface-container-lowest cursor-pointer hover:border-primary transition-colors file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-primary file:text-on-primary-fixed file:font-bold file:text-xs file:cursor-pointer">
                 <p class="text-xs text-on-surface-variant mt-1">
                     <i class="fa-solid fa-circle-info mr-0.5"></i>
-                    OTP: Számlatörténet → Letöltés → CSV. CIB: Számlatörténet → Export → CSV.
+                    OTP: Számlatörténet → CSV letöltés &nbsp;|&nbsp; CIB: Tranzakciós jelentés → Excel letöltés
                 </p>
             </div>
 
