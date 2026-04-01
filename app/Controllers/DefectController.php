@@ -15,8 +15,8 @@ class DefectController
         Middleware::tabPermission('selejt', 'view');
 
         $storeId = Auth::isStore() ? Auth::storeId() : ($_GET['store_id'] ?? null);
-        $dateFrom = $_GET['date_from'] ?? null;
-        $dateTo = $_GET['date_to'] ?? null;
+        $dateFrom = $_GET['date_from'] ?? date('Y-m-d');
+        $dateTo = $_GET['date_to'] ?? date('Y-m-d');
 
         $items = DefectItem::all(
             $storeId ? (int)$storeId : null,
