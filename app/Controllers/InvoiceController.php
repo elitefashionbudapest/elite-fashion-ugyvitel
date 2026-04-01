@@ -242,8 +242,8 @@ class InvoiceController
             $tmpSaved = $uploadDir . '/' . $filename;
             if (!move_uploaded_file($tmpFile, $tmpSaved)) continue;
 
-            // Adatok kinyerése a mentett PDF-ből
-            $invoiceData = $this->extractPdfData($tmpSaved, $originalName);
+            // Adatok kinyerése AI-val
+            $invoiceData = $this->analyzeInvoiceWithAI($tmpSaved, $originalName);
 
             // Sikertelen számla kihagyása
             if (!empty($invoiceData['failed'])) {
@@ -280,7 +280,7 @@ class InvoiceController
                 'currency'       => $invoiceData['currency'] ?? 'HUF',
                 'invoice_date'   => $invoiceData['date'] ?? date('Y-m-d'),
                 'due_date'       => null,
-                'payment_method' => 'kartya',
+                'payment_method' => $invoiceData['payment_method'] ?? 'kartya',
                 'notes'          => 'Tömeges feltöltés: ' . $originalName,
                 'recorded_by'    => Auth::id(),
             ];
@@ -296,145 +296,83 @@ class InvoiceController
     }
 
     /**
-     * PDF-ből adatok kinyerése (beszállító, összeg, dátum, számla szám)
+     * Számla feldolgozása Claude AI-val
      */
-    private function extractPdfData(string $filePath, string $originalName): array
+    private function analyzeInvoiceWithAI(string $filePath, string $originalName): array
     {
-        $result = [
-            'supplier'       => null,
-            'invoice_number' => null,
+        $name = pathinfo($originalName, PATHINFO_FILENAME);
+        $default = [
+            'supplier'       => $name,
+            'invoice_number' => $name,
             'amount'         => 0,
             'net_amount'     => 0,
             'currency'       => 'HUF',
             'date'           => date('Y-m-d'),
+            'failed'         => false,
         ];
 
-        $name = pathinfo($originalName, PATHINFO_FILENAME);
-        $nameLower = mb_strtolower($name);
+        $apiKey = \App\Models\CompanySetting::get('anthropic_api_key', '');
+        if (!$apiKey) return $default;
 
-        // Fájlnévből adatok
-        if (preg_match('/invoice[_\s-]*(\d+)/i', $name, $m)) {
-            $result['invoice_number'] = $m[1];
-        }
-        if (preg_match('/(\d{4})[._-](\d{2})[._-](\d{2})/', $name, $m)) {
-            $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
+        $fileData = file_get_contents($filePath);
+        if (!$fileData) return $default;
+
+        $prompt = "Elemezd ezt a számlát/invoice-t. Válaszolj KIZÁRÓLAG JSON formátumban:\n\n";
+        $prompt .= '{"supplier_name":"a kiállító/eladó cég neve","invoice_number":"számla szám","net_amount":0,"gross_amount":0,"currency":"HUF","invoice_date":"YYYY-MM-DD","payment_method":"kartya","is_failed":false}' . "\n\n";
+        $prompt .= "is_failed: true ha a számla sikertelen/unsuccessful/failed/declined fizetést jelez\n";
+        $prompt .= "currency: HUF, EUR vagy USD\n";
+        $prompt .= "payment_method: keszpenz, atutalas, kartya, utanvet\n";
+        $prompt .= "Ha nem számla, válaszolj: {\"is_invoice\":false}\n";
+
+        $messages = [['role' => 'user', 'content' => [
+            ['type' => 'document', 'source' => ['type' => 'base64', 'media_type' => 'application/pdf', 'data' => base64_encode($fileData)]],
+            ['type' => 'text', 'text' => $prompt],
+        ]]];
+
+        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'content-type: application/json',
+                'x-api-key: ' . $apiKey,
+                'anthropic-version: 2023-06-01',
+            ],
+            CURLOPT_POSTFIELDS => json_encode([
+                'model' => 'claude-sonnet-4-20250514',
+                'max_tokens' => 500,
+                'messages' => $messages,
+            ]),
+        ]);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        if (!$response) return $default;
+        $data = json_decode($response, true);
+        $text = $data['content'][0]['text'] ?? '';
+
+        if (!preg_match('/\{.*\}/s', $text, $match)) return $default;
+        $ai = json_decode($match[0], true);
+        if (!$ai) return $default;
+
+        // Nem számla
+        if (isset($ai['is_invoice']) && !$ai['is_invoice']) {
+            $default['failed'] = true;
+            return $default;
         }
 
-        // 1) Beszállító felismerés FÁJLNÉVBŐL (legmegbízhatóbb)
-        $filenameSuppliers = [
-            'Facebook'             => ['facebook', 'meta'],
-            'Google Ads'           => ['google'],
-            'TikTok'               => ['tiktok'],
-            'Telenor'              => ['telenor', 'yettel'],
-            'Vodafone'             => ['vodafone'],
-            'Telekom'              => ['telekom'],
-            'DPD'                  => ['dpd'],
-            'GLS'                  => ['gls'],
-            'FoxPost'              => ['foxpost'],
-            'PayPal'               => ['paypal'],
-            'Shopify'              => ['shopify'],
-            'Mysoft Kft.'          => ['mysoft'],
+        return [
+            'supplier'       => $ai['supplier_name'] ?? $name,
+            'invoice_number' => $ai['invoice_number'] ?? $name,
+            'amount'         => (float)($ai['gross_amount'] ?? 0),
+            'net_amount'     => (float)($ai['net_amount'] ?? $ai['gross_amount'] ?? 0),
+            'currency'       => $ai['currency'] ?? 'HUF',
+            'date'           => $ai['invoice_date'] ?? date('Y-m-d'),
+            'payment_method' => $ai['payment_method'] ?? 'kartya',
+            'failed'         => !empty($ai['is_failed']),
         ];
-
-        foreach ($filenameSuppliers as $supplierName => $keywords) {
-            foreach ($keywords as $keyword) {
-                if (str_contains($nameLower, $keyword)) {
-                    $result['supplier'] = $supplierName;
-                    break 2;
-                }
-            }
-        }
-
-        // PDF szöveg kinyerése
-        $textContent = $this->extractPdfText($filePath);
-
-        if (!$textContent) {
-            $result['supplier'] = $result['supplier'] ?? $name;
-            $result['invoice_number'] = $result['invoice_number'] ?? $name;
-            return $result;
-        }
-
-        // 2) Ha fájlnévből nem találtuk meg, PDF tartalomból (csak hosszabb, specifikus nevek)
-        if (!$result['supplier']) {
-            $contentSuppliers = [
-                'Facebook'             => ['facebook ireland', 'facebook payments', 'meta platforms', 'meta ireland'],
-                'Google Ads'           => ['google ads', 'google ireland', 'google llc', 'google payment', 'google cloud'],
-                'TikTok'               => ['tiktok', 'bytedance'],
-                'Microsoft Advertising'=> ['microsoft advertising', 'microsoft ireland', 'bing ads'],
-                'Telenor'              => ['telenor magyarország', 'yettel magyarország'],
-                'Yettel'               => ['yettel magyarország'],
-                'Vodafone'             => ['vodafone magyarország'],
-                'Telekom'              => ['magyar telekom'],
-                'ELMŰ'                 => ['elmű-émász', 'e.on energiakereskedelmi'],
-                'FoxPost'              => ['foxpost'],
-                'Shopify'              => ['shopify'],
-                'Stripe'               => ['stripe payments', 'stripe technology'],
-                'PayPal'               => ['paypal europe'],
-                'Amazon'               => ['amazon eu', 'amazon europe'],
-                'Mysoft Kft.'          => ['mysoft kft'],
-                'DPD'                  => ['dpd hungária', 'dpd hungary'],
-                'GLS'                  => ['gls general logistics'],
-            ];
-
-            $contentLower = mb_strtolower($textContent);
-            foreach ($contentSuppliers as $supplierName => $keywords) {
-                foreach ($keywords as $keyword) {
-                    if (str_contains($contentLower, $keyword)) {
-                        $result['supplier'] = $supplierName;
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        // Összeg keresése
-        if (preg_match('/(?:Total|Összesen|Amount Due|Végösszeg|Fizetendő)[:\s]*([0-9.,\s]+)\s*(HUF|EUR|USD|Ft|\$|€)?/i', $content, $m)) {
-            $result['amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
-            if (!empty($m[2])) {
-                $cur = strtoupper(trim($m[2]));
-                if ($cur === 'FT') $cur = 'HUF';
-                if ($cur === '€') $cur = 'EUR';
-                if ($cur === '$') $cur = 'USD';
-                $result['currency'] = $cur;
-            }
-        }
-
-        // Számla szám
-        if (!$result['invoice_number']) {
-            if (preg_match('/(?:Invoice|Számla|Receipt)\s*(?:#|No\.?|szám)[:\s]*([A-Za-z0-9_-]+)/i', $content, $m)) {
-                $result['invoice_number'] = trim($m[1]);
-            }
-        }
-
-        // Nettó összeg
-        if (preg_match('/(?:Subtotal|Nettó|Net Amount)[:\s]*([0-9.,\s]+)/i', $content, $m)) {
-            $result['net_amount'] = (float)str_replace([',', ' '], ['.', ''], $m[1]);
-        }
-
-        // Dátum a tartalomból ha fájlnévben nem volt
-        if ($result['date'] === date('Y-m-d')) {
-            if (preg_match('/(?:Invoice Date|Számla kelte|Date)[:\s]*(\d{4})[.\/-](\d{2})[.\/-](\d{2})/i', $content, $m)) {
-                $result['date'] = $m[1] . '-' . $m[2] . '-' . $m[3];
-            }
-        }
-
-        // Sikertelen számla kiszűrése
-        if (preg_match('/(?:unsuccessful|failed|sikertelen|declined|elutasítva|not paid|payment failed)/i', $content)) {
-            $result['failed'] = true;
-        }
-
-        // Fallback értékek
-        if (!$result['supplier']) {
-            $result['supplier'] = $name;
-        }
-        if (!$result['invoice_number']) {
-            $result['invoice_number'] = $name;
-        }
-        if ($result['net_amount'] == 0) {
-            $result['net_amount'] = $result['amount'];
-        }
-
-        return $result;
     }
 
     /**
@@ -470,72 +408,4 @@ class InvoiceController
         redirect('/invoices');
     }
 
-    /**
-     * PDF-ből szöveg kinyerése
-     * 1) pdftotext (ha elérhető a szerveren)
-     * 2) PDF stream-ek dekompresszálása
-     */
-    private function extractPdfText(string $filePath): string
-    {
-        // 1) pdftotext (poppler-utils)
-        $pdftotext = null;
-        foreach (['/usr/bin/pdftotext', '/usr/local/bin/pdftotext'] as $path) {
-            if (file_exists($path)) { $pdftotext = $path; break; }
-        }
-        if ($pdftotext) {
-            $tmpTxt = tempnam(sys_get_temp_dir(), 'pdf');
-            exec(escapeshellcmd($pdftotext) . ' ' . escapeshellarg($filePath) . ' ' . escapeshellarg($tmpTxt) . ' 2>/dev/null');
-            if (file_exists($tmpTxt) && filesize($tmpTxt) > 10) {
-                $text = file_get_contents($tmpTxt);
-                unlink($tmpTxt);
-                return $text;
-            }
-            if (file_exists($tmpTxt)) unlink($tmpTxt);
-        }
-
-        // 2) PHP: PDF stream-ekből szöveg kinyerése
-        $raw = file_get_contents($filePath);
-        if (!$raw) return '';
-
-        $text = '';
-
-        // Deflate tömörített streamek kibontása
-        if (preg_match_all('/stream\s*\n(.*?)\nendstream/s', $raw, $matches)) {
-            foreach ($matches[1] as $stream) {
-                $decoded = @gzuncompress($stream);
-                if (!$decoded) $decoded = @gzinflate($stream);
-                if (!$decoded) continue;
-
-                // Szöveg operátorok kinyerése: (szöveg) Tj, [(...)] TJ
-                if (preg_match_all('/\(([^)]+)\)\s*Tj/s', $decoded, $tm)) {
-                    $text .= implode(' ', $tm[1]) . ' ';
-                }
-                if (preg_match_all('/\[([^\]]*)\]\s*TJ/s', $decoded, $tm)) {
-                    foreach ($tm[1] as $arr) {
-                        if (preg_match_all('/\(([^)]*)\)/', $arr, $parts)) {
-                            $text .= implode('', $parts[1]) . ' ';
-                        }
-                    }
-                }
-                // BT...ET blokkok
-                if (preg_match_all('/BT\s*(.*?)\s*ET/s', $decoded, $blocks)) {
-                    foreach ($blocks[1] as $block) {
-                        if (preg_match_all('/\(([^)]+)\)/', $block, $parts)) {
-                            $text .= implode('', $parts[1]) . ' ';
-                        }
-                    }
-                }
-            }
-        }
-
-        // Ha nem sikerült stream-ekből, fallback: bináris-ból olvasható szövegek
-        if (strlen($text) < 20) {
-            // Csak ASCII-olvasható részeket szűrjük ki
-            if (preg_match_all('/[A-Za-z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ.,\s@#:\/\-]{5,}/', $raw, $readable)) {
-                $text = implode(' ', $readable[0]);
-            }
-        }
-
-        return $text;
-    }
 }
