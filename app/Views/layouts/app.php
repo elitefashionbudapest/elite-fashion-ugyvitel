@@ -236,7 +236,8 @@
     </style>
 
     <!-- Lebegő chat gomb (minden oldalon) -->
-    <?php if (!\str_contains($_SERVER['REQUEST_URI'] ?? '', '/chat')): ?>
+    <?php $uri = $_SERVER['REQUEST_URI'] ?? ''; $hideFab = str_contains($uri, '/chat') || ($data['activeTab'] ?? '') === 'dashboard'; ?>
+    <?php if (!$hideFab): ?>
     <a href="<?= base_url('/chat') ?>" id="chat-fab" class="fixed bottom-5 right-5 z-50 w-14 h-14 bg-gradient-to-br from-primary to-blue-600 text-white rounded-full shadow-xl hover:shadow-2xl flex items-center justify-center transition-all hover:scale-110">
         <i class="fa-solid fa-comments text-xl"></i>
         <span id="chat-fab-badge" class="hidden absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg">0</span>
