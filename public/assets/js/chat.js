@@ -11,6 +11,7 @@ const Chat = (function () {
     let pollInterval = null;
     let isLoading = false;
     let lastMessageId = null;
+    let forceScrollBottom = false;
 
     // DOM elemek
     const app = document.getElementById('chat-app');
@@ -92,6 +93,7 @@ const Chat = (function () {
         }
 
         // Uzenetek betoltese
+        forceScrollBottom = true;
         loadMessages();
 
         // Input fokuszba
@@ -151,6 +153,10 @@ const Chat = (function () {
         if (newestId === lastMessageId) {
             return; // Nincs valtozas
         }
+
+        // Mielőtt újrarajzolunk: a felhasználó alul van-e (nem scrollozott fel)?
+        var isAtBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 80;
+
         lastMessageId = newestId;
 
         var html = '';
@@ -193,7 +199,10 @@ const Chat = (function () {
         });
 
         messagesContainer.innerHTML = html;
-        scrollToBottom();
+        if (isAtBottom || forceScrollBottom) {
+            scrollToBottom();
+            forceScrollBottom = false;
+        }
     }
 
     /**
@@ -219,8 +228,8 @@ const Chat = (function () {
         })
             .then(function (data) {
                 if (data.success) {
-                    // Azonnal betoltjuk az uj uzeneteket
-                    lastMessageId = null; // Kenyszeritjuk a frissites
+                    lastMessageId = null;
+                    forceScrollBottom = true;
                     loadMessages();
                 }
             })
