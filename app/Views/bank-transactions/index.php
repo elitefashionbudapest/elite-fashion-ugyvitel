@@ -35,6 +35,12 @@ $filters = $data['filters'] ?? [];
         <a href="<?= base_url('/bank-transactions/import') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-cyan-600 text-white font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm shadow-lg shadow-cyan-600/10">
             <i class="fa-solid fa-file-import"></i> <span class="hidden sm:inline">Kivonat import</span> <span class="sm:hidden">Import</span>
         </a>
+        <a href="<?= base_url('/bank-transactions/export?' . http_build_query(array_filter($filters))) ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface-container-low text-on-surface font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm border border-outline-variant">
+            <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden sm:inline">CSV Export</span> <span class="sm:hidden">Export</span>
+        </a>
+        <a href="<?= base_url('/bank-transactions/reconcile') ?>" class="px-3 sm:px-5 py-2 sm:py-2.5 bg-violet-600 text-white font-bold rounded-full flex items-center gap-1.5 text-xs sm:text-sm shadow-lg shadow-violet-600/10">
+            <i class="fa-solid fa-scale-balanced"></i> <span class="hidden sm:inline">Egyenleg összevetés</span> <span class="sm:hidden">Összevetés</span>
+        </a>
     </div>
 </div>
 

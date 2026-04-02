@@ -224,6 +224,9 @@ $router->get('/bank-transactions/transfer/create', [App\Controllers\BankTransact
 $router->post('/bank-transactions/transfer', [App\Controllers\BankTransactionController::class, 'storeTransfer']);
 $router->get('/bank-transactions/commission/create', [App\Controllers\BankTransactionController::class, 'createCommission']);
 $router->post('/bank-transactions/commission', [App\Controllers\BankTransactionController::class, 'storeCommission']);
+$router->get('/bank-transactions/export', [App\Controllers\BankTransactionController::class, 'export']);
+$router->get('/bank-transactions/reconcile', [App\Controllers\BankTransactionController::class, 'reconcile']);
+$router->post('/bank-transactions/reconcile', [App\Controllers\BankTransactionController::class, 'reconcileCompare']);
 $router->get('/bank-transactions/import', [App\Controllers\BankTransactionController::class, 'importForm']);
 $router->post('/bank-transactions/import/upload', [App\Controllers\BankTransactionController::class, 'importUpload']);
 $router->post('/bank-transactions/import/store', [App\Controllers\BankTransactionController::class, 'importStore']);

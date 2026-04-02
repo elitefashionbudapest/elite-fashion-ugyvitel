@@ -1,0 +1,52 @@
+<?php
+$banks = $data['banks'] ?? [];
+$inputCls = 'w-full px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary-container focus:border-primary bg-surface-container-lowest';
+?>
+
+<div class="max-w-lg">
+    <div class="bg-surface-container-lowest rounded-xl p-6 sm:p-8">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                <i class="fa-solid fa-scale-balanced text-violet-600"></i>
+            </div>
+            <div>
+                <h3 class="font-heading font-bold text-on-surface text-xl">Egyenleg összevetés</h3>
+                <p class="text-xs text-on-surface-variant">Banki kivonat összehasonlítása a rendszer tételeivel.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="<?= base_url('/bank-transactions/reconcile') ?>" enctype="multipart/form-data" class="space-y-5">
+            <?= csrf_field() ?>
+
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Bankszámla</label>
+                <select name="bank_id" class="<?= $inputCls ?>" required>
+                    <option value="">-- Válassz bankot --</option>
+                    <?php foreach ($banks as $b): ?>
+                        <option value="<?= $b['id'] ?>"><?= e($b['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Nyitó egyenleg (Ft)</label>
+                <input type="text" inputmode="numeric" data-calc name="opening_balance" class="<?= $inputCls ?>" placeholder="pl. 1389294" required>
+                <p class="text-xs text-on-surface-variant mt-1"><i class="fa-solid fa-circle-info mr-0.5"></i>Az egyenleg a kivonat első tétele ELŐTT. A banki kivonat fejlécében találod.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Banki kivonat fájl</label>
+                <input type="file" name="csv_file" accept=".csv,.txt,.xls,.xlsx" required
+                       class="w-full px-4 py-3 border-2 border-dashed border-outline-variant rounded-xl text-sm bg-surface-container-lowest cursor-pointer hover:border-primary transition-colors file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-violet-600 file:text-white file:font-bold file:text-xs file:cursor-pointer">
+                <p class="text-xs text-on-surface-variant mt-1">Ugyanaz a formátum mint az importálásnál (OTP CSV vagy CIB Excel).</p>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="px-6 py-3 bg-violet-600 text-white font-bold rounded-full text-sm shadow-lg hover:bg-violet-700 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-scale-balanced"></i> Összevetés
+                </button>
+                <a href="<?= base_url('/bank-transactions') ?>" class="px-6 py-3 text-on-surface-variant hover:text-on-surface text-sm font-medium">Mégse</a>
+            </div>
+        </form>
+    </div>
+</div>

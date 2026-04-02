@@ -814,4 +814,172 @@ class BankTransactionController
              LIMIT 50"
         )->fetchAll();
     }
+
+    /**
+     * CSV export (szűrőknek megfelelő tételek)
+     */
+    public function export(): void
+    {
+        Middleware::owner();
+
+        $bankId = !empty($_GET['bank_id']) ? (int)$_GET['bank_id'] : null;
+        $type = $_GET['type'] ?? null;
+        $dateFrom = $_GET['date_from'] ?? null;
+        $dateTo = $_GET['date_to'] ?? null;
+
+        $transactions = BankTransaction::all($bankId, $type ?: null, $dateFrom ?: null, $dateTo ?: null);
+
+        $filename = 'bank_tranzakciok_' . date('Y-m-d_His') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        fputcsv($output, ['Dátum', 'Típus', 'Bank', 'Összeg', 'Irány', 'Részletek', 'Bruttó', 'Jutalék'], ';');
+
+        $typeLabels = BankTransaction::TYPES;
+        foreach ($transactions as $tx) {
+            $isIncoming = in_array($tx['type'], ['kartya_beerkezes', 'tagi_kolcson_be']);
+            $details = $tx['provider_name'] ?? $tx['notes'] ?? $tx['loan_name'] ?? '';
+
+            fputcsv($output, [
+                $tx['transaction_date'],
+                $typeLabels[$tx['type']] ?? $tx['type'],
+                $tx['bank_name'],
+                $tx['amount'],
+                $isIncoming ? 'Bejövő' : 'Kimenő',
+                $details,
+                $tx['gross_amount'] ?? '',
+                $tx['commission'] ?? '',
+            ], ';');
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Egyenleg összevetés — banki kivonat vs rendszer
+     */
+    public function reconcile(): void
+    {
+        Middleware::owner();
+
+        $banks = Bank::all();
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/reconcile',
+            'data' => [
+                'pageTitle' => 'Egyenleg összevetés',
+                'activeTab' => 'bank_transactions',
+                'banks'     => $banks,
+            ]
+        ]);
+    }
+
+    /**
+     * Egyenleg összevetés — CSV feltöltés és összehasonlítás
+     */
+    public function reconcileCompare(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $bankId = (int)($_POST['bank_id'] ?? 0);
+        $openingBalance = (float)str_replace([' ', ','], ['', '.'], $_POST['opening_balance'] ?? '0');
+
+        if (!$bankId) {
+            set_flash('error', 'Válassz bankszámlát.');
+            redirect('/bank-transactions/reconcile');
+        }
+
+        if (empty($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            set_flash('error', 'Kérem tölts fel egy banki kivonatot.');
+            redirect('/bank-transactions/reconcile');
+        }
+
+        $file = $_FILES['csv_file'];
+        $csvRows = CsvImportService::parseFile($file['tmp_name'], $file['name']);
+
+        if (empty($csvRows)) {
+            set_flash('error', 'A fájl üres vagy nem sikerült feldolgozni.');
+            redirect('/bank-transactions/reconcile');
+        }
+
+        // Dátum tartomány a CSV-ből
+        $dates = array_filter(array_column($csvRows, 'booking_date'));
+        $dateFrom = min($dates);
+        $dateTo = max($dates);
+
+        // Rendszer tranzakciók az adott időszakra
+        $systemTx = BankTransaction::all($bankId, null, $dateFrom, $dateTo);
+
+        // CSV tételek összegzése
+        $csvTotal = ['in' => 0, 'out' => 0];
+        foreach ($csvRows as &$csvRow) {
+            if ($csvRow['direction'] === 'J') {
+                $csvTotal['in'] += $csvRow['amount'];
+            } else {
+                $csvTotal['out'] += $csvRow['amount'];
+            }
+
+            // Párosítás a rendszer tételeivel
+            $csvRow['matched'] = false;
+            $csvRow['system_match'] = null;
+            foreach ($systemTx as &$sTx) {
+                if (!empty($sTx['_matched'])) continue;
+                if (abs((float)$sTx['amount'] - $csvRow['amount']) < 0.01
+                    && abs(strtotime($sTx['transaction_date']) - strtotime($csvRow['booking_date'])) <= 86400) {
+                    $csvRow['matched'] = true;
+                    $csvRow['system_match'] = $sTx;
+                    $sTx['_matched'] = true;
+                    break;
+                }
+            }
+        }
+
+        // Rendszer tételek összegzése
+        $systemTotal = ['in' => 0, 'out' => 0];
+        $unmatchedSystem = [];
+        foreach ($systemTx as $sTx) {
+            $isIncoming = in_array($sTx['type'], ['kartya_beerkezes', 'tagi_kolcson_be']);
+            if ($isIncoming) {
+                $systemTotal['in'] += (float)$sTx['amount'];
+            } else {
+                $systemTotal['out'] += (float)$sTx['amount'];
+            }
+            if (empty($sTx['_matched'])) {
+                $unmatchedSystem[] = $sTx;
+            }
+        }
+
+        $unmatchedCsv = array_filter($csvRows, fn($r) => !$r['matched']);
+
+        // Számított egyenleg
+        $csvBalance = $openingBalance + $csvTotal['in'] - $csvTotal['out'];
+        $systemBalance = $openingBalance + $systemTotal['in'] - $systemTotal['out'];
+
+        $bank = Bank::find($bankId);
+
+        view('layouts/app', [
+            'content' => 'bank-transactions/reconcile-result',
+            'data' => [
+                'pageTitle'       => 'Egyenleg összevetés eredménye',
+                'activeTab'       => 'bank_transactions',
+                'bank'            => $bank,
+                'dateFrom'        => $dateFrom,
+                'dateTo'          => $dateTo,
+                'openingBalance'  => $openingBalance,
+                'csvBalance'      => $csvBalance,
+                'systemBalance'   => $systemBalance,
+                'csvTotal'        => $csvTotal,
+                'systemTotal'     => $systemTotal,
+                'unmatchedCsv'    => array_values($unmatchedCsv),
+                'unmatchedSystem' => $unmatchedSystem,
+                'csvRowCount'     => count($csvRows),
+                'matchedCount'    => count(array_filter($csvRows, fn($r) => $r['matched'])),
+            ]
+        ]);
+    }
 }
