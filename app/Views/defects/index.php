@@ -283,10 +283,14 @@ $todayEstimatedValue = $data['todayEstimatedValue'] ?? 0;
     // Automatikus fókusz a vonalkód mezőre (de ne a szűrő formból)
     barcodeInput.focus();
     document.addEventListener('click', function(e) {
-        // Ne vegye el a fókuszt a szűrő elemekről (select, input[type=date], button)
+        // Ne vegye el a fókuszt ha a felhasználó más beviteli mezőben dolgozik
         const tag = e.target.tagName;
-        const isFilterArea = e.target.closest('form[method="GET"]') || tag === 'SELECT' || tag === 'OPTION';
-        if (isFilterArea) return;
+        const isInteractive = e.target.closest('form[method="GET"]')
+            || e.target.closest('#daily-value-section')
+            || e.target.closest('form[method="POST"]')
+            || tag === 'SELECT' || tag === 'OPTION'
+            || tag === 'INPUT' || tag === 'BUTTON' || tag === 'TEXTAREA';
+        if (isInteractive) return;
         setTimeout(() => barcodeInput.focus(), 100);
     });
 })();
