@@ -323,7 +323,7 @@ class FinanceController
         // === P&L: Havi eredménykimutatás (aktuális szűrt időszak + előző hónap összehasonlítás) ===
         $plHelper = function(string $from, string $to) use ($db) {
             // Bevétel (nettó = bruttó / 1.27)
-            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE purpose IN ('napi_keszpenz','napi_bankkartya') AND record_date BETWEEN :df AND :dt");
+            $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM financial_records WHERE purpose IN ('napi_keszpenz','napi_bankkartya','selejt_befizetes') AND record_date BETWEEN :df AND :dt");
             $stmt->execute(['df' => $from, 'dt' => $to]);
             $revenueBrutto = (float)$stmt->fetchColumn();
             $revenueNetto = round($revenueBrutto / 1.27);
