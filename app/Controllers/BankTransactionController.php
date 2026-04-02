@@ -693,7 +693,7 @@ class BankTransactionController
             AuditLog::log('delete', 'bank_transactions', (int)$id, $tx, null);
             set_flash('success', 'Tranzakció törölve.');
         }
-        redirect('/bank-transactions');
+        redirect_back('/bank-transactions');
     }
 
     /**

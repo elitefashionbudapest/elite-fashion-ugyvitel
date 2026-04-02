@@ -156,7 +156,7 @@ class InvoiceController
         Invoice::markPaid((int)$id, $bankId);
         AuditLog::log('update', 'invoices', (int)$id, null, ['is_paid' => 1, 'bank_id' => $bankId]);
         set_flash('success', 'Számla fizetve.');
-        redirect('/invoices');
+        redirect_back('/invoices');
     }
 
     public function markUnpaid(string $id): void
@@ -166,7 +166,7 @@ class InvoiceController
 
         Invoice::markUnpaid((int)$id);
         AuditLog::log('update', 'invoices', (int)$id, null, ['is_paid' => 0]);
-        redirect('/invoices');
+        redirect_back('/invoices');
     }
 
     public function destroy(string $id): void
@@ -180,7 +180,7 @@ class InvoiceController
             AuditLog::log('delete', 'invoices', (int)$id, $invoice, null);
             set_flash('success', 'Számla törölve.');
         }
-        redirect('/invoices');
+        redirect_back('/invoices');
     }
 
     /**

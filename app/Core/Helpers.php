@@ -23,6 +23,23 @@ function redirect(string $path): never
 }
 
 /**
+ * Visszairányítás az előző oldalra (szűrők megőrzése)
+ * Ha nincs Referer vagy külső URL, a megadott fallback-re irányít.
+ */
+function redirect_back(string $fallback = '/'): never
+{
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    $base = rtrim((require __DIR__ . '/../../config/app.php')['base_url'], '/');
+
+    // Csak saját domainről fogadunk el Referer-t (open redirect védelem)
+    if ($referer && str_contains($referer, parse_url($base, PHP_URL_HOST) ?? '')) {
+        header("Location: {$referer}");
+        exit;
+    }
+    redirect($fallback);
+}
+
+/**
  * CSRF hidden input mező generálás
  */
 function csrf_field(): string

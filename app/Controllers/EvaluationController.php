@@ -126,7 +126,7 @@ class EvaluationController
             AuditLog::log('delete', 'evaluations', (int)$id, $evaluation, null);
             set_flash('success', 'Ertekeles torolve.');
         }
-        redirect('/evaluations');
+        redirect_back('/evaluations');
     }
 
     /**

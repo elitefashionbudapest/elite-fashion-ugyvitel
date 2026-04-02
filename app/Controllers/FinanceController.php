@@ -190,7 +190,7 @@ class FinanceController
             AuditLog::log('delete', 'financial_records', (int)$id, $record, null);
             set_flash('success', 'Pénzmozgás törölve.');
         }
-        redirect('/finance');
+        redirect_back('/finance');
     }
 
     public function checkDuplicate(): void

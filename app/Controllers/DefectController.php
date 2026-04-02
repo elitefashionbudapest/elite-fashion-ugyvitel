@@ -128,7 +128,7 @@ class DefectController
             AuditLog::log('delete', 'defect_items', (int)$id, $item, null);
             set_flash('success', 'Selejt tetel torolve.');
         }
-        redirect('/defects');
+        redirect_back('/defects');
     }
 
     /**

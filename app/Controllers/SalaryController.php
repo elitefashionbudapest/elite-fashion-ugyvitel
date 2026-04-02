@@ -208,7 +208,7 @@ class SalaryController
                 AuditLog::log('delete', 'owner_payments', (int)$id, $record, null);
                 set_flash('success', 'Tulajdonosi fizetés törölve.');
             }
-            redirect('/salary?tab=tulajdonosi');
+            redirect_back('/salary?tab=tulajdonosi');
         } else {
             $record = SalaryPayment::find((int)$id);
             if ($record) {
@@ -219,7 +219,7 @@ class SalaryController
                 AuditLog::log('delete', 'salary_payments', (int)$id, $record, null);
                 set_flash('success', 'Dolgozói fizetés törölve.');
             }
-            redirect('/salary?tab=dolgozoi');
+            redirect_back('/salary?tab=dolgozoi');
         }
     }
 }
