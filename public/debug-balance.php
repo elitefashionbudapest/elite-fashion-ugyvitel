@@ -214,6 +214,40 @@ foreach ($invoices as $inv) {
     }
 }
 
+// === JAVÍTÁSOK ===
+echo "\n=== JAVÍTÁSOK ===\n";
+
+// 1. Hiányzó ATM díjak hozzáadása
+$missingFees = [
+    ['date' => '2026-03-31', 'amount' => 265, 'notes' => '2026.03.30 0152619002 — KP.FELVÉT/-BEFIZ. DÍJA'],
+    ['date' => '2026-04-01', 'amount' => 265, 'notes' => '2026.03.31 0152619002 — KP.FELVÉT/-BEFIZ. DÍJA'],
+    ['date' => '2026-04-01', 'amount' => 795, 'notes' => '2026.03.31 0180099680 — KP.FELVÉT/-BEFIZ. DÍJA (befizetés)'],
+];
+
+foreach ($missingFees as $fee) {
+    // Ellenőrzés hogy ne duplázzuk
+    $check = $db->prepare("SELECT COUNT(*) FROM bank_transactions WHERE bank_id = :bid AND type = 'banki_jutalek' AND amount = :a AND transaction_date = :d AND notes LIKE :n");
+    $check->execute(['bid' => $bankId, 'a' => $fee['amount'], 'd' => $fee['date'], 'n' => '%' . substr($fee['notes'], 0, 20) . '%']);
+    if ((int)$check->fetchColumn() === 0) {
+        $ins = $db->prepare("INSERT INTO bank_transactions (bank_id, type, amount, transaction_date, notes, recorded_by) VALUES (:bid, 'banki_jutalek', :a, :d, :n, 1)");
+        $ins->execute(['bid' => $bankId, 'a' => $fee['amount'], 'd' => $fee['date'], 'n' => $fee['notes']]);
+        echo "✓ ATM díj hozzáadva: {$fee['date']} — {$fee['amount']} Ft\n";
+    } else {
+        echo "- ATM díj már létezik: {$fee['date']} — {$fee['amount']} Ft\n";
+    }
+}
+
+// 2. Nyitó egyenleg korrekció
+$newOpening = 1408944;
+$db->prepare("UPDATE banks SET opening_balance = :bal WHERE id = :id")->execute(['bal' => $newOpening, 'id' => $bankId]);
+echo "✓ Nyitó egyenleg frissítve: 1 389 294 → " . number_format($newOpening, 0, ',', ' ') . " Ft\n";
+
+// 3. Újraszámolt egyenleg
+$newBalance = \App\Models\Bank::getBalance($bankId);
+echo "\n=== ÚJ EGYENLEG: " . number_format($newBalance, 0, ',', ' ') . " Ft ===\n";
+echo "VALÓS BANKI: 2 811 236 Ft\n";
+echo "ELTÉRÉS: " . number_format(2811236 - $newBalance, 0, ',', ' ') . " Ft\n";
+
 echo "\n=== FINANCIAL_RECORDS (bank-related) ===\n";
 $stmt = $db->prepare("SELECT purpose, amount, record_date, store_id FROM financial_records WHERE bank_id = :id ORDER BY record_date, id");
 $stmt->execute(['id' => $bankId]);
