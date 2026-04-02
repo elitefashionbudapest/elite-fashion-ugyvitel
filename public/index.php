@@ -95,6 +95,9 @@ $router->get('/login', [App\Controllers\AuthController::class, 'loginForm']);
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);
 $router->post('/logout', [App\Controllers\AuthController::class, 'logout']);
 
+// Dokumentáció (bejelentkezés nélkül elérhető)
+$router->get('/docs', [App\Controllers\DocsController::class, 'index']);
+
 // Dashboard
 $router->get('/', [App\Controllers\DashboardController::class, 'index']);
 
