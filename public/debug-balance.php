@@ -4,19 +4,19 @@
  * VAGY hívd meg böngészőből: /ugyvitel/debug-balance.php
  * Töröld utána!
  */
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 if (!class_exists('App\Core\Database')) {
-    require __DIR__ . '/app/Core/Helpers.php';
+    require __DIR__ . '/../app/Core/Helpers.php';
     spl_autoload_register(function (string $class) {
         $prefix = 'App\\';
-        $baseDir = __DIR__ . '/app/';
+        $baseDir = __DIR__ . '/../app/';
         if (!str_starts_with($class, $prefix)) return;
         $file = $baseDir . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
         if (file_exists($file)) require $file;
     });
 }
 
-$envFile = __DIR__ . '/.env';
+$envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
