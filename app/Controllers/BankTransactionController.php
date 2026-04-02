@@ -918,23 +918,115 @@ class BankTransactionController
         // CSV tételek összegzése
         $csvTotal = ['in' => 0, 'out' => 0];
         foreach ($csvRows as &$csvRow) {
+            $csvRow['matched'] = false;
+            $csvRow['match_note'] = null;
             if ($csvRow['direction'] === 'J') {
                 $csvTotal['in'] += $csvRow['amount'];
             } else {
                 $csvTotal['out'] += $csvRow['amount'];
             }
+        }
 
-            // Párosítás a rendszer tételeivel
-            $csvRow['matched'] = false;
-            $csvRow['system_match'] = null;
+        // 1. lépés: pontos párosítás (összeg + dátum ±1 nap)
+        foreach ($csvRows as &$csvRow) {
             foreach ($systemTx as &$sTx) {
                 if (!empty($sTx['_matched'])) continue;
                 if (abs((float)$sTx['amount'] - $csvRow['amount']) < 0.01
                     && abs(strtotime($sTx['transaction_date']) - strtotime($csvRow['booking_date'])) <= 86400) {
                     $csvRow['matched'] = true;
-                    $csvRow['system_match'] = $sTx;
+                    $csvRow['match_note'] = 'Pontos egyezés';
                     $sTx['_matched'] = true;
                     break;
+                }
+            }
+        }
+
+        // 2. lépés: összeg-csoportos párosítás
+        // Több banki tétel összege = egy rendszer tétel (pl. 2 ATM felvétel = 1 tulajdonosi fizetés)
+        // Vagy több banki beérkezés = egy összesített kártyás beérkezés
+        $unmatchedCsvIdxs = [];
+        foreach ($csvRows as $i => &$cr) {
+            if (!$cr['matched']) $unmatchedCsvIdxs[] = $i;
+        }
+
+        foreach ($systemTx as &$sTx) {
+            if (!empty($sTx['_matched'])) continue;
+            $sAmount = (float)$sTx['amount'];
+            $sDate = $sTx['transaction_date'];
+
+            // Keresünk CSV tételek kombinációját amik összege egyezik
+            // Max 5 tételt kombinálunk (teljesítmény miatt)
+            $candidates = [];
+            foreach ($unmatchedCsvIdxs as $idx) {
+                $cr = $csvRows[$idx];
+                if (abs(strtotime($cr['booking_date']) - strtotime($sDate)) <= 2 * 86400) {
+                    $candidates[] = $idx;
+                }
+            }
+
+            // 2 tételes kombinációk keresése
+            $found = false;
+            for ($a = 0; $a < count($candidates) && !$found; $a++) {
+                for ($b = $a + 1; $b < count($candidates) && !$found; $b++) {
+                    $sum = $csvRows[$candidates[$a]]['amount'] + $csvRows[$candidates[$b]]['amount'];
+                    if (abs($sum - $sAmount) < 0.01) {
+                        $csvRows[$candidates[$a]]['matched'] = true;
+                        $csvRows[$candidates[$a]]['match_note'] = 'Csoportos egyezés (' . number_format($sAmount, 0, ',', ' ') . ' Ft)';
+                        $csvRows[$candidates[$b]]['matched'] = true;
+                        $csvRows[$candidates[$b]]['match_note'] = 'Csoportos egyezés (' . number_format($sAmount, 0, ',', ' ') . ' Ft)';
+                        $sTx['_matched'] = true;
+                        $unmatchedCsvIdxs = array_values(array_diff($unmatchedCsvIdxs, [$candidates[$a], $candidates[$b]]));
+                        $found = true;
+                    }
+                }
+            }
+
+            // 3 tételes kombinációk keresése
+            if (!$found) {
+                for ($a = 0; $a < count($candidates) && !$found; $a++) {
+                    for ($b = $a + 1; $b < count($candidates) && !$found; $b++) {
+                        for ($c = $b + 1; $c < count($candidates) && !$found; $c++) {
+                            $sum = $csvRows[$candidates[$a]]['amount'] + $csvRows[$candidates[$b]]['amount'] + $csvRows[$candidates[$c]]['amount'];
+                            if (abs($sum - $sAmount) < 0.01) {
+                                $matched3 = [$candidates[$a], $candidates[$b], $candidates[$c]];
+                                foreach ($matched3 as $m) {
+                                    $csvRows[$m]['matched'] = true;
+                                    $csvRows[$m]['match_note'] = 'Csoportos egyezés (' . number_format($sAmount, 0, ',', ' ') . ' Ft)';
+                                }
+                                $sTx['_matched'] = true;
+                                $unmatchedCsvIdxs = array_values(array_diff($unmatchedCsvIdxs, $matched3));
+                                $found = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fordítva is: több rendszer tétel = egy banki tétel
+        foreach ($csvRows as &$csvRow) {
+            if ($csvRow['matched']) continue;
+            $cAmount = $csvRow['amount'];
+            $cDate = $csvRow['booking_date'];
+
+            $sysCandidates = [];
+            foreach ($systemTx as $si => &$stx) {
+                if (!empty($stx['_matched'])) continue;
+                if (abs(strtotime($stx['transaction_date']) - strtotime($cDate)) <= 2 * 86400) {
+                    $sysCandidates[] = $si;
+                }
+            }
+
+            for ($a = 0; $a < count($sysCandidates); $a++) {
+                for ($b = $a + 1; $b < count($sysCandidates); $b++) {
+                    $sum = (float)$systemTx[$sysCandidates[$a]]['amount'] + (float)$systemTx[$sysCandidates[$b]]['amount'];
+                    if (abs($sum - $cAmount) < 0.01) {
+                        $csvRow['matched'] = true;
+                        $csvRow['match_note'] = 'Csoportos egyezés (rendszerben 2 tétel)';
+                        $systemTx[$sysCandidates[$a]]['_matched'] = true;
+                        $systemTx[$sysCandidates[$b]]['_matched'] = true;
+                        break 2;
+                    }
                 }
             }
         }
@@ -954,7 +1046,7 @@ class BankTransactionController
             }
         }
 
-        $unmatchedCsv = array_filter($csvRows, fn($r) => !$r['matched']);
+        $unmatchedCsv = array_values(array_filter($csvRows, fn($r) => !$r['matched']));
 
         // Számított egyenleg
         $csvBalance = $openingBalance + $csvTotal['in'] - $csvTotal['out'];
