@@ -162,6 +162,29 @@ foreach ($txs as $tx) {
     );
 }
 
+echo "\n=== SZÁMLÁK amik csökkentik az egyenleget (paid_from_bank, nincs bank_tx) ===\n";
+$stmt = $db->prepare(
+    "SELECT i.id, i.invoice_number, sp.name as supplier, i.amount, i.invoice_date, i.paid_from_bank_id
+     FROM invoices i
+     JOIN suppliers sp ON i.supplier_id = sp.id
+     WHERE i.paid_from_bank_id = :id AND i.is_paid = 1
+     AND NOT EXISTS (SELECT 1 FROM bank_transactions bt WHERE bt.invoice_id = i.id)
+     ORDER BY i.invoice_date"
+);
+$stmt->execute(['id' => $bankId]);
+$invoices = $stmt->fetchAll();
+$invoiceTotal = 0;
+foreach ($invoices as $inv) {
+    $invoiceTotal += (float)$inv['amount'];
+    echo sprintf("%-12s %-30s %12s  %s\n",
+        $inv['invoice_date'],
+        e(mb_substr($inv['supplier'], 0, 30)),
+        number_format($inv['amount'], 0, ',', ' ') . ' Ft',
+        $inv['invoice_number']
+    );
+}
+echo "ÖSSZESEN: " . number_format($invoiceTotal, 0, ',', ' ') . " Ft\n";
+
 echo "\n=== FINANCIAL_RECORDS (bank-related) ===\n";
 $stmt = $db->prepare("SELECT purpose, amount, record_date, store_id FROM financial_records WHERE bank_id = :id ORDER BY record_date, id");
 $stmt->execute(['id' => $bankId]);
