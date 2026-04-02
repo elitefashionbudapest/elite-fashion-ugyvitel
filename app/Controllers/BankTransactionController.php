@@ -702,6 +702,28 @@ class BankTransactionController
                 BankTransaction::assignStores($id, $storeIds[$index]);
             }
 
+            // Szolgáltatói levonásnál: automatikus számla-összekötés (dupla levonás megelőzése)
+            if ($type === 'szolgaltato_levon') {
+                $db = \App\Core\Database::getInstance();
+                $invStmt = $db->prepare(
+                    "SELECT i.id FROM invoices i
+                     WHERE i.paid_from_bank_id = :bank_id AND i.is_paid = 1
+                     AND ABS(i.amount - :amount) < 1
+                     AND ABS(DATEDIFF(i.invoice_date, :date)) <= 3
+                     AND NOT EXISTS (SELECT 1 FROM bank_transactions bt WHERE bt.invoice_id = i.id)
+                     LIMIT 1"
+                );
+                $invStmt->execute([
+                    'bank_id' => $bankId,
+                    'amount'  => $row['amount'],
+                    'date'    => $row['booking_date'],
+                ]);
+                $matchedInvoice = $invStmt->fetchColumn();
+                if ($matchedInvoice) {
+                    BankTransaction::linkInvoice($id, (int)$matchedInvoice);
+                }
+            }
+
             AuditLog::log('create', 'bank_transactions', $id, null, array_merge($data, ['source' => 'csv_import']));
             $count++;
         }
