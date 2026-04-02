@@ -85,6 +85,86 @@ async function fetchWithCsrf(url, options = {}) {
 // ==========================================
 // Összeg kalkulátor (pl. 15000+23000+8500 = 46500)
 // ==========================================
+// ==========================================
+// Táblázat rendezés (kattintás a fejlécre)
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('table').forEach(function(table) {
+        var headers = table.querySelectorAll('thead th');
+        if (headers.length === 0) return;
+
+        headers.forEach(function(th, colIndex) {
+            // Checkbox oszlopot és üres fejlécet kihagyjuk
+            if (th.querySelector('input[type="checkbox"]') || th.textContent.trim() === '') return;
+
+            th.style.cursor = 'pointer';
+            th.style.userSelect = 'none';
+            th.setAttribute('title', 'Kattints a rendezéshez');
+
+            // Rendezés ikon
+            var icon = document.createElement('i');
+            icon.className = 'fa-solid fa-sort sort-icon';
+            icon.style.marginLeft = '4px';
+            icon.style.fontSize = '9px';
+            icon.style.opacity = '0.3';
+            th.appendChild(icon);
+
+            th.addEventListener('click', function() {
+                var tbody = table.querySelector('tbody');
+                if (!tbody) return;
+
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                // Üres/placeholder sorokat kihagyjuk a rendezésből
+                rows = rows.filter(function(r) { return r.querySelectorAll('td').length > 1 || !r.querySelector('[colspan]'); });
+                if (rows.length < 2) return;
+
+                // Jelenlegi irány
+                var asc = th.dataset.sortDir !== 'asc';
+                th.dataset.sortDir = asc ? 'asc' : 'desc';
+
+                // Ikonok resetelése
+                headers.forEach(function(h) {
+                    var si = h.querySelector('.sort-icon');
+                    if (si) { si.className = 'fa-solid fa-sort sort-icon'; si.style.opacity = '0.3'; }
+                });
+                icon.className = asc ? 'fa-solid fa-sort-up sort-icon' : 'fa-solid fa-sort-down sort-icon';
+                icon.style.opacity = '1';
+
+                rows.sort(function(a, b) {
+                    var cellA = a.querySelectorAll('td')[colIndex];
+                    var cellB = b.querySelectorAll('td')[colIndex];
+                    if (!cellA || !cellB) return 0;
+
+                    var valA = (cellA.dataset.sortValue !== undefined) ? cellA.dataset.sortValue : cellA.textContent.trim();
+                    var valB = (cellB.dataset.sortValue !== undefined) ? cellB.dataset.sortValue : cellB.textContent.trim();
+
+                    // Szám felismerés (Ft, %, szóközök eltávolítása)
+                    var numA = parseFloat(valA.replace(/[^\d.,-]/g, '').replace(/\s/g, '').replace(',', '.'));
+                    var numB = parseFloat(valB.replace(/[^\d.,-]/g, '').replace(/\s/g, '').replace(',', '.'));
+
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return asc ? numA - numB : numB - numA;
+                    }
+
+                    // Dátum felismerés (YYYY.MM.DD vagy YYYY-MM-DD)
+                    var dateA = Date.parse(valA.replace(/\./g, '-').replace(/\s/g, ''));
+                    var dateB = Date.parse(valB.replace(/\./g, '-').replace(/\s/g, ''));
+                    if (!isNaN(dateA) && !isNaN(dateB)) {
+                        return asc ? dateA - dateB : dateB - dateA;
+                    }
+
+                    // Szöveges rendezés (magyar ékezetek)
+                    return asc
+                        ? valA.localeCompare(valB, 'hu')
+                        : valB.localeCompare(valA, 'hu');
+                });
+
+                rows.forEach(function(row) { tbody.appendChild(row); });
+            });
+        });
+    });
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('input[data-calc]').forEach(function(input) {
         input.addEventListener('blur', function() {
