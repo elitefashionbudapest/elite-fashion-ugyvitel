@@ -231,6 +231,7 @@ $router->get('/bank-transactions/tax/create', [App\Controllers\BankTransactionCo
 $router->post('/bank-transactions/tax', [App\Controllers\BankTransactionController::class, 'storeTax']);
 $router->get('/bank-transactions/owner-loan/create', [App\Controllers\BankTransactionController::class, 'createOwnerLoan']);
 $router->post('/bank-transactions/owner-loan', [App\Controllers\BankTransactionController::class, 'storeOwnerLoan']);
+$router->post('/bank-transactions/bulk-delete', [App\Controllers\BankTransactionController::class, 'bulkDestroy']);
 $router->get('/bank-transactions/{id}/edit', [App\Controllers\BankTransactionController::class, 'edit']);
 $router->post('/bank-transactions/{id}', [App\Controllers\BankTransactionController::class, 'update']);
 $router->post('/bank-transactions/{id}/link-invoice', [App\Controllers\BankTransactionController::class, 'linkInvoice']);

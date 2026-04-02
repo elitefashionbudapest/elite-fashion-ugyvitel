@@ -77,11 +77,20 @@ $filters = $data['filters'] ?? [];
 </div>
 
 <!-- Táblázat -->
+<!-- Tömeges törlés sáv -->
+<div id="bulk-bar" class="hidden bg-red-50 border border-red-200 rounded-xl p-3 mb-3 flex items-center justify-between">
+    <span class="text-sm font-bold text-red-700"><i class="fa-solid fa-trash-can mr-1"></i><span id="bulk-count">0</span> kijelölve</span>
+    <button type="button" onclick="bulkDelete()" class="px-4 py-2 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700 transition-colors">
+        <i class="fa-solid fa-trash mr-1"></i> Kijelöltek törlése
+    </button>
+</div>
+
 <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
     <div class="overflow-x-auto">
-    <table class="data-table">
+    <table class="data-table" id="tx-table">
         <thead>
             <tr>
+                <th class="w-8"><input type="checkbox" id="tx-select-all" class="h-4 w-4 text-primary border-outline rounded"></th>
                 <th>Dátum</th>
                 <th>Típus</th>
                 <th>Bank</th>
@@ -95,10 +104,11 @@ $filters = $data['filters'] ?? [];
         </thead>
         <tbody>
             <?php if (empty($transactions)): ?>
-                <tr><td colspan="9" class="text-center text-on-surface-variant py-8">Nincs bank tranzakció.</td></tr>
+                <tr><td colspan="10" class="text-center text-on-surface-variant py-8">Nincs bank tranzakció.</td></tr>
             <?php else: ?>
                 <?php foreach ($transactions as $tx): ?>
                 <tr>
+                    <td><input type="checkbox" class="tx-check h-4 w-4 text-primary border-outline rounded" value="<?= $tx['id'] ?>"></td>
                     <td class="text-sm"><?= e($tx['transaction_date']) ?></td>
                     <td>
                         <?php if ($tx['type'] === 'kartya_beerkezes'): ?>
@@ -224,3 +234,49 @@ $filters = $data['filters'] ?? [];
     </table>
     </div>
 </div>
+
+<script>
+(function() {
+    var selectAll = document.getElementById('tx-select-all');
+    var checks = document.querySelectorAll('.tx-check');
+    var bulkBar = document.getElementById('bulk-bar');
+    var bulkCount = document.getElementById('bulk-count');
+
+    function updateBulk() {
+        var count = document.querySelectorAll('.tx-check:checked').length;
+        bulkCount.textContent = count;
+        bulkBar.classList.toggle('hidden', count === 0);
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checks.forEach(function(cb) { cb.checked = selectAll.checked; });
+            updateBulk();
+        });
+    }
+
+    checks.forEach(function(cb) { cb.addEventListener('change', updateBulk); });
+
+    window.bulkDelete = async function() {
+        var ids = Array.from(document.querySelectorAll('.tx-check:checked')).map(function(cb) { return cb.value; });
+        if (ids.length === 0) return;
+        if (!confirm('Biztosan törölni szeretnéd a kijelölt ' + ids.length + ' tranzakciót? Ez nem vonható vissza!')) return;
+
+        try {
+            var resp = await fetch('<?= base_url('/bank-transactions/bulk-delete') ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
+                body: JSON.stringify({ ids: ids })
+            });
+            var data = await resp.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Hiba történt a törlés során.');
+            }
+        } catch(e) {
+            alert('Hálózati hiba.');
+        }
+    };
+})();
+</script>

@@ -726,6 +726,39 @@ class BankTransactionController
     }
 
     /**
+     * Tömeges törlés (JSON API)
+     */
+    public function bulkDestroy(): void
+    {
+        Middleware::owner();
+        Middleware::verifyCsrf();
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $ids = $input['ids'] ?? [];
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($ids)) {
+            echo json_encode(['success' => false, 'error' => 'Nincs kijelölt tétel.']);
+            exit;
+        }
+
+        $deleted = 0;
+        foreach ($ids as $id) {
+            $id = (int)$id;
+            $tx = BankTransaction::find($id);
+            if ($tx) {
+                BankTransaction::delete($id);
+                AuditLog::log('delete', 'bank_transactions', $id, $tx, null);
+                $deleted++;
+            }
+        }
+
+        echo json_encode(['success' => true, 'deleted' => $deleted]);
+        exit;
+    }
+
+    /**
      * API: Bruttó összeg lekérése kiválasztott boltok+időszak alapján
      */
     public function apiGross(): void
