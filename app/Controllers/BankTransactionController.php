@@ -619,6 +619,8 @@ class BankTransactionController
         $selected = $_POST['selected'] ?? [];
         $types = $_POST['types'] ?? [];
         $storeIds = $_POST['store_ids'] ?? [];
+        $dateFroms = $_POST['date_from'] ?? [];
+        $dateTos = $_POST['date_to'] ?? [];
 
         if (empty($selected)) {
             set_flash('error', 'Jelöljön ki legalább egy sort.');
@@ -644,13 +646,21 @@ class BankTransactionController
             if ($row['reference']) $notes[] = $row['reference'];
             $notesStr = implode(' — ', $notes) ?: null;
 
+            // Kártyás beérkezésnél a felhasználó által megadott időszakot használjuk
+            $dateFrom = ($type === 'kartya_beerkezes' && !empty($dateFroms[$index]))
+                ? $dateFroms[$index]
+                : (($type === 'kartya_beerkezes') ? $row['booking_date'] : null);
+            $dateTo = ($type === 'kartya_beerkezes' && !empty($dateTos[$index]))
+                ? $dateTos[$index]
+                : (($type === 'kartya_beerkezes') ? $row['booking_date'] : null);
+
             $data = [
                 'bank_id'          => $bankId,
                 'type'             => $type,
                 'amount'           => $row['amount'],
                 'transaction_date' => $row['booking_date'],
-                'date_from'        => ($type === 'kartya_beerkezes') ? $row['booking_date'] : null,
-                'date_to'          => ($type === 'kartya_beerkezes') ? $row['booking_date'] : null,
+                'date_from'        => $dateFrom,
+                'date_to'          => $dateTo,
                 'provider_name'    => ($type === 'szolgaltato_levon') ? ($row['partner_name'] ?: null) : null,
                 'notes'            => $notesStr,
                 'recorded_by'      => Auth::id(),

@@ -112,10 +112,16 @@ $typeIcons = [
                         <?php $showStores = in_array($row['suggested_type'] ?? '', ['kartya_beerkezes', 'befizetes_boltbol']); ?>
                         <div id="stores-<?= $i ?>" class="mt-1 <?= $showStores ? '' : 'hidden' ?>" data-date="<?= e($row['booking_date']) ?>">
                             <div id="lookup-date-wrap-<?= $i ?>" class="mb-1 <?= in_array($row['suggested_type'] ?? '', ['befizetes_boltbol', 'kartya_beerkezes']) ? '' : 'hidden' ?>">
-                                <label class="text-[10px] text-on-surface-variant">Forgalom napja:</label>
-                                <input type="date" id="lookup-date-<?= $i ?>" value="<?= e(date('Y-m-d', strtotime($row['booking_date'] . ' -1 day'))) ?>"
-                                       class="px-1.5 py-0.5 border border-outline-variant rounded text-[11px] ml-1"
-                                       onchange="fetchGross(<?= $i ?>)">
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <label class="text-[10px] text-on-surface-variant">Időszak:</label>
+                                    <input type="date" name="date_from[<?= $i ?>]" id="lookup-date-from-<?= $i ?>" value="<?= e(date('Y-m-d', strtotime($row['booking_date'] . ' -1 day'))) ?>"
+                                           class="px-1.5 py-0.5 border border-outline-variant rounded text-[11px]"
+                                           onchange="fetchGross(<?= $i ?>)">
+                                    <span class="text-[10px] text-on-surface-variant">—</span>
+                                    <input type="date" name="date_to[<?= $i ?>]" id="lookup-date-to-<?= $i ?>" value="<?= e(date('Y-m-d', strtotime($row['booking_date'] . ' -1 day'))) ?>"
+                                           class="px-1.5 py-0.5 border border-outline-variant rounded text-[11px]"
+                                           onchange="fetchGross(<?= $i ?>)">
+                                </div>
                             </div>
                             <div class="flex flex-wrap gap-1">
                             <?php foreach ($stores as $s): ?>
@@ -202,15 +208,16 @@ async function fetchGross(rowIdx) {
 
     const purpose = (type === 'befizetes_boltbol') ? 'bank_kifizetes' : 'napi_bankkartya';
 
-    // A lookup dátumot használjuk (lehet más nap mint a banki könyvelés)
-    let lookupDate = date;
-    const dateInput = document.getElementById('lookup-date-' + rowIdx);
-    if (dateInput && dateInput.value) lookupDate = dateInput.value;
+    // Időszak dátumok (date_from — date_to)
+    const dateFromInput = document.getElementById('lookup-date-from-' + rowIdx);
+    const dateToInput = document.getElementById('lookup-date-to-' + rowIdx);
+    let dateFrom = dateFromInput ? dateFromInput.value : date;
+    let dateTo = dateToInput ? dateToInput.value : date;
 
     const params = new URLSearchParams();
     checked.forEach(cb => params.append('store_ids[]', cb.value));
-    params.set('date_from', lookupDate);
-    params.set('date_to', lookupDate);
+    params.set('date_from', dateFrom);
+    params.set('date_to', dateTo);
     params.set('purpose', purpose);
 
     try {
