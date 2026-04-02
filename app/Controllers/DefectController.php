@@ -86,7 +86,11 @@ class DefectController
         }
 
         // Termék keresése vonalkód alapján
-        $product = Product::findByBarcode($barcode);
+        try {
+            $product = Product::findByBarcode($barcode);
+        } catch (\Throwable $e) {
+            $product = null;
+        }
 
         $data = [
             'store_id'      => $storeId,
@@ -96,22 +100,27 @@ class DefectController
             'scanned_by'    => Auth::id(),
         ];
 
-        $id = DefectItem::create($data);
-        $item = DefectItem::find($id);
+        try {
+            $id = DefectItem::create($data);
+            $item = DefectItem::find($id);
 
-        AuditLog::log('create', 'defect_items', $id, null, $data);
+            AuditLog::log('create', 'defect_items', $id, null, $data);
 
-        echo json_encode([
-            'success' => true,
-            'item'    => [
-                'id'            => $item['id'],
-                'barcode'       => $item['barcode'],
-                'product_name'  => $item['product_name'],
-                'product_price' => $item['product_price'],
-                'store_name'    => $item['store_name'],
-                'scanned_at'    => $item['scanned_at'],
-            ],
-        ]);
+            echo json_encode([
+                'success' => true,
+                'item'    => [
+                    'id'            => $item['id'],
+                    'barcode'       => $item['barcode'],
+                    'product_name'  => $item['product_name'] ?? null,
+                    'product_price' => $item['product_price'] ?? null,
+                    'store_name'    => $item['store_name'],
+                    'scanned_at'    => $item['scanned_at'],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Mentési hiba: ' . $e->getMessage()]);
+        }
     }
 
     /**
