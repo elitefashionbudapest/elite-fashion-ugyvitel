@@ -15,8 +15,9 @@ class Session
         ini_set('session.cookie_samesite', 'Lax');
 
         session_name('elite_session');
+        ini_set('session.gc_maxlifetime', '86400'); // 24 óra
         session_set_cookie_params([
-            'lifetime' => 0,
+            'lifetime' => 86400, // 24 óra — ne kelljen napközben újra belépni
             'path'     => '/',
             'domain'   => '',
             'secure'   => isset($_SERVER['HTTPS']),
