@@ -238,7 +238,7 @@ foreach ($missingFees as $fee) {
 }
 
 // 2. Nyitó egyenleg korrekció
-$newOpening = 1408944;
+$newOpening = 1407884;
 $db->prepare("UPDATE banks SET opening_balance = :bal WHERE id = :id")->execute(['bal' => $newOpening, 'id' => $bankId]);
 echo "✓ Nyitó egyenleg frissítve: 1 389 294 → " . number_format($newOpening, 0, ',', ' ') . " Ft\n";
 
