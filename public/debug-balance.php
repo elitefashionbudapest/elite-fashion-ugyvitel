@@ -185,6 +185,35 @@ foreach ($invoices as $inv) {
 }
 echo "ÖSSZESEN: " . number_format($invoiceTotal, 0, ',', ' ') . " Ft\n";
 
+// Automatikus összekötés keresése
+echo "\n=== AUTOMATIKUS ÖSSZEKÖTÉS (számla ↔ bank tranzakció) ===\n";
+foreach ($invoices as $inv) {
+    // Keresés: szolgáltatói levonás, hasonló összeg, ±3 nap
+    $stmt = $db->prepare(
+        "SELECT id, amount, transaction_date, provider_name, notes FROM bank_transactions
+         WHERE bank_id = :bank_id AND type = 'szolgaltato_levon' AND invoice_id IS NULL
+         AND ABS(amount - :amount) < 1
+         AND ABS(DATEDIFF(transaction_date, :date)) <= 3
+         LIMIT 1"
+    );
+    $stmt->execute([
+        'bank_id' => $bankId,
+        'amount' => $inv['amount'],
+        'date' => $inv['invoice_date'],
+    ]);
+    $match = $stmt->fetch();
+    if ($match) {
+        echo "SZÁMLA #{$inv['invoice_number']} ({$inv['amount']} Ft) → TX #{$match['id']} ({$match['amount']} Ft, {$match['transaction_date']})\n";
+
+        // Összekötés!
+        $db->prepare("UPDATE bank_transactions SET invoice_id = :inv_id WHERE id = :tx_id")
+           ->execute(['inv_id' => $inv['id'], 'tx_id' => $match['id']]);
+        echo "  ✓ ÖSSZEKÖTVE!\n";
+    } else {
+        echo "SZÁMLA #{$inv['invoice_number']} ({$inv['amount']} Ft) → NEM TALÁLTAM PÁRT\n";
+    }
+}
+
 echo "\n=== FINANCIAL_RECORDS (bank-related) ===\n";
 $stmt = $db->prepare("SELECT purpose, amount, record_date, store_id FROM financial_records WHERE bank_id = :id ORDER BY record_date, id");
 $stmt->execute(['id' => $bankId]);
