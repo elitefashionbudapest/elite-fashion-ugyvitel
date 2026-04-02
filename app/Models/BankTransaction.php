@@ -44,7 +44,7 @@ class BankTransaction
             $sql .= ' AND bt.bank_id = :bank_id';
             $params['bank_id'] = $bankId;
         }
-        if ($type) {
+        if ($type && $type !== 'befizetes_boltbol') {
             $sql .= ' AND bt.type = :type';
             $params['type'] = $type;
         }
@@ -70,6 +70,65 @@ class BankTransaction
                 $row['gross_amount'] = self::calculateGross($row['id']);
                 $row['commission'] = $row['gross_amount'] - (float)$row['amount'];
             }
+        }
+
+        // Boltokból való befizetések hozzáadása (financial_records-ból)
+        if (!$type || $type === 'befizetes_boltbol') {
+            $frSql = "SELECT fr.id as fr_id, fr.record_date, fr.amount, fr.bank_id,
+                             s.name as store_name, b.name as bank_name, u.name as recorded_by_name
+                      FROM financial_records fr
+                      JOIN stores s ON fr.store_id = s.id
+                      JOIN banks b ON fr.bank_id = b.id
+                      JOIN users u ON fr.recorded_by = u.id
+                      WHERE fr.purpose = 'bank_kifizetes'";
+            $frParams = [];
+
+            if ($bankId) {
+                $frSql .= ' AND fr.bank_id = :bank_id';
+                $frParams['bank_id'] = $bankId;
+            }
+            if ($dateFrom) {
+                $frSql .= ' AND fr.record_date >= :date_from';
+                $frParams['date_from'] = $dateFrom;
+            }
+            if ($dateTo) {
+                $frSql .= ' AND fr.record_date <= :date_to';
+                $frParams['date_to'] = $dateTo;
+            }
+
+            $frSql .= ' ORDER BY fr.record_date DESC';
+            $frStmt = $db->prepare($frSql);
+            $frStmt->execute($frParams);
+            $deposits = $frStmt->fetchAll();
+
+            foreach ($deposits as $dep) {
+                $results[] = [
+                    'id'                => 'fr_' . $dep['fr_id'],
+                    'bank_id'           => $dep['bank_id'],
+                    'type'              => 'befizetes_boltbol',
+                    'amount'            => $dep['amount'],
+                    'transaction_date'  => $dep['record_date'],
+                    'bank_name'         => $dep['bank_name'],
+                    'recorded_by_name'  => $dep['recorded_by_name'],
+                    'notes'             => $dep['store_name'] . ' — befizetés',
+                    'provider_name'     => null,
+                    'invoice_id'        => null,
+                    'invoice_number'    => null,
+                    'loan_name'         => null,
+                    'target_bank_name'  => null,
+                    'date_from'         => null,
+                    'date_to'           => null,
+                    'source_amount'     => null,
+                    'target_currency'   => null,
+                    'stores'            => [['store_name' => $dep['store_name']]],
+                    '_from_financial'   => true,
+                ];
+            }
+
+            // Újra rendezés dátum szerint
+            usort($results, function($a, $b) {
+                return strcmp($b['transaction_date'], $a['transaction_date']);
+            });
         }
 
         return $results;

@@ -60,6 +60,7 @@ $filters = $data['filters'] ?? [];
             <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Típus</label>
             <select name="type" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm">
                 <option value="">Mind</option>
+                <option value="befizetes_boltbol" <?= ($filters['type'] ?? '') === 'befizetes_boltbol' ? 'selected' : '' ?>>Befizetés boltból</option>
                 <option value="kartya_beerkezes" <?= ($filters['type'] ?? '') === 'kartya_beerkezes' ? 'selected' : '' ?>>Kártyás beérkezés</option>
                 <option value="szolgaltato_levon" <?= ($filters['type'] ?? '') === 'szolgaltato_levon' ? 'selected' : '' ?>>Szolgáltatói levonás</option>
                 <option value="hitel_torlesztes" <?= ($filters['type'] ?? '') === 'hitel_torlesztes' ? 'selected' : '' ?>>Hitel törlesztés</option>
@@ -114,7 +115,11 @@ $filters = $data['filters'] ?? [];
             <?php else: ?>
                 <?php foreach ($transactions as $tx): ?>
                 <tr>
-                    <td><input type="checkbox" class="tx-check h-4 w-4 text-primary border-outline rounded" value="<?= $tx['id'] ?>"></td>
+                    <td>
+                        <?php if (empty($tx['_from_financial'])): ?>
+                        <input type="checkbox" class="tx-check h-4 w-4 text-primary border-outline rounded" value="<?= $tx['id'] ?>">
+                        <?php endif; ?>
+                    </td>
                     <td class="text-sm"><?= e($tx['transaction_date']) ?></td>
                     <td>
                         <?php if ($tx['type'] === 'kartya_beerkezes'): ?>
@@ -124,6 +129,10 @@ $filters = $data['filters'] ?? [];
                         <?php elseif ($tx['type'] === 'hitel_torlesztes'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
                                 <i class="fa-solid fa-landmark mr-1"></i>Törlesztés
+                            </span>
+                        <?php elseif ($tx['type'] === 'befizetes_boltbol'): ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                <i class="fa-solid fa-store mr-1"></i>Befizetés
                             </span>
                         <?php elseif ($tx['type'] === 'szamla_kozti'): ?>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
@@ -157,7 +166,9 @@ $filters = $data['filters'] ?? [];
                     </td>
                     <td class="text-sm"><?= e($tx['bank_name']) ?></td>
                     <td class="text-sm">
-                        <?php if ($tx['type'] === 'kartya_beerkezes'): ?>
+                        <?php if ($tx['type'] === 'befizetes_boltbol'): ?>
+                            <span class="font-medium"><?= e($tx['notes'] ?? 'Befizetés boltból') ?></span>
+                        <?php elseif ($tx['type'] === 'kartya_beerkezes'): ?>
                             <div class="flex flex-wrap gap-1">
                                 <?php foreach ($tx['stores'] ?? [] as $s): ?>
                                     <span class="px-2 py-0.5 bg-surface-container text-on-surface text-[10px] font-bold rounded-full"><?= e($s['store_name']) ?></span>
@@ -190,7 +201,7 @@ $filters = $data['filters'] ?? [];
                             —
                         <?php endif; ?>
                     </td>
-                    <?php $isIncoming = in_array($tx['type'], ['kartya_beerkezes', 'tagi_kolcson_be']); ?>
+                    <?php $isIncoming = in_array($tx['type'], ['kartya_beerkezes', 'tagi_kolcson_be', 'befizetes_boltbol']); ?>
                     <td class="text-right font-medium <?= $isIncoming ? 'text-emerald-600' : 'text-red-600' ?>">
                         <?= $isIncoming ? '+' : '-' ?><?= format_money($tx['amount']) ?>
                     </td>
@@ -227,11 +238,15 @@ $filters = $data['filters'] ?? [];
                         <?php endif; ?>
                     </td>
                     <td class="text-right">
+                        <?php if (empty($tx['_from_financial'])): ?>
                         <a href="<?= base_url("/bank-transactions/{$tx['id']}/edit") ?>" class="text-blue-500 hover:text-blue-700 text-sm mr-1"><i class="fa-solid fa-pen-to-square"></i></a>
                         <form method="POST" action="<?= base_url("/bank-transactions/{$tx['id']}/delete") ?>" class="inline" onsubmit="return confirmDelete(this, 'tranzakció')">
                             <?= csrf_field() ?>
                             <button type="submit" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
                         </form>
+                        <?php else: ?>
+                        <span class="text-[10px] text-on-surface-variant italic">könyvelésből</span>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
