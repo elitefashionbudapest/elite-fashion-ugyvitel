@@ -27,16 +27,16 @@ class AuthController
         $password = $_POST['password'] ?? '';
         $remember = isset($_POST['remember']);
 
-        // reCAPTCHA ellenőrzés (kikapcsolva screenshot készítéshez)
-        // $recaptchaSecret = getenv('RECAPTCHA_SECRET');
-        // if ($recaptchaSecret) {
-        //     $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
-        //     if (empty($recaptchaResponse) || !$this->verifyRecaptcha($recaptchaSecret, $recaptchaResponse)) {
-        //         save_old_input();
-        //         set_flash('error', 'Kérjük igazolja, hogy nem robot.');
-        //         redirect('/login');
-        //     }
-        // }
+        // reCAPTCHA ellenőrzés
+        $recaptchaSecret = getenv('RECAPTCHA_SECRET');
+        if ($recaptchaSecret) {
+            $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
+            if (empty($recaptchaResponse) || !$this->verifyRecaptcha($recaptchaSecret, $recaptchaResponse)) {
+                save_old_input();
+                set_flash('error', 'Kérjük igazolja, hogy nem robot.');
+                redirect('/login');
+            }
+        }
 
         // Rate limiting: IP alapú
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
