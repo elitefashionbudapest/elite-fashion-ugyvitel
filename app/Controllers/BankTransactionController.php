@@ -579,17 +579,46 @@ class BankTransactionController
         foreach ($rows as &$row) {
             $row['suggested_type'] = CsvImportService::suggestType($row);
 
-            // Duplikátum keresés (ugyanaz a bank + dátum + összeg)
+            // Duplikátum keresés — összeg + dátum
             $stmt = $db->prepare(
-                'SELECT COUNT(*) FROM bank_transactions
-                 WHERE bank_id = :bank_id AND transaction_date = :d AND amount = :a'
+                'SELECT id, type, amount, transaction_date, notes FROM bank_transactions
+                 WHERE bank_id = :bank_id AND transaction_date = :d AND amount = :a
+                 LIMIT 1'
             );
             $stmt->execute([
                 'bank_id' => $bankId,
                 'd'       => $row['booking_date'],
                 'a'       => $row['amount'],
             ]);
-            $row['duplicate'] = (int)$stmt->fetchColumn() > 0;
+            $match = $stmt->fetch();
+
+            if ($match) {
+                $row['duplicate'] = true;
+                $row['duplicate_match'] = $match;
+            } else {
+                // Laza keresés: csak összeg (±1 nap eltéréssel — bank néha más napra könyveli)
+                $stmt = $db->prepare(
+                    'SELECT id, type, amount, transaction_date, notes FROM bank_transactions
+                     WHERE bank_id = :bank_id
+                       AND ABS(DATEDIFF(transaction_date, :d)) <= 1
+                       AND amount = :a
+                     LIMIT 1'
+                );
+                $stmt->execute([
+                    'bank_id' => $bankId,
+                    'd'       => $row['booking_date'],
+                    'a'       => $row['amount'],
+                ]);
+                $looseMatch = $stmt->fetch();
+
+                if ($looseMatch) {
+                    $row['duplicate'] = true;
+                    $row['duplicate_match'] = $looseMatch;
+                    $row['duplicate_loose'] = true;
+                } else {
+                    $row['duplicate'] = false;
+                }
+            }
         }
 
         $_SESSION['csv_import'] = [

@@ -68,10 +68,11 @@ $typeIcons = [
             </thead>
             <tbody>
                 <?php foreach ($rows as $i => $row): ?>
-                <tr class="import-row <?= $row['duplicate'] ? 'opacity-50' : '' ?>">
+                <tr class="import-row <?= $row['duplicate'] ? 'opacity-40' : '' ?>">
                     <td>
                         <input type="checkbox" name="selected[]" value="<?= $i ?>"
-                               class="row-check h-4 w-4 text-primary border-outline rounded focus:ring-primary-container">
+                               class="row-check h-4 w-4 text-primary border-outline rounded focus:ring-primary-container"
+                               <?= $row['duplicate'] ? 'data-duplicate="1"' : '' ?>>
                     </td>
                     <td class="text-sm"><?= e($row['booking_date']) ?></td>
                     <td>
@@ -98,7 +99,17 @@ $typeIcons = [
                             <div class="text-[10px] text-on-surface-variant truncate"><?= e($row['description']) ?></div>
                         <?php endif; ?>
                         <?php if ($row['duplicate']): ?>
-                            <span class="text-[10px] text-amber-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i>Lehet duplikált</span>
+                            <div class="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-lg">
+                                <span class="text-[10px] text-red-600 font-bold block"><i class="fa-solid fa-triangle-exclamation mr-0.5"></i><?= !empty($row['duplicate_loose']) ? 'Valószínűleg duplikált (±1 nap)' : 'Már létezik a rendszerben' ?></span>
+                                <?php if (!empty($row['duplicate_match'])): ?>
+                                    <span class="text-[9px] text-red-400 block mt-0.5">
+                                        <?= e($row['duplicate_match']['transaction_date']) ?> — <?= number_format($row['duplicate_match']['amount'], 0, ',', ' ') ?> Ft
+                                        <?php if ($row['duplicate_match']['notes']): ?>
+                                            — <?= e(mb_substr($row['duplicate_match']['notes'], 0, 60)) ?>...
+                                        <?php endif; ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </td>
                     <td class="text-xs text-on-surface-variant"><?= e($row['csv_type']) ?></td>
@@ -167,7 +178,12 @@ function updateCount() {
 }
 
 selectAll.addEventListener('change', function() {
-    rowChecks.forEach(cb => { cb.checked = this.checked; });
+    const isChecked = this.checked;
+    rowChecks.forEach(cb => {
+        // Duplikáltakat ne jelölje ki automatikusan
+        if (isChecked && cb.dataset.duplicate === '1') return;
+        cb.checked = isChecked;
+    });
     updateCount();
 });
 
