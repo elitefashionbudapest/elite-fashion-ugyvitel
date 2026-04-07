@@ -71,12 +71,15 @@ class DefectController
         Middleware::tabPermission('selejt', 'create');
         Middleware::verifyCsrf();
 
-        header('Content-Type: application/json; charset=utf-8');
+        // Output buffer — hogy semmi ne kerüljön a JSON elé
+        ob_start();
 
         $input = json_decode(file_get_contents('php://input'), true);
         $barcode = trim($input['barcode'] ?? $_POST['barcode'] ?? '');
 
         if (empty($barcode)) {
+            ob_end_clean();
+            header('Content-Type: application/json; charset=utf-8');
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Vonalkod megadasa kotelezo.']);
             return;
@@ -87,6 +90,8 @@ class DefectController
             : (int)($input['store_id'] ?? $_POST['store_id'] ?? 0);
 
         if (!$storeId) {
+            ob_end_clean();
+            header('Content-Type: application/json; charset=utf-8');
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => 'Bolt kivalasztasa kotelezo.']);
             return;
@@ -107,27 +112,30 @@ class DefectController
             'scanned_by'    => Auth::id(),
         ];
 
+        $id = DefectItem::create($data);
+        $item = DefectItem::find($id);
+
         try {
-            $id = DefectItem::create($data);
-            $item = DefectItem::find($id);
-
             AuditLog::log('create', 'defect_items', $id, null, $data);
-
-            echo json_encode([
-                'success' => true,
-                'item'    => [
-                    'id'            => $item['id'],
-                    'barcode'       => $item['barcode'],
-                    'product_name'  => $item['product_name'] ?? null,
-                    'product_price' => $item['product_price'] ?? null,
-                    'store_name'    => $item['store_name'],
-                    'scanned_at'    => $item['scanned_at'],
-                ],
-            ]);
         } catch (\Throwable $e) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Mentési hiba: ' . $e->getMessage()]);
+            // Audit log hiba nem akadályozhatja meg a választ
         }
+
+        // Minden korábbi outputot eldobjuk (PHP warning-ok, stb.)
+        ob_end_clean();
+        header('Content-Type: application/json; charset=utf-8');
+
+        echo json_encode([
+            'success' => true,
+            'item'    => [
+                'id'            => $item['id'],
+                'barcode'       => $item['barcode'],
+                'product_name'  => $item['product_name'] ?? null,
+                'product_price' => $item['product_price'] ?? null,
+                'store_name'    => $item['store_name'],
+                'scanned_at'    => $item['scanned_at'],
+            ],
+        ]);
     }
 
     /**
