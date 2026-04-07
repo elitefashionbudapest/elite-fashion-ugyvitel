@@ -130,3 +130,47 @@ echo $testJson ? "OK\n" : "HIBA: " . json_last_error_msg() . "\n";
 
 echo "\n=== PHP verzió: " . PHP_VERSION . " ===\n";
 echo "=== Output buffering: " . (ob_get_level() > 0 ? 'aktív (' . ob_get_level() . ' szint)' : 'inaktív') . " ===\n";
+
+// 9. Teljes scan szimuláció
+echo "\n=== TELJES SCAN SZIMULÁCIÓ ===\n";
+ob_start();
+
+// Session indítás (mint index.php-ben)
+App\Core\Session::start();
+
+echo "Session started... ";
+$sessionOutput = ob_get_contents();
+if ($sessionOutput) echo "(OUTPUT VOLT: '" . $sessionOutput . "')";
+ob_clean();
+
+// Middleware check
+try {
+    // Auth check - van-e session
+    $user = App\Core\Auth::user();
+    echo "Auth: " . ($user ? $user['name'] : 'NEM BEJELENTKEZVE') . "\n";
+} catch (\Throwable $e) {
+    echo "Auth hiba: " . $e->getMessage() . "\n";
+}
+
+$simOutput = ob_get_clean();
+if ($simOutput) echo "Szimuláció közben output volt: '" . $simOutput . "'\n";
+else echo "Szimuláció: nincs stray output, OK\n";
+
+// 10. Error log utolsó sorai
+echo "\n=== UTOLSÓ PHP HIBÁK (error_log) ===\n";
+$errorLog = ini_get('error_log');
+if ($errorLog && file_exists($errorLog)) {
+    $lines = file($errorLog);
+    $last = array_slice($lines, -10);
+    foreach ($last as $l) echo $l;
+} else {
+    echo "Error log nem elérhető: " . ($errorLog ?: 'nincs beállítva') . "\n";
+    // Próbáljuk a szerver default error log-ját
+    $defaultLog = __DIR__ . '/../error_log';
+    if (file_exists($defaultLog)) {
+        echo "Talált: $defaultLog\n";
+        $lines = file($defaultLog);
+        $last = array_slice($lines, -10);
+        foreach ($last as $l) echo $l;
+    }
+}
