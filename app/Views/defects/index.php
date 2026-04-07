@@ -237,6 +237,9 @@ $filteredTotal       = $data['filteredTotal'] ?? 0;
 
             if (data.success) {
                 // Sikeres mentés
+                const pName = data.item?.product_name;
+                const pPrice = data.item?.product_price;
+
                 barcodeInput.value = '';
                 lastScannedCode.textContent = barcode;
                 const productInfo = document.getElementById('last-scanned-product');
@@ -250,8 +253,6 @@ $filteredTotal       = $data['filteredTotal'] ?? 0;
 
                 // Sor hozzáadása a táblázathoz
                 if (emptyRow) emptyRow.remove();
-                const pName = data.item?.product_name;
-                const pPrice = data.item?.product_price;
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-surface-container-low/50 transition-colors bg-green-50';
                 row.innerHTML =
