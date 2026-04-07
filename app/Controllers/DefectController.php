@@ -26,6 +26,12 @@ class DefectController
 
         $stores = Auth::isOwner() ? Store::all() : [];
 
+        // Szűrt tételek összértéke
+        $filteredTotal = 0;
+        foreach ($items as $item) {
+            $filteredTotal += (float)($item['product_price'] ?? 0);
+        }
+
         // Mai selejtek száma és becsült összérték
         $todayItems = DefectItem::all(
             $storeId ? (int)$storeId : null,
@@ -46,6 +52,7 @@ class DefectController
                 'items'               => $items,
                 'todayCount'          => $todayCount,
                 'todayEstimatedValue' => $todayEstimatedValue,
+                'filteredTotal'       => $filteredTotal,
                 'stores'     => $stores,
                 'filters'    => [
                     'store_id'  => $storeId,

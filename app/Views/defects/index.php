@@ -6,6 +6,7 @@ $stores     = $data['stores'] ?? [];
 $filters    = $data['filters'] ?? [];
 $todayCount          = $data['todayCount'] ?? 0;
 $todayEstimatedValue = $data['todayEstimatedValue'] ?? 0;
+$filteredTotal       = $data['filteredTotal'] ?? 0;
 ?>
 
 <div class="flex flex-wrap flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -167,6 +168,18 @@ $todayEstimatedValue = $data['todayEstimatedValue'] ?? 0;
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
+                <?php if (!empty($items)): ?>
+                <tfoot class="sticky bottom-0 z-10">
+                    <tr class="bg-surface-container-low border-t-2 border-surface-container">
+                        <td class="px-6 py-3 text-xs font-bold text-on-surface-variant uppercase"><?= count($items) ?> tétel</td>
+                        <td class="px-6 py-3"></td>
+                        <td class="px-6 py-3 text-right font-heading font-bold text-on-surface"><?= number_format($filteredTotal, 0, ',', ' ') ?> Ft</td>
+                        <td class="px-6 py-3" colspan="<?= Auth::isOwner() ? 3 : 2 ?>">
+                            <span class="text-[10px] text-on-surface-variant italic">becsült összérték</span>
+                        </td>
+                    </tr>
+                </tfoot>
+                <?php endif; ?>
             </table>
         </div>
     </div>
